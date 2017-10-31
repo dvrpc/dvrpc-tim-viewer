@@ -1,0 +1,47 @@
+{
+    "version": 8,
+    "name": "DVRPC-freight-light",
+    
+    "center": [
+        -74.9056907662051,
+        40.21678268816336
+    ],
+    "zoom": 8,
+    "bearing": 0,
+    "pitch": 0,
+    "sources": {
+        
+        "tim_transit": {
+            "url": "http://a.michaelruane.com/transit_tiles.json",
+            "type": "vector"
+        }
+        
+    },
+    "sprite": "mapbox://sprites/mruane/cik5ms8hp002p04ly651sqxkm",
+    "glyphs": "mapbox://fonts/mruane/{fontstack}/{range}.pbf",
+    "transition": {
+      "duration": 300,
+      "delay": 0
+    },
+    "layers": [
+        
+        {
+            "interactive": true,
+            "layout": {
+                "visibility": "visible"
+            },
+            "type": "line",
+            "source": "tim_transit",
+            "id": "transit-lines",
+            
+            
+            "source-layer": "transit_lines"
+        }
+        
+    ],
+    "created": "2016-02-02T16:40:00.364Z",
+    "id": "cik5ms8hp002p04ly651sqxkm",
+    "modified": "2016-02-03T14:55:16.806Z",
+    "owner": "mruane",
+    "draft": false
+}
