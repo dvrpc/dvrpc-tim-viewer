@@ -30,3 +30,4 @@ $RECYCLE.BIN/
 *.cache
 
 config.js
+*credentials*
