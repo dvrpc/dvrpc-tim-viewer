@@ -9,6 +9,10 @@ RETURNS TABLE(
 ) AS $$
 DECLARE
     zoneindex INTEGER;
+    _am TEXT;
+    _md TEXT;
+    _pm TEXT;
+    _nt TEXT;
 BEGIN
 
     SELECT (rownum - 1)::INTEGER INTO zoneindex
@@ -17,44 +21,40 @@ BEGIN
         FROM tim23_zone ORDER BY no
     ) _q WHERE no = zoneno;
 
-    CREATE TEMPORARY TABLE _am (oindex INTEGER, dindex INTEGER, val DOUBLE PRECISION) ON COMMIT DROP;
-    CREATE TEMPORARY TABLE _md (oindex INTEGER, dindex INTEGER, val DOUBLE PRECISION) ON COMMIT DROP;
-    CREATE TEMPORARY TABLE _pm (oindex INTEGER, dindex INTEGER, val DOUBLE PRECISION) ON COMMIT DROP;
-    CREATE TEMPORARY TABLE _nt (oindex INTEGER, dindex INTEGER, val DOUBLE PRECISION) ON COMMIT DROP;
-
-    EXECUTE format('INSERT INTO _am SELECT oindex, dindex, val FROM %I WHERE oindex = $1 OR dindex = $1', 'mtx_' || mtxno || '_am') USING zoneindex;
-    EXECUTE format('INSERT INTO _md SELECT oindex, dindex, val FROM %I WHERE oindex = $1 OR dindex = $1', 'mtx_' || mtxno || '_md') USING zoneindex;
-    EXECUTE format('INSERT INTO _pm SELECT oindex, dindex, val FROM %I WHERE oindex = $1 OR dindex = $1', 'mtx_' || mtxno || '_pm') USING zoneindex;
-    EXECUTE format('INSERT INTO _nt SELECT oindex, dindex, val FROM %I WHERE oindex = $1 OR dindex = $1', 'mtx_' || mtxno || '_nt') USING zoneindex;
+    _am := format('%I', 'mtx_' || mtxno || '_am');
+    _md := format('%I', 'mtx_' || mtxno || '_md');
+    _pm := format('%I', 'mtx_' || mtxno || '_pm');
+    _nt := format('%I', 'mtx_' || mtxno || '_nt');
 
     RETURN QUERY
+    EXECUTE format('
     SELECT
-        _am.oindex, _am.dindex,
-        _am.val am, _md.val md,
-        _pm.val pm, _nt.val nt
-    FROM _am
-    INNER JOIN _md
-    ON _am.oindex = _md.oindex AND _am.dindex = _md.dindex
-    INNER JOIN _pm
-    ON _am.oindex = _pm.oindex AND _am.dindex = _pm.dindex
-    INNER JOIN _nt
-    ON _am.oindex = _nt.oindex AND _am.dindex = _nt.dindex
-    WHERE _am.oindex = zoneindex
-    
+        am.oindex, am.dindex,
+        am.val am, md.val md,
+        pm.val pm, nt.val nt
+    FROM %I am
+    INNER JOIN %I md
+    ON am.oindex = md.oindex AND am.dindex = md.dindex
+    INNER JOIN %I pm
+    ON am.oindex = pm.oindex AND am.dindex = pm.dindex
+    INNER JOIN %I nt
+    ON am.oindex = nt.oindex AND am.dindex = nt.dindex
+    WHERE am.oindex = $1
     UNION ALL
-    
     SELECT
-        _am.oindex, _am.dindex,
-        _am.val am, _md.val md,
-        _pm.val pm, _nt.val nt
-    FROM _am
-    INNER JOIN _md
-    ON _am.oindex = _md.oindex AND _am.dindex = _md.dindex
-    INNER JOIN _pm
-    ON _am.oindex = _pm.oindex AND _am.dindex = _pm.dindex
-    INNER JOIN _nt
-    ON _am.oindex = _nt.oindex AND _am.dindex = _nt.dindex
-    WHERE _am.dindex = zoneindex;
+        am.oindex, am.dindex,
+        am.val am, md.val md,
+        pm.val pm, nt.val nt
+    FROM %I am
+    INNER JOIN %I md
+    ON am.oindex = md.oindex AND am.dindex = md.dindex
+    INNER JOIN %I pm
+    ON am.oindex = pm.oindex AND am.dindex = pm.dindex
+    INNER JOIN %I nt
+    ON am.oindex = nt.oindex AND am.dindex = nt.dindex
+    WHERE am.dindex = $1
+    ', _am, _md, _pm, _nt, _am, _md, _pm, _nt) USING zoneindex;
 
 END;
+
 $$ LANGUAGE plpgsql;
