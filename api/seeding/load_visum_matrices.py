@@ -48,12 +48,13 @@ PSQL_CONNECTION_PARAM = {
 def main():
     Visum = h.CreateVisum(15)
     con = psql.connect(**PSQL_CONNECTION_PARAM)
+    cur = con.cursor()
     for tod in TODs:
         Visum.LoadVersion(VER_TEMPLATE.format(**{'tod':tod}))
         for mtxno in MTXs:
             print mtxno,
             start_time = time.time()
-            tblname = "mtx_{mtxno}_{tod}".format(**{"mtxxno":mtxno,"tod":tod})
+            tblname = "mtx_{mtxno}_{tod}".format(**{"mtxno":mtxno,"tod":tod})
             mtx = h.GetMatrix(Visum, mtxno)
             n,n = mtx.shape
             y = numpy.vstack((numpy.arange(n) for _ in xrange(n)))
