@@ -6,7 +6,7 @@ import numpy
 import psycopg2 as psql
 import VisumPy.helpers as h
 
-VER_TEMPLATE = r"F:\Modeling\Model_Development\TIM2.3\TIM_23Full_run\TIM23_2015_Base_170612_FINAL_TMC_{tod}.ver"
+VER_TEMPLATE = r"M:\Modeling\Model_Development\TIM2.3\TIM_23Full_run\TIM23_2015_Base_170612_FINAL_TMC_{tod}.ver"
 TODs = [
     "AM",
     "MD",
@@ -44,7 +44,6 @@ PSQL_CONNECTION_PARAM = {
     "user": "postgres",
     "password": "sergt"
 }
-INSERT_BATCHSIZE = 100000
 
 def main():
     Visum = h.CreateVisum(15)
@@ -54,7 +53,7 @@ def main():
         for mtxno in MTXs:
             print mtxno,
             start_time = time.time()
-            tblname = "mtx_{no}_{tod}".format(**{"no":mtxno,"tod":tod})
+            tblname = "mtx_{mtxno}_{tod}".format(**{"mtxxno":mtxno,"tod":tod})
             mtx = h.GetMatrix(Visum, mtxno)
             n,n = mtx.shape
             y = numpy.vstack((numpy.arange(n) for _ in xrange(n)))
@@ -89,26 +88,18 @@ def main():
             con.commit()
             print "%.2f" % (time.time() - start_time)
 
-def __analysis__():
-    # Drop 0 value cells?
-    for mtxno in mtxnos:
-        for tod in tods:
+        # Vacuuming needs to occur outside of the transaction block
+        print "Vaccumming..."
+        con.set_isolation_level(psql.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        for mtxno in mtxnos:
             tbl = "mtx_{mtxno}_{tod}".format(**{"mtxno":mtxno, "tod":tod})
-            cur.execute("SELECT COUNT(*) FROM {tbl}".format(**{"tbl":tbl}))
-            print tbl, cur.fetchall(),
-            cur.execute("DELETE FROM {tbl} WHERE val = 0".format(**{"tbl":tbl}))
-            cur.execute("SELECT COUNT(*) FROM {tbl}".format(**{"tbl":tbl}))
-            print cur.fetchall()
+            print tbl,
+            cur.execute("VACUUM FULL VERBOSE ANALYZE {tbl}".format(**{"tbl":tbl}))
+            print 'Done'
+        con.set_isolation_level(psql.extensions.ISOLATION_LEVEL_DEFAULT)
 
-    # Vacuuming needs to occur outside of the transaction block
-    con.set_isolation_level(psql.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    for mtxno in mtxnos:
-        tbl = "mtx_{mtxno}_{tod}".format(**{"mtxno":mtxno, "tod":tod})
-        print tbl,
-        cur.execute("VACUUM FULL VERBOSE ANALYZE {tbl}".format(**{"tbl":tbl}))
-        print 'Done'
-    con.set_isolation_level(psql.extensions.ISOLATION_LEVEL_DEFAULT)
 
+def __analysis__():
     for mtxno in mtxnos:
         for tod in tods:
             tbl = "mtx_{mtxno}_{tod}".format(**{"mtxno":mtxno, "tod":tod})
