@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION getskimbyzoneno(zoneno INTEGER, mtxno INTEGER)
+CREATE OR REPLACE FUNCTION tim_getskimbyzoneno(zoneno INTEGER, mtxno INTEGER)
 RETURNS TABLE(
     ozoneno INTEGER,
     dzoneno INTEGER,
