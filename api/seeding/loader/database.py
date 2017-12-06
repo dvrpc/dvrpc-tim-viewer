@@ -3,8 +3,9 @@ import threading
 import psycopg2 as psql
 
 TBL_GEOMETRY = "geom"
-TBL_DATA = "net"
+TBL_NETOBJ = "net"
 TBL_MATRIX = "mtx"
+TBL_DATA = "dat"
 
 class Database(threading.Thread):
     def __init__(self, db_credentials, queue):
@@ -24,9 +25,10 @@ class Database(threading.Thread):
 
     def process(self, con, payload):
         cur = con.cursor()
-        cur.execute("SELECT COUNT(*) FROM mtx_210_am")
-        (cnt,) = cur.fetchone()
-        print "OK", cnt
+        # cur.execute("SELECT COUNT(*) FROM mtx_210_am")
+        # (cnt,) = cur.fetchone()
+        # print "OK", cnt
+        print payload.type
 
 class Echo(threading.Thread):
     def __init__(self, queue):

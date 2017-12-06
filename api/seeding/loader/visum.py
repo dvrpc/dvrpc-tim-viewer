@@ -3,7 +3,13 @@ import sys
 import threading
 import win32com.client
 
-Visum_IDs = {
+import database
+
+import time
+
+# Generated automanually using Utility.get_attributes below
+# and manually finding identifying fields
+NETOBJ_ID = {
     "NotepadLines": ("index",), # OK
     "POICategories": ("no",), # OK
     "ValidDaysCont": ("no",), # OK
@@ -35,12 +41,12 @@ Visum_IDs = {
     "Screenlines": ("no",), # OK
 }
 
-_invalid_Visum_IDs = {
-    "[User-Defined Attributes]": (),
-    "[Network]": (),
+_invalid_NETOBJ_ID = {
+    "[User-Defined Attributes]": (), # No Identifiers
+    "[Network]": (), # No Identifiers
+    "[Fare Model]": (), # No Identifiers
     "[Fare Systems]": ("no",),
     "[Transfer Fares]": ("fromfsysno", "tofsysno"),
-    "[Fare Model]": (),
     "[Points]": ("id",),
     "[Edges]": ("id",),
     "[Intermediate Points]": ("edgeid", "index"),
@@ -64,29 +70,51 @@ _invalid_Visum_IDs = {
     "[Screenline polygons]": ("screenlineno", "index"),
     "[Lanes]": ("nodeno", "mainnodeno", "linkno", "no", "approachtype"),
     "[Lane turns]": ("nodeno", "mainnodeno", "fromlinkno", "fromlaneno", "tolinkno", "tolaneno"),
-    "Legs": ("nodeno", "mainnodeno", "orientation"), # Missing?
-    "CalendarPeriod": ("no",), # Missing
+    "Legs": ("nodeno", "mainnodeno", "orientation"), # Missing from COM
+    "CalendarPeriod": ("no",), # Missing from COM
 }
 
 class VisumManager(threading.Thread):
-    def __init__(self, vernum):
-        super(VisumManager, self).__init__()
+    TODs = ["AM","MD","PM","NT"]
 
-    def run(self):
-        pass
-
-class Visum(threading.Thread):
-    def __init__(self):
+    def __init__(self, path_template, vernum, queue):
         super(VisumManager, self).__init__()
+        self.vernum = vernum
+        self.path_template = path_template
+        self.queue = queue
 
     def run(self):
         sys.coinit_flags = 0
         pythoncom.CoInitialize()
 
+        for TOD in self.TODs:
+            v = self.CreateVisum(TOD)
+            for netobj, id in self.iterNetObjIDs():
+                self.queue.put(Sponge(**{
+                    "type": database.TBL_NETOBJ,
+                    "data": getattr(v.Net, netobj).GetMultiAttValues(id)
+                }))
+
+    def CreateVisum(self, tod):
+        v = win32com.client.Dispatch("Visum.Visum-64.{vn}".format(**{"vn":self.vernum}))
+        v.LoadVersion(self.path_template.format(**{"tod":tod}))
+        print v, type(v)
+        return v
+
+    @staticmethod
+    def iterNetObjIDs():
+        for netobj, ids in NETOBJ_ID.iteritems():
+            for id in ids:
+                yield netobj, id
+
+class Sponge:
+    def __init__(self, **kwds):
+        for k, v in kwds.iteritems():
+            setattr(self, k, v)
+
 class Utility:
     def __init__(self):
         pass
-
     @staticmethod
     def enumerateCOM(object, bruteforcen = 1000):
         methods, attributes = [], []
@@ -101,13 +129,12 @@ class Utility:
                 else:
                     attributes.append(sig)
         return (methods, attributes)
-
     @classmethod
-    def get_attributes(self):
+    def get_attributes(self, VisumCOM):
         master_attributes = []
-        methods, attributes = self.enumerateCOM(Visum.Net)
+        methods, attributes = self.enumerateCOM(VisumCOM.Net)
         for (att,) in sorted(attributes):
-            COMobj = getattr(Visum.Net, att)
+            COMobj = getattr(VisumCOM.Net, att)
             _methods, _attributes = enumerateCOM(COMobj)
             if ("Attributes",) in _attributes:
                 for COMatt in COMobj.Attributes.GetAll:
