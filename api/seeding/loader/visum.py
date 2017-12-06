@@ -11,7 +11,7 @@ import time
 
 # Generated automanually using Utility.get_attributes below
 # and manually finding identifying fields
-NETOBJ_ID = {
+NETOBJ_IDs = {
     "NotepadLines": ("index",), # OK
     "POICategories": ("no",), # OK
     "ValidDaysCont": ("no",), # OK
@@ -43,7 +43,7 @@ NETOBJ_ID = {
     "Screenlines": ("no",), # OK
 }
 
-_invalid_NETOBJ_ID = {
+_invalid_NETOBJ_IDs = {
     "[User-Defined Attributes]": (), # No Identifiers
     "[Network]": (), # No Identifiers
     "[Fare Model]": (), # No Identifiers
@@ -117,29 +117,37 @@ class VisumManager(threading.Thread):
 
         for TOD in self.TODs:
             v = self.CreateVisum(TOD)
-            
-            for netobj, id in self.iterNetObjIDs():
-                self.queue.put(Sponge(**{
-                    "type": database.TBL_NETOBJ,
-                    "tod": TOD,
-                    "netobj": netobj,
-                    "att": id,
-                    "data": getattr(v.Net, netobj).GetMultiAttValues(id)
-                }))
-                
+            self.GetNetObjects(v)
+            # self.GetAttributes(v)
+            # self.GetMatrices(v)
+            # self.GetGeometries(v)
 
     def CreateVisum(self, tod):
         v = win32com.client.Dispatch("Visum.Visum-64.{vn}".format(**{"vn":self.vernum}))
         v.LoadVersion(self.path_template.format(**{"tod":tod}))
         return v
 
-    def GetNetObjects(self):
-        pass
-    def GetAttributes(self):
-        pass
-    def GetMatrices(self):
+    def GetNetObjects(self, Visum):
+        for netobj, ids in self.iterNetObjGroupIDs():
+            self.queue.put(Sponge(**{
+                "type": database.TBL_NETOBJ,
+                "tod": Visum.Net.AttValue("TOD"),
+                "netobj": netobj,
+                "att": id,
+                "data": map(lambda id:getattr(Visum.Net, netobj).GetMultiAttValues(id), ids)
+            }))
+    def GetAttributes(self, Visum):
+        for netobj, ids in self.iterNetObjIDs():
+            self.queue.put(Sponge(**{
+                "type": database.TBL_NETOBJ,
+                "tod": TOD,
+                "netobj": netobj,
+                "att": id,
+                "data": getattr(Visum.Net, netobj).GetMultiAttValues(id)
+            }))
+    def GetMatrices(self, Visum):
         for mtxno in self.iterMatrices():
-            mtx = self.GetVisumMatrix(v, mtxno)
+            mtx = self.GetVisumMatrix(Visum, mtxno)
             if not mtx.shape in self._index_templates:
                 n,n = mtx.shape
                 y = numpy.vstack((numpy.arange(n) for _ in xrange(n)))
@@ -161,12 +169,19 @@ class VisumManager(threading.Thread):
         return numpy.array(Visum.Net.Matrices.ItemByKey(mtxno).GetValues())
     @staticmethod
     def iterNetObjIDs():
-        for netobj, ids in NETOBJ_ID.iteritems():
+        for netobj, ids in NETOBJ_IDs.iteritems():
             for id in ids:
                 yield netobj, id
     @staticmethod
-    def iterNetObjAttributes():
-        pass
+    def iterNetObjectGroup(dictionary):
+        for netobj, ids in dictionary.iteritems():
+            yield netobj, ids
+    @classmethod
+    def iterNetObjGroupIDs(self):
+        return self.iterNetObjectGroup(NETOBJ_IDs)
+    @classmethod
+    def iterNetObjGroupAttributes(self):
+        return self.iterNetObjectGroup(NETOBJ_ATTRIBUTES)
     @staticmethod
     def iterMatrices():
         pass

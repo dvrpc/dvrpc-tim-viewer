@@ -15,15 +15,19 @@ PSQL_CNX = {
 }
 
 def main():
+    # Initialisation
     Q = Queue.Queue()
     D = loader.database.Database(PSQL_CNX, Q)
     VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, 15, Q)
 
+    # Start Database IO Agent
     D.start()
+    # Start Visum data streamer
     VM.start()
-
     VM.join()
+    # When data has been exported from Visum, flag shutdown
     Q.put(None)
+    # Wait for DB Agent to finish doing its thing
     D.join()
 
 if __name__ == "__main__":

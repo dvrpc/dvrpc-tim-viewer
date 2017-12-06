@@ -34,7 +34,7 @@ class Database(threading.Thread):
     def process(self, con, payload):
         cur = con.cursor()
         print payload.type, payload.tod, payload.netobj, payload.att
-        print '\t', payload.data[0]
+        print '\t', payload.data[0] if len(payload.data) > 0 else None
 
     def LoadMatrixData(self):
         pass
