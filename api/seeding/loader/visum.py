@@ -9,6 +9,8 @@ import database
 
 import time
 
+MODEL_SRID = 26918
+
 # Generated automanually using Utility.get_attributes below
 # and manually finding identifying fields
 # TOD INDEPENDENT
@@ -200,7 +202,13 @@ class Visum(threading.Thread):
         return mtx_listing[numpy.where(mtx_listing[:,2] < MTX_UPPERLIMIT)]
     def GetGeometries(self, Visum):
         for netobj, ids in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
-            payload = zip(*map(lambda id:self.GetVisumAttribute(Visum, netobj, id), ids))
+            payload = zip(*map(
+                lambda id:map(
+                    lambda v:"SRID={srid};".format(**{"srid":MODEL_SRID}) + v
+                    self.GetVisumAttribute(Visum, netobj, id)
+                ),
+                ids
+            ))
             if len(payload) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_GEOMETRY,

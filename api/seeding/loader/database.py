@@ -1,3 +1,5 @@
+import csv
+import StringIO
 import threading
 
 import psycopg2 as psql
@@ -13,7 +15,17 @@ TBL_MATRIX = "mtx"
 # TOD agnostic(?)
 TBL_GEOMETRY = "geom"
 
+TBL_NAMETMPLT_NETOBJ = "net_{netobj}"
+TBL_NAMETMPLT_MTX = "mtx_{mtxno}_{tod}"
+TBL_NAMETMPLT_DATA = "dat_{netobj}_{tod}"
+TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
+
+"CREATE TABLE {tblname} ({fields})"
+"ALTER TABLE {tblname} ADD COLUMN ({fname} {dtype})"
+"INSERT INTO {tblname} VALUES ({nargs})"
+
 class Database(threading.Thread):
+    MTX_DEFAULT_COLUMNS = ["oindex", "dindex", "val"]
     def __init__(self, db_credentials, queue):
         super(Database, self).__init__()
         self.db_credentials = db_credentials
@@ -51,26 +63,29 @@ class Database(threading.Thread):
 
     def LoadMatrix(self, payload, con):
         print payload.tod, payload.mtxno, payload.data.shape
-
-    def LoadGeometries(self, payload, con):
-        print payload.netobj, payload.att
-
-    def InsertMatrixData(self):
-        f = StringIO.StringIO()
-        w = csv.writer(f)
-        w.writerows(mtx_listing[numpy.where(mtx_listing[:,2] < 1e5)])
-        f.seek(0)
+        f = self._bufferMatrix(payload.data)
+        tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
+        cur = con.cursor()
         cur.copy_from(
             f,
             tblname,
-            columns = [
-                "oindex",
-                "dindex",
-                "val"
-            ],
+            columns = self.MTX_DEFAULT_COLUMNS,
             sep = ','
         )
         f.close()
+        con.commit()
+
+    def _bufferMatrix(self, mtx_listing):
+        f = StringIO.StringIO()
+        w = csv.writer(io)
+        w.writerows(mtx_listing)
+        f.seek(0)
+        return f
+
+    def LoadGeometries(self, payload, con):
+        print payload.netobj, payload.att
+        "ST_GeomFromEWKT('{wkt}')".format(**{"wkt": })
+        
 
     @classmethod
     def log(self, message):
