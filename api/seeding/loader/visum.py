@@ -3,6 +3,8 @@ import sys
 import threading
 import win32com.client
 
+import numpy
+
 import database
 
 import time
@@ -74,6 +76,31 @@ _invalid_NETOBJ_ID = {
     "CalendarPeriod": ("no",), # Missing from COM
 }
 
+MTXs = [
+    210, # IMP
+    220, # IVT
+    250, # OVT
+    260, # TOL
+    270, # DIS
+    290, # TTC
+    291, # UDS
+    400, # IPD
+    420, # IVT
+    421, # IVTT(RR)
+    422, # IVTT(Sub)
+    423, # IVTT(Pat)
+    424, # IVTT(LRT)
+    426, # IVTT(BRT)
+    428, # IVTT(Bus)
+    429, # IVTT(Trl)
+    450, # OVT
+    451, # OWTA
+    460, # FAR
+    480, # NTR
+    481, # XIMP
+    490, # JRT
+]
+
 class VisumManager(threading.Thread):
     TODs = ["AM","MD","PM","NT"]
 
@@ -82,6 +109,7 @@ class VisumManager(threading.Thread):
         self.vernum = vernum
         self.path_template = path_template
         self.queue = queue
+        self._index_templates = {}
 
     def run(self):
         sys.coinit_flags = 0
@@ -89,6 +117,7 @@ class VisumManager(threading.Thread):
 
         for TOD in self.TODs:
             v = self.CreateVisum(TOD)
+            
             for netobj, id in self.iterNetObjIDs():
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
@@ -104,11 +133,43 @@ class VisumManager(threading.Thread):
         v.LoadVersion(self.path_template.format(**{"tod":tod}))
         return v
 
+    def GetNetObjects(self):
+        pass
+    def GetAttributes(self):
+        pass
+    def GetMatrices(self):
+        for mtxno in self.iterMatrices():
+            mtx = self.GetVisumMatrix(v, mtxno)
+            if not mtx.shape in self._index_templates:
+                n,n = mtx.shape
+                y = numpy.vstack((numpy.arange(n) for _ in xrange(n)))
+                x = y.T.flatten()
+                y = y.flatten()
+                self._index_templates[mtx.shape] = (x, y)
+            else:
+                x, y = self._index_templates[mtx.shape]
+            z = mtx.flatten()
+            mtx_listing = numpy.array((x,y,z,), dtype = object).T
+    def GetGeometries(self):
+        pass
+
+    @staticmethod
+    def GetVisumAttribute(Visum, netobj, att):
+        return getattr(Visum.Net, netobj).GetMultiAttValues(att)
+    @staticmethod
+    def GetVisumMatrix(Visum, mtxno):
+        return numpy.array(Visum.Net.Matrices.ItemByKey(mtxno).GetValues())
     @staticmethod
     def iterNetObjIDs():
         for netobj, ids in NETOBJ_ID.iteritems():
             for id in ids:
                 yield netobj, id
+    @staticmethod
+    def iterNetObjAttributes():
+        pass
+    @staticmethod
+    def iterMatrices():
+        pass
 
 class Sponge:
     def __init__(self, **kwds):
