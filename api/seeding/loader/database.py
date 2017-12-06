@@ -2,8 +2,11 @@ import threading
 
 import psycopg2 as psql
 
-class Database(threading.Thread):
+TBL_GEOMETRY = "geom"
+TBL_DATA = "net"
+TBL_MATRIX = "mtx"
 
+class Database(threading.Thread):
     def __init__(self, db_credentials, queue):
         super(Database, self).__init__()
         self.db_credentials = db_credentials
@@ -18,7 +21,6 @@ class Database(threading.Thread):
                         break
                 else:
                     self.process(con, payload)
-            
 
     def process(self, con, payload):
         cur = con.cursor()
