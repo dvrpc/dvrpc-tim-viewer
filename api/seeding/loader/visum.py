@@ -199,35 +199,22 @@ class Visum(threading.Thread):
         mtx_listing = numpy.array((x,y,z,), dtype = object).T
         return mtx_listing[numpy.where(mtx_listing[:,2] < MTX_UPPERLIMIT)]
     def GetGeometries(self, Visum):
-        # attributes = Utility.get_attributes(Visum)
-        # wkt_fields = filter(lambda row:"wkt" in row[1].lower(), attributes)
-        # for netobj in set(zip(*wkt_fields)[0]):
-            # ids = zip(*filter(lambda row:row[0] == netobj, attributes))[1]
-            # payload = zip(*map(lambda id:self.GetVisumAttribute(Visum, netobj, id), ids))
-            # if len(payload) > 0:
-                # self.queue.put(Sponge(**{
-                    # "type": database.TBL_GEOMETRY,
-                    # "netobj": netobj,
-                    # "att": code,
-                    # "data": payload
-                # }))
-
-    for netobj, ids in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
-        payload = zip(*map(lambda id:self.GetVisumAttribute(Visum, netobj, id), ids))
-        if len(payload) > 0:
-            self.queue.put(Sponge(**{
-                "type": database.TBL_GEOMETRY,
-                "netobj": netobj,
-                "att": code,
-                "data": payload
-            }))
-
+        for netobj, ids in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
+            payload = zip(*map(lambda id:self.GetVisumAttribute(Visum, netobj, id), ids))
+            if len(payload) > 0:
+                self.queue.put(Sponge(**{
+                    "type": database.TBL_GEOMETRY,
+                    "netobj": netobj,
+                    "att": ids,
+                    "data": payload
+                }))
     def _getGeometryFields(self, Visum):
         netobj_geometry = {}
         attributes = Utility.get_attributes(Visum)
-        wkt_fields = filter(lambda row:"wkt" in row[1].lower(), attributes
+        wkt_fields = filter(lambda row:"wkt" in row[1].lower(), attributes)
         for netobj in set(zip(*wkt_fields)[0]):
-            netobj_geometry[netobj] = zip(*filter(lambda row:row[0] == netobj, attributes))[1]
+            netobj_geometry[netobj] = zip(*filter(lambda row:row[0] == netobj, wkt_fields))[1]
+        print netobj_geometry
         return netobj_geometry
 
     @staticmethod
