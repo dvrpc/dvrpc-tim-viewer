@@ -31,15 +31,22 @@ class Database(threading.Thread):
                     self.process(con, payload)
                 else:
                     self.log("Missing payload type")
-                time.sleep(0.1)
+                time.sleep(0.2)
 
     def process(self, con, payload):
         cur = con.cursor()
         print payload.type, payload.tod, payload.netobj, payload.atts
         print '\t', payload.data[0] if len(payload.data) > 0 else None
 
+    def LoadAttributes(self):
+        pass
+
     def LoadMatrixData(self):
         pass
+
+    def LoadGeometries(self):
+        pass
+
     def InsertMatrixData(self):
         f = StringIO.StringIO()
         w = csv.writer(f)
@@ -60,3 +67,10 @@ class Database(threading.Thread):
     @classmethod
     def log(self, message):
         print "Database:", message
+
+class Utility:
+    def __init__(self):
+        pass
+    @staticmethod
+    def guessDType(field):
+        pass

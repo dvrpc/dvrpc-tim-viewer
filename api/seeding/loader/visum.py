@@ -101,30 +101,47 @@ MTXs = [
     490, # JRT
 ]
 
+# I knew I wanted a thread manager
 class VisumManager(threading.Thread):
     TODs = ["AM","MD","PM","NT"]
-
     def __init__(self, path_template, vernum, queue):
         super(VisumManager, self).__init__()
-        self.vernum = vernum
         self.path_template = path_template
+        self.vernum = vernum
+        self.queue = queue
+    def run(self):
+        for TOD in self.TODs:
+            print "TOD",
+            v = Visum(self.path_template.format(**{"tod":TOD}), self.vernum, self.queue)
+            print "start",
+            v.start()
+            v.join()
+            print "done"
+
+class Visum(threading.Thread):
+    def __init__(self, path, vernum, queue):
+        super(Visum, self).__init__()
+        self.path = path
+        self.vernum = vernum
         self.queue = queue
         self._index_templates = {}
+        self.tod = None
 
     def run(self):
         sys.coinit_flags = 0
         pythoncom.CoInitialize()
+        v = self.CreateVisum()
+        self.tod = v.Net.AttValue("TOD")
 
-        for TOD in self.TODs:
-            v = self.CreateVisum(TOD)
-            self.GetNetObjects(v)
-            # self.GetAttributes(v)
-            # self.GetMatrices(v)
-            # self.GetGeometries(v)
+        self.GetNetObjects(v)
+        # self.GetAttributes(v)
+        # self.GetMatrices(v)
+        # self.GetGeometries(v)
+        pythoncom.CoUninitialize()
 
-    def CreateVisum(self, tod):
+    def CreateVisum(self):
         v = win32com.client.Dispatch("Visum.Visum-64.{vn}".format(**{"vn":self.vernum}))
-        v.LoadVersion(self.path_template.format(**{"tod":tod}))
+        v.LoadVersion(self.path)
         return v
 
     def GetNetObjects(self, Visum):
@@ -133,7 +150,7 @@ class VisumManager(threading.Thread):
             if len(payload) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
-                    "tod": Visum.Net.AttValue("TOD"),
+                    "tod": self.tod,
                     "netobj": netobj,
                     "atts": ids,
                     "data": payload
@@ -141,8 +158,8 @@ class VisumManager(threading.Thread):
     def GetAttributes(self, Visum):
         for netobj, ids in self.iterNetObjIDs():
             self.queue.put(Sponge(**{
-                "type": database.TBL_NETOBJ,
-                "tod": TOD,
+                "type": database.TBL_DATA,
+                "tod": self.tod,
                 "netobj": netobj,
                 "atts": ids,
                 "data": getattr(Visum.Net, netobj).GetMultiAttValues(id)
