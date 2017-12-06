@@ -92,13 +92,16 @@ class VisumManager(threading.Thread):
             for netobj, id in self.iterNetObjIDs():
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
+                    "tod": TOD,
+                    "netobj": netobj,
+                    "att": id,
                     "data": getattr(v.Net, netobj).GetMultiAttValues(id)
                 }))
+                
 
     def CreateVisum(self, tod):
         v = win32com.client.Dispatch("Visum.Visum-64.{vn}".format(**{"vn":self.vernum}))
         v.LoadVersion(self.path_template.format(**{"tod":tod}))
-        print v, type(v)
         return v
 
     @staticmethod
@@ -111,6 +114,8 @@ class Sponge:
     def __init__(self, **kwds):
         for k, v in kwds.iteritems():
             setattr(self, k, v)
+    def __contains__(self, key):
+        return hasattr(self, key)
 
 class Utility:
     def __init__(self):
