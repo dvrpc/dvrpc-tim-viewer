@@ -129,20 +129,22 @@ class VisumManager(threading.Thread):
 
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
-            self.queue.put(Sponge(**{
-                "type": database.TBL_NETOBJ,
-                "tod": Visum.Net.AttValue("TOD"),
-                "netobj": netobj,
-                "att": id,
-                "data": map(lambda id:getattr(Visum.Net, netobj).GetMultiAttValues(id), ids)
-            }))
+            payload = zip(*map(lambda id:self.GetVisumAttribute(Visum, netobj, id), ids))
+            if len(payload) > 0:
+                self.queue.put(Sponge(**{
+                    "type": database.TBL_NETOBJ,
+                    "tod": Visum.Net.AttValue("TOD"),
+                    "netobj": netobj,
+                    "atts": ids,
+                    "data": payload
+                }))
     def GetAttributes(self, Visum):
         for netobj, ids in self.iterNetObjIDs():
             self.queue.put(Sponge(**{
                 "type": database.TBL_NETOBJ,
                 "tod": TOD,
                 "netobj": netobj,
-                "att": id,
+                "atts": ids,
                 "data": getattr(Visum.Net, netobj).GetMultiAttValues(id)
             }))
     def GetMatrices(self, Visum):
@@ -163,7 +165,7 @@ class VisumManager(threading.Thread):
 
     @staticmethod
     def GetVisumAttribute(Visum, netobj, att):
-        return getattr(Visum.Net, netobj).GetMultiAttValues(att)
+        return map(lambda (i,v):v, getattr(Visum.Net, netobj).GetMultiAttValues(att))
     @staticmethod
     def GetVisumMatrix(Visum, mtxno):
         return numpy.array(Visum.Net.Matrices.ItemByKey(mtxno).GetValues())

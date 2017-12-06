@@ -4,9 +4,13 @@ import psycopg2 as psql
 
 import time
 
+# TOD agnostic
 TBL_NETOBJ = "net"
+# TOD dependent
 TBL_DATA = "dat"
+# TOD dependent
 TBL_MATRIX = "mtx"
+# TOD agnostic(?)
 TBL_GEOMETRY = "geom"
 
 class Database(threading.Thread):
@@ -23,17 +27,15 @@ class Database(threading.Thread):
                 if payload is None:
                     con.commit()
                     break
-
                 if "type" in payload:
                     self.process(con, payload)
                 else:
                     self.log("Missing payload type")
-
                 time.sleep(0.1)
 
     def process(self, con, payload):
         cur = con.cursor()
-        print payload.type, payload.tod, payload.netobj, payload.att
+        print payload.type, payload.tod, payload.netobj, payload.atts
         print '\t', payload.data[0] if len(payload.data) > 0 else None
 
     def LoadMatrixData(self):
