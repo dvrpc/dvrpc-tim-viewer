@@ -22,7 +22,6 @@ class Database(threading.Thread):
     def run(self):
         with psql.connect(**self.db_credentials) as con:
             while True:
-                print self.queue.qsize(), 
                 payload = self.queue.get()
                 if payload is None:
                     con.commit()
@@ -31,21 +30,30 @@ class Database(threading.Thread):
                     self.process(con, payload)
                 else:
                     self.log("Missing payload type")
-                time.sleep(0.2)
 
     def process(self, con, payload):
-        cur = con.cursor()
-        print payload.type, payload.tod, payload.netobj, payload.atts
-        print '\t', payload.data[0] if len(payload.data) > 0 else None
+        # Oh switch statement, where art thou?
+        if   payload.type == TBL_NETOBJ:
+            self.LoadAttributes(payload, con, True)
+        elif payload.type == TBL_DATA:
+            self.LoadAttributes(payload, con)
+        elif payload.type == TBL_MATRIX:
+            self.LoadMatrix(payload, con)
+        elif payload.type == TBL_GEOMETRY:
+            self.LoadGeometries(payload, con)
+        else:
+            print "Whoopsie"
 
-    def LoadAttributes(self):
-        pass
+    def LoadAttributes(self, payload, con, noTOD = False):
+        if not noTOD:
+            print payload.tod,
+        print payload.netobj, payload.atts
 
-    def LoadMatrixData(self):
-        pass
+    def LoadMatrix(self, payload, con):
+        print payload.tod, payload.mtxno, payload.data.shape
 
-    def LoadGeometries(self):
-        pass
+    def LoadGeometries(self, payload, con):
+        print payload.netobj, payload.att
 
     def InsertMatrixData(self):
         f = StringIO.StringIO()

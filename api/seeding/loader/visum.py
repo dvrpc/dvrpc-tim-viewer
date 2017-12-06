@@ -11,6 +11,7 @@ import time
 
 # Generated automanually using Utility.get_attributes below
 # and manually finding identifying fields
+# TOD INDEPENDENT
 NETOBJ_IDs = {
     "NotepadLines": ("index",), # OK
     "POICategories": ("no",), # OK
@@ -43,6 +44,12 @@ NETOBJ_IDs = {
     "Screenlines": ("no",), # OK
 }
 
+# TOD DEPENDENT
+NETOBJ_ATTRIBUTES = {
+    "Links": ("V0PrT",)
+}
+
+# graveyard
 _invalid_NETOBJ_IDs = {
     "[User-Defined Attributes]": (), # No Identifiers
     "[Network]": (), # No Identifiers
@@ -76,6 +83,7 @@ _invalid_NETOBJ_IDs = {
     "CalendarPeriod": ("no",), # Missing from COM
 }
 
+# TOD DEPENDENT
 MTXs = [
     210, # IMP
     220, # IVT
@@ -101,6 +109,8 @@ MTXs = [
     490, # JRT
 ]
 
+MTX_UPPERLIMIT = 1e5
+
 # I knew I wanted a thread manager
 class VisumManager(threading.Thread):
     TODs = ["AM","MD","PM","NT"]
@@ -109,14 +119,15 @@ class VisumManager(threading.Thread):
         self.path_template = path_template
         self.vernum = vernum
         self.queue = queue
+        self._threads = []
     def run(self):
         for TOD in self.TODs:
-            print "TOD",
+            print TOD,
             v = Visum(self.path_template.format(**{"tod":TOD}), self.vernum, self.queue)
-            print "start",
             v.start()
-            v.join()
-            print "done"
+            self._threads.append(v)
+        for t in self._threads:
+            t.join()
 
 class Visum(threading.Thread):
     def __init__(self, path, vernum, queue):
@@ -134,9 +145,9 @@ class Visum(threading.Thread):
         self.tod = v.Net.AttValue("TOD")
 
         self.GetNetObjects(v)
-        # self.GetAttributes(v)
-        # self.GetMatrices(v)
-        # self.GetGeometries(v)
+        self.GetAttributes(v)
+        self.GetMatrices(v)
+        self.GetGeometries(v)
         pythoncom.CoUninitialize()
 
     def CreateVisum(self):
@@ -150,35 +161,74 @@ class Visum(threading.Thread):
             if len(payload) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
-                    "tod": self.tod,
                     "netobj": netobj,
                     "atts": ids,
                     "data": payload
                 }))
     def GetAttributes(self, Visum):
-        for netobj, ids in self.iterNetObjIDs():
-            self.queue.put(Sponge(**{
-                "type": database.TBL_DATA,
-                "tod": self.tod,
-                "netobj": netobj,
-                "atts": ids,
-                "data": getattr(Visum.Net, netobj).GetMultiAttValues(id)
-            }))
+        for netobj, ids in self.iterNetObjGroupAttributes():
+            payload = zip(*map(lambda id:self.GetVisumAttribute(Visum, netobj, id), ids))
+            if len(payload) > 0:
+                self.queue.put(Sponge(**{
+                    "type": database.TBL_DATA,
+                    "tod": self.tod,
+                    "netobj": netobj,
+                    "atts": ids,
+                    "data": payload
+                }))
     def GetMatrices(self, Visum):
         for mtxno in self.iterMatrices():
-            mtx = self.GetVisumMatrix(Visum, mtxno)
-            if not mtx.shape in self._index_templates:
-                n,n = mtx.shape
-                y = numpy.vstack((numpy.arange(n) for _ in xrange(n)))
-                x = y.T.flatten()
-                y = y.flatten()
-                self._index_templates[mtx.shape] = (x, y)
-            else:
-                x, y = self._index_templates[mtx.shape]
-            z = mtx.flatten()
-            mtx_listing = numpy.array((x,y,z,), dtype = object).T
-    def GetGeometries(self):
-        pass
+            mtx_listing = self._getMatrix(Visum, mtxno)
+            self.queue.put(Sponge(**{
+                "type": database.TBL_MATRIX,
+                "tod": self.tod,
+                "mtxno": mtxno,
+                "data": mtx_listing
+            }))
+    def _getMatrix(self, Visum, mtxno):
+        mtx = self.GetVisumMatrix(Visum, mtxno)
+        if not mtx.shape in self._index_templates:
+            n,n = mtx.shape
+            y = numpy.vstack((numpy.arange(n) for _ in xrange(n)))
+            x = y.T.flatten()
+            y = y.flatten()
+            self._index_templates[mtx.shape] = (x, y)
+        else:
+            x, y = self._index_templates[mtx.shape]
+        z = mtx.flatten()
+        mtx_listing = numpy.array((x,y,z,), dtype = object).T
+        return mtx_listing[numpy.where(mtx_listing[:,2] < MTX_UPPERLIMIT)]
+    def GetGeometries(self, Visum):
+        # attributes = Utility.get_attributes(Visum)
+        # wkt_fields = filter(lambda row:"wkt" in row[1].lower(), attributes)
+        # for netobj in set(zip(*wkt_fields)[0]):
+            # ids = zip(*filter(lambda row:row[0] == netobj, attributes))[1]
+            # payload = zip(*map(lambda id:self.GetVisumAttribute(Visum, netobj, id), ids))
+            # if len(payload) > 0:
+                # self.queue.put(Sponge(**{
+                    # "type": database.TBL_GEOMETRY,
+                    # "netobj": netobj,
+                    # "att": code,
+                    # "data": payload
+                # }))
+
+    for netobj, ids in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
+        payload = zip(*map(lambda id:self.GetVisumAttribute(Visum, netobj, id), ids))
+        if len(payload) > 0:
+            self.queue.put(Sponge(**{
+                "type": database.TBL_GEOMETRY,
+                "netobj": netobj,
+                "att": code,
+                "data": payload
+            }))
+
+    def _getGeometryFields(self, Visum):
+        netobj_geometry = {}
+        attributes = Utility.get_attributes(Visum)
+        wkt_fields = filter(lambda row:"wkt" in row[1].lower(), attributes
+        for netobj in set(zip(*wkt_fields)[0]):
+            netobj_geometry[netobj] = zip(*filter(lambda row:row[0] == netobj, attributes))[1]
+        return netobj_geometry
 
     @staticmethod
     def GetVisumAttribute(Visum, netobj, att):
@@ -203,7 +253,8 @@ class Visum(threading.Thread):
         return self.iterNetObjectGroup(NETOBJ_ATTRIBUTES)
     @staticmethod
     def iterMatrices():
-        pass
+        for mtxno in MTXs:
+            yield mtxno
 
 class Sponge:
     def __init__(self, **kwds):
@@ -235,7 +286,8 @@ class Utility:
         methods, attributes = self.enumerateCOM(VisumCOM.Net)
         for (att,) in sorted(attributes):
             COMobj = getattr(VisumCOM.Net, att)
-            _methods, _attributes = enumerateCOM(COMobj)
+            _methods, _attributes = self.enumerateCOM(COMobj)
             if ("Attributes",) in _attributes:
                 for COMatt in COMobj.Attributes.GetAll:
                     master_attributes.append((att, COMatt.Code, COMatt.ValueType, COMatt.Source))
+        return master_attributes
