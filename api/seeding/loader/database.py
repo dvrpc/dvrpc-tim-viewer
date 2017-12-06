@@ -83,9 +83,15 @@ class Database(threading.Thread):
         return f
 
     def LoadGeometries(self, payload, con):
-        print payload.netobj, payload.att
-        "ST_GeomFromEWKT('{wkt}')".format(**{"wkt": })
-        
+        # Create temporary table for model SRID
+        # Reproject the data into a permanent table via internal Postgis
+        # Could also use pyproj or something or even reprojecting within Visum itself
+
+        print payload.netobj, payload.atts
+        for gfield in payload.atts:
+            # Begin transaction, temp table, oh god the train is approaching my stop
+            "ST_GeomFromEWKT('{wkt}')".format(**{"wkt": ewkt})
+
 
     @classmethod
     def log(self, message):

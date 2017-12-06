@@ -201,19 +201,23 @@ class Visum(threading.Thread):
         mtx_listing = numpy.array((x,y,z,), dtype = object).T
         return mtx_listing[numpy.where(mtx_listing[:,2] < MTX_UPPERLIMIT)]
     def GetGeometries(self, Visum):
-        for netobj, ids in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
+        # Need to include the related network object identifiers
+        for netobj, geomfields in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
+            if not netobj in NETOBJ_IDs:
+                print "Warning, {0} not included in NETOBJ_IDs".format(netobj)
             payload = zip(*map(
-                lambda id:map(
+                lambda gfield:map(
                     lambda v:"SRID={srid};".format(**{"srid":MODEL_SRID}) + v
-                    self.GetVisumAttribute(Visum, netobj, id)
+                    self.GetVisumAttribute(Visum, netobj, gfield)
                 ),
-                ids
+                geomfields
             ))
             if len(payload) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_GEOMETRY,
                     "netobj": netobj,
-                    "att": ids,
+                    "ids": None,
+                    "atts": geomfields,
                     "data": payload
                 }))
     def _getGeometryFields(self, Visum):
