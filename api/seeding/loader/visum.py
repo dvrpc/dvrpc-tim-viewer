@@ -11,82 +11,9 @@ import time
 
 MODEL_SRID = 26918
 
-# Generated automanually using Utility.get_attributes below
-# and manually finding identifying fields
-# TOD INDEPENDENT
-NETOBJ_IDs = {
-    "NotepadLines": ("index",), # OK
-    "POICategories": ("no",), # OK
-    "ValidDaysCont": ("no",), # OK
-    "TSystems": ("code",), # OK
-    "Modes": ("code",), # OK
-    "DemandSegments": ("code",), # OK
-    "Directions": ("no",), # OK
-    "Nodes": ("no",), # OK
-    "MainZones": ("no",), # OK
-    "Zones": ("no",), # OK
-    "LinkTypes": ("no",), # OK
-    "Links": ("no","fromnodeno", "tonodeno"), # OK
-    "Turns": ("fromnodeno", "tonodeno", "vianodeno"), # OK
-    "Connectors": ("zoneno", "nodeno", "direction"), # OK
-    "Operators": ("no",), # OK
-    "Territories": ("no",), # OK
-    "Stops": ("no",), # OK
-    "StopAreas": ("no",), # OK
-    "StopPoints": ("no",), # OK
-    "MainLines": ("name",), # OK
-    "Lines": ("name",), # OK
-    "LineRoutes": ("linename", "name", "directioncode"), # OK
-    "LineRouteItems": ("linename", "lineroutename", "directioncode", "index"), # OK
-    "TimeProfiles": ("linename", "lineroutename", "directioncode", "name"), # OK
-    "TimeProfileItems": ("linename", "lineroutename", "directioncode", "index"), # OK
-    "VehicleJourneys": ("name",), # OK
-    "VehJourneySections": ("vehjourneyno", "no"), # OK
-    "CountLocations": ("no",), # OK
-    "Screenlines": ("no",), # OK
-}
-
-Detectors
-MainNodes
-TollSystems
-
 # TOD DEPENDENT
 NETOBJ_ATTRIBUTES = {
     "Links": ("V0PrT",)
-}
-
-# graveyard
-_invalid_NETOBJ_IDs = {
-    "[User-Defined Attributes]": (), # No Identifiers
-    "[Network]": (), # No Identifiers
-    "[Fare Model]": (), # No Identifiers
-    "[Fare Systems]": ("no",),
-    "[Transfer Fares]": ("fromfsysno", "tofsysno"),
-    "[Points]": ("id",),
-    "[Edges]": ("id",),
-    "[Intermediate Points]": ("edgeid", "index"),
-    "[Faces]": ("id",),
-    "[Face Items]": ("faceid", "index"),
-    "[Surfaces]": ("id",),
-    "[Surface Items]": ("surfaceid", "faceid"),
-    "[Link Polygons]": ("fromnodeno", "tonodeno", "index"),
-    "[Chained up vehicle journey sections]": ("vehjourneyno", "vehjourneysectionno", "calendarday"),
-    "[Transfer Walk times between stop areas]": ("fromstopareano", "tostopareano", "tsyscode"),
-    "[Fare Zones]": ("tickettypeno", "tsyscode"),
-    "[Stop to fare zones]": ("farezoneno", "stopno"),
-    "[Ticket types]": ("no",),
-    "[Fare Supplements]": ("tickettypeno", "tsyscode"),
-    "[Zone count fare items]": ("tickettypeno", "numfarezones"),
-    "[From-to-Zone fare items]": ("tickettypeno", "fromfarezoneno", "tofarezoneno"),
-    "[Fare system ticket types by Dseg]": ("tickettypeno", "dsegcode", "fsysno"),
-    "[Block Versions]": ("id",),
-    "[Points of Interest]": ("catno", "no"),
-    "[POI to links]": ("poicatno", "poino", "fromnodeno", "tonodeno"),
-    "[Screenline polygons]": ("screenlineno", "index"),
-    "[Lanes]": ("nodeno", "mainnodeno", "linkno", "no", "approachtype"),
-    "[Lane turns]": ("nodeno", "mainnodeno", "fromlinkno", "fromlaneno", "tolinkno", "tolaneno"),
-    "Legs": ("nodeno", "mainnodeno", "orientation"), # Missing from COM
-    "CalendarPeriod": ("no",), # Missing from COM
 }
 
 # TOD DEPENDENT
@@ -116,6 +43,92 @@ MTXs = [
 ]
 
 MTX_UPPERLIMIT = 1e5
+
+# Generated automanually using Utility.GetUsableAttributes below
+# and manually finding/translating identifying fields
+# TOD INDEPENDENT
+NETOBJ_IDs = {
+    u'BlockItemTypes': [(u'NO', 'INTEGER')],
+    u'BlockItems': [(u'BLOCKID', 'INTEGER'),
+                    (u'BLOCKINGDAY', 'INTEGER'),
+                    (u'STARTDAYINDEX', 'INTEGER'),
+                    (u'STARTTIME', 'TEXT'),
+                    (u'VEHJOURNEYNO', 'INTEGER'),
+                    (u'VEHJOURNEYSECTIONNO', 'INTEGER')],
+    u'BlockVersions': [(u'ID', 'INTEGER')],
+    u'Blocks': [(u'ID', 'INTEGER')],
+    u'Connectors': [(u'ZONENO', 'INTEGER'),
+                    (u'NODENO', 'INTEGER'),
+                    (u'DIRECTION', 'TEXT')],
+    u'CountLocations': [(u'NO', 'INTEGER')],
+    u'Crosswalks': [(u'NODENO', 'INTEGER'),
+                    (u'MAINNODENO', 'INTEGER'),
+                    (u'ORIENTATION', 'TEXT'),
+                    (u'INDEX', 'INTEGER'),
+                    (u'DIRECTION', 'INTEGER')],
+    u'DemandSegments': [(u'CODE', 'TEXT')],
+    u'Detectors': [(u'NO', 'INTEGER')],
+    u'Directions': [(u'NO', 'INTEGER')],
+    u'GeometryTemplates': [(u'NO', 'INTEGER')],
+    u'LegTemplates': [(u'NO', 'INTEGER')],
+    u'LineRouteItems': [(u'LINENAME', 'TEXT'),
+                        (u'LINEROUTENAME', 'TEXT'),
+                        (u'DIRECTIONCODE', 'TEXT'),
+                        (u'INDEX', 'INTEGER')],
+    u'LineRoutes': [(u'LINENAME', 'TEXT'),
+                    (u'NAME', 'TEXT'),
+                    (u'DIRECTIONCODE', 'TEXT')],
+    u'Lines': [(u'NAME', 'TEXT')],
+    u'LinkTypes': [(u'NO', 'INTEGER')],
+    u'Links': [(u'NO', 'INTEGER'),
+               (u'FROMNODENO', 'INTEGER'),
+               (u'TONODENO', 'INTEGER')],
+    u'MainLines': [(u'NAME', 'TEXT')],
+    u'MainNodes': [(u'NO', 'INTEGER')],
+    u'MainTurns': [(u'FROMNODENO', 'INTEGER'),
+                   (u'FROMCORDONNODENO', 'INTEGER'),
+                   (u'TOCORDONNODENO', 'INTEGER'),
+                   (u'TONODENO', 'INTEGER')],
+    u'MainZones': [(u'NO', 'INTEGER')],
+    u'Modes': [(u'CODE', 'TEXT')],
+    u'Nodes': [(u'NO', 'INTEGER')],
+    u'Operators': [(u'NO', 'INTEGER')],
+    u'PathSets': [(u'NO', 'INTEGER')],
+    u'Paths': [(u'SETNO', 'INTEGER'), (u'NO', 'INTEGER')],
+    u'PropagationLinkInfos': [(u'FROMNODENO', 'INTEGER'),
+                              (u'TONODENO', 'INTEGER'),
+                              (u'DESTZONENO', 'INTEGER')],
+    u'Screenlines': [(u'NO', 'INTEGER')],
+    u'SignalControls': [(u'NO', 'INTEGER')],
+    u'SignalGroups': [(u'SCNO', 'INTEGER'), (u'NO', 'INTEGER')],
+    u'Stages': [(u'SCNO', 'INTEGER'), (u'NO', 'INTEGER')],
+    u'StopAreas': [(u'NO', 'INTEGER')],
+    u'StopPoints': [(u'NO', 'INTEGER')],
+    u'Stops': [(u'NO', 'INTEGER')],
+    u'TSystems': [(u'CODE', 'TEXT')],
+    u'Territories': [(u'NO', 'INTEGER')],
+    u'TicketTypes': [(u'NO', 'INTEGER')],
+    u'TimeProfileItems': [(u'LINENAME', 'TEXT'),
+                          (u'LINEROUTENAME', 'TEXT'),
+                          (u'DIRECTIONCODE', 'TEXT'),
+                          (u'TIMEPROFILENAME', 'TEXT'),
+                          (u'INDEX', 'INTEGER')],
+    u'TimeProfiles': [(u'LINENAME', 'TEXT'),
+                      (u'LINEROUTENAME', 'TEXT'),
+                      (u'DIRECTIONCODE', 'TEXT'),
+                      (u'NAME', 'TEXT')],
+    u'TollSystems': [(u'NO', 'INTEGER')],
+    u'Turns': [(u'FROMNODENO', 'INTEGER'),
+               (u'VIANODENO', 'INTEGER'),
+               (u'TONODENO', 'INTEGER')],
+    u'ValidDaysCont': [(u'NO', 'INTEGER')],
+    u'VehJourneySections': [(u'VEHJOURNEYNO', 'INTEGER'), (u'NO', 'INTEGER')],
+    u'VehicleCombinations': [(u'NO', 'INTEGER')],
+    u'VehicleJourneyItems': [(u'VEHJOURNEYNO', 'INTEGER'), (u'INDEX', 'INTEGER')],
+    u'VehicleJourneys': [(u'NO', 'INTEGER')],
+    u'VehicleUnits': [(u'NO', 'INTEGER')],
+    u'Zones': [(u'NO', 'INTEGER')]
+}
 
 # I knew I wanted a thread manager
 class VisumManager(threading.Thread):
@@ -269,14 +282,14 @@ class Utility:
     os = __import__("os")
     # Due to various inconsistencies, manual review is required
     ATTRIBUTE_PATCH = {
-        "poicategory": "POICategories",
-        "territory": "Territories",
-        "tsys": "TSystems",
-        "validdays": "ValidDaysCont", # (?)
-        "vehcomb": "VehicleCombinations",
-        "vehjourney": "VehicleJourneys",
-        "vehjourneyitem": "VehicleJourneyItems",
-        "vehunit": "VehicleUnits",
+        u"poicategory": u"POICategories",
+        u"territory": u"Territories",
+        u"tsys": u"TSystems",
+        u"validdays": u"ValidDaysCont", # (?)
+        u"vehcomb": u"VehicleCombinations",
+        u"vehjourney": u"VehicleJourneys",
+        u"vehjourneyitem": u"VehicleJourneyItems",
+        u"vehunit": u"VehicleUnits",
     }
     def __init__(self):
         pass
@@ -325,18 +338,26 @@ class Utility:
         accdb = Access(path_temp)
         COM_atts = self.GetCOMAttributes(Visum)
         COM_netobj = dict((netobj.lower(), netobj) for netobj in set(zip(*COM_atts)[0]))
-        for netobj, field, dtype in accdb.iterAllTableFields():
+
+        netobj_ids = {}
+        for netobj, field, dtype in accdb.iterAllTableFields(notNullable = 1):
             netobj = netobj.lower()
+            _netobj = None
             if netobj in COM_netobj:
-                print "OK", netobj
+                _netobj = COM_netobj[netobj]
             elif (netobj + 's') in COM_netobj:
-                print "OK (Plural)", netobj
+                _netobj = COM_netobj[netobj + 's']
             elif netobj in self.ATTRIBUTE_PATCH:
-                print "OK (Patched)", netobj
+                _netobj = self.ATTRIBUTE_PATCH[netobj]
             else:
-                print "ERROR", netobj
+                continue
+            if not _netobj in netobj_ids:
+                netobj_ids[_netobj] = []
+            netobj_ids[_netobj].append((field, accdb.ACCESS_POSTGRES_DTYPES[dtype]))
+
         accdb.close()
         os.remove(path_temp)
+        return netobj_ids
 
 class Access:
     pypyodbc = __import__("pypyodbc")
