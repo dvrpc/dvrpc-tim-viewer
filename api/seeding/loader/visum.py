@@ -296,10 +296,31 @@ class Utility:
 class VisumUtility:
     def __init__(self):
         pass
+    @staticmethod
+    def GetFullAccessDB(Visum, path_accdb):
+        Visum.SaveAccessDatabase(
+            DatabasePath = path_accdb,
+            LayoutFile = "",
+            editableOnly = False, # Default: True
+            nonDefaultOnly = True, # Default: False
+            activeNetElemsOnly = False,
+            nonEmptyTablesOnly = False
+        )
+    @classmethod
+    def GetUsableAttributes(self, Visum):
+        pass
 
 class Access:
     pypyodbc = __import__("pypyodbc")
     sqlite3 = __import__("sqlite3")
+    ACCESS_SYS_TABLES = [
+        "msysaccessstorage",
+        "msysaccessxml",
+        "msysnavpanegroupcategories",
+        "msysnavpanegroups",
+        "msysnavpanegrouptoobjects",
+        "msysresources"
+    ]
     SQL_CREATE_TBL_FIELDS = """
     CREATE TABLE fields (
         table_cat text,
@@ -323,15 +344,45 @@ class Access:
         ordinal_position_redux integer
     );
     """
+    SQL_CREATE_TBL_BLACKLIST = """
+    CREATE TABLE blacklist (
+        table_name text not null
+    );
+    """
     SQL_INSERT_TBL_FIELDS = """
     INSERT INTO fields VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
     """
+    SQL_INSERT_TBL_BLACKLIST = """
+    INSERT INTO blacklist VALUES (?);
+    """
     SQL_SELECT_TBL_FIELDS_TABLENAMES = """
-    SELECT DISTINCT(table_name) table_name FROM fields ORDER BY table_name;
+    SELECT DISTINCT(table_name) table_name
+    FROM fields
+    WHERE LOWER(table_name) NOT IN (SELECT * FROM blacklist)
+    ORDER BY table_name;
     """
     SQL_SELECT_TBL_FIELDS_COLUMNSxTABLENAMES = """
-    SELECT table_name, column_name, type_name FROM fields WHERE table_name = ? AND nullable <> ?;
+    SELECT table_name, column_name, type_name
+    FROM fields WHERE table_name = ? AND nullable <> ?;
     """
+    ACCESS_SQLITE_DTYPES = {
+        "COUNTER": "INTEGER", # Unsure
+        "DATETIME": "TEXT", # Unsure
+        "DOUBLE": "REAL",
+        "INTEGER": "INTEGER",
+        "LONGBINARY": "BLOB",
+        "LONGCHAR": "TEXT",
+        "VARCHAR": "TEXT"
+    }
+    ACCESS_POSTGRES_DTYPES = {
+        "COUNTER": "INTEGER", # Unsure
+        "DATETIME": "TEXT", # Unsure
+        "DOUBLE": "DOUBLE PRECISION",
+        "INTEGER": "INTEGER",
+        "LONGBINARY": "BLOB",
+        "LONGCHAR": "TEXT",
+        "VARCHAR": "TEXT"
+    }
     def __init__(self, path_accdb, path_sqlite = ":memory:"):
         self.path_accdb = path_accdb
         self.path_sqlite = path_sqlite
@@ -342,6 +393,8 @@ class Access:
         cur = self.con_sqlite.cursor()
         cur.execute(self.SQL_CREATE_TBL_FIELDS)
         cur.executemany(self.SQL_INSERT_TBL_FIELDS, list(self.con_accdb.cursor().columns()))
+        cur.execute(self.SQL_CREATE_TBL_BLACKLIST)
+        cur.executemany(self.SQL_INSERT_TBL_BLACKLIST, map(lambda v:(v,), self.ACCESS_SYS_TABLES))
         self.con_sqlite.commit()
     def close(self):
         self.con_accdb.close()
