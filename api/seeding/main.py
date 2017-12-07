@@ -7,7 +7,7 @@ import loader.visum
 MODEL_PATH_TEMPLATE = r"D:\William\Documents\_DVRPC_Mini14\DV_38_125_pruned_toynetwork_{tod}.ver"
 
 PSQL_CNX = {
-    "host": "toad",
+    "host": "localhost",
     "port": 5432,
     "database": "postgres",
     "user": "postgres",

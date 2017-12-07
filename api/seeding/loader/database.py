@@ -24,6 +24,10 @@ TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 "ALTER TABLE {tblname} ADD COLUMN ({fname} {dtype})"
 "INSERT INTO {tblname} VALUES ({nargs})"
 
+SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex smallint, val double precision);"
+SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (oindex ASC NULLS LAST);"
+SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dindex ASC NULLS LAST);"
+
 class Database(threading.Thread):
     MTX_DEFAULT_COLUMNS = ["oindex", "dindex", "val"]
     def __init__(self, db_credentials, queue):
@@ -62,10 +66,10 @@ class Database(threading.Thread):
         print payload.netobj, payload.atts
 
     def LoadMatrix(self, payload, con):
-        print payload.tod, payload.mtxno, payload.data.shape
         f = self._bufferMatrix(payload.data)
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
         cur = con.cursor()
+        cur.execute(SQL_CREATE_TBL_MTX.format(tblname))
         cur.copy_from(
             f,
             tblname,
@@ -73,11 +77,13 @@ class Database(threading.Thread):
             sep = ','
         )
         f.close()
+        cur.execute(SQL_CREATE_IDX_MTX_O.format(tblname))
+        cur.execute(SQL_CREATE_IDX_MTX_D.format(tblname))
         con.commit()
 
     def _bufferMatrix(self, mtx_listing):
         f = StringIO.StringIO()
-        w = csv.writer(io)
+        w = csv.writer(f)
         w.writerows(mtx_listing)
         f.seek(0)
         return f
@@ -87,11 +93,11 @@ class Database(threading.Thread):
         # Reproject the data into a permanent table via internal Postgis
         # Could also use pyproj or something or even reprojecting within Visum itself
 
-        print payload.netobj, payload.atts
-        for gfield in payload.atts:
+        print payload.netobj, payload.atts,
+        for i, id in enumerate(payload.ids):
             # Begin transaction, temp table, oh god the train is approaching my stop
-            "ST_GeomFromEWKT('{wkt}')".format(**{"wkt": ewkt})
-
+            print id, payload.data[i]
+            # "ST_GeomFromEWKT('{wkt}')".format(**{"wkt": ewkt})
 
     @classmethod
     def log(self, message):

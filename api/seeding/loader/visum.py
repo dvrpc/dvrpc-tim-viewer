@@ -46,6 +46,10 @@ NETOBJ_IDs = {
     "Screenlines": ("no",), # OK
 }
 
+Detectors
+MainNodes
+TollSystems
+
 # TOD DEPENDENT
 NETOBJ_ATTRIBUTES = {
     "Links": ("V0PrT",)
@@ -207,7 +211,7 @@ class Visum(threading.Thread):
                 print "Warning, {0} not included in NETOBJ_IDs".format(netobj)
             payload = zip(*map(
                 lambda gfield:map(
-                    lambda v:"SRID={srid};".format(**{"srid":MODEL_SRID}) + v
+                    lambda v:"SRID={srid};".format(**{"srid":MODEL_SRID}) + v,
                     self.GetVisumAttribute(Visum, netobj, gfield)
                 ),
                 geomfields
@@ -216,8 +220,7 @@ class Visum(threading.Thread):
                 self.queue.put(Sponge(**{
                     "type": database.TBL_GEOMETRY,
                     "netobj": netobj,
-                    "ids": None,
-                    "atts": geomfields,
+                    "ids": geomfields,
                     "data": payload
                 }))
     def _getGeometryFields(self, Visum):
@@ -226,7 +229,6 @@ class Visum(threading.Thread):
         wkt_fields = filter(lambda row:"wkt" in row[1].lower(), attributes)
         for netobj in set(zip(*wkt_fields)[0]):
             netobj_geometry[netobj] = zip(*filter(lambda row:row[0] == netobj, wkt_fields))[1]
-        print netobj_geometry
         return netobj_geometry
 
     @staticmethod
@@ -290,3 +292,50 @@ class Utility:
                 for COMatt in COMobj.Attributes.GetAll:
                     master_attributes.append((att, COMatt.Code, COMatt.ValueType, COMatt.Source))
         return master_attributes
+
+class VisumUtility:
+    def __init__(self):
+        pass
+
+class Access:
+    pypyodbc = __import__("pypyodbc")
+    sqlite3 = __import__("sqlite3")
+    SQL_CREATE_TBL_FIELDS = """
+    CREATE TABLE fields (
+        table_cat text,
+        table_schem text,
+        table_name text not null,
+        column_name text not null,
+        data_type integer not null,
+        type_name text not null,
+        column_size integer,
+        buffer_length integer,
+        decimal_digits integer,
+        num_prec_radix integer,
+        nullable integer,
+        remarks text,
+        column_def text,
+        sql_data_type integer not null,
+        sql_datetime_sub integer,
+        char_octet_length integer,
+        ordinal_position integer not null,
+        is_nullable text,
+        ordinal_position_redux integer
+    );
+    """
+    SQL_INSERT_TBL_FIELDS = """
+    INSERT INTO fields VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+    """
+    def __init__(self, path_accdb, path_sqlite = ":memory:"):
+        self.path_accdb = path_accdb
+        self.path_sqlite = path_sqlite
+        self.con_accdb = self.pypyodbc.win_connect_mdb(path_accdb)
+        self.con_sqlite = self.sqlite3.connect(path_sqlite)
+    def _createSQLiteDB(self):
+        cur = self.con_sqlite.cursor()
+        cur.execute(self.SQL_CREATE_TBL_FIELDS)
+        cur.executemany(self.SQL_INSERT_TBL_FIELDS, list(self.con_accdb.cursor().columns()))
+        self.con_sqlite.commit()
+    def close(self):
+        self.con_accdb.close()
+        self.con_sqlite.close()
