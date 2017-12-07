@@ -129,15 +129,15 @@ class VisumManager(threading.Thread):
     def run(self):
         for TOD in self.TODs:
             print TOD,
-            v = Visum(self.path_template.format(**{"tod":TOD}), self.vernum, self.queue)
+            v = VisumDataMiner(self.path_template.format(**{"tod":TOD}), self.vernum, self.queue)
             v.start()
             self._threads.append(v)
         for t in self._threads:
             t.join()
 
-class Visum(threading.Thread):
+class VisumDataMiner(threading.Thread):
     def __init__(self, path, vernum, queue):
-        super(Visum, self).__init__()
+        super(VisumDataMiner, self).__init__()
         self.path = path
         self.vernum = vernum
         self.queue = queue
@@ -265,6 +265,8 @@ class Sponge:
         return hasattr(self, key)
 
 class Utility:
+    tempfile = __import__("tempfile")
+    os = __import__("os")
     def __init__(self):
         pass
     @staticmethod
@@ -281,21 +283,6 @@ class Utility:
                 else:
                     attributes.append(sig)
         return (methods, attributes)
-    @classmethod
-    def get_attributes(self, VisumCOM):
-        master_attributes = []
-        methods, attributes = self.enumerateCOM(VisumCOM.Net)
-        for (att,) in sorted(attributes):
-            COMobj = getattr(VisumCOM.Net, att)
-            _methods, _attributes = self.enumerateCOM(COMobj)
-            if ("Attributes",) in _attributes:
-                for COMatt in COMobj.Attributes.GetAll:
-                    master_attributes.append((att, COMatt.Code, COMatt.ValueType, COMatt.Source))
-        return master_attributes
-
-class VisumUtility:
-    def __init__(self):
-        pass
     @staticmethod
     def GetFullAccessDB(Visum, path_accdb):
         Visum.SaveAccessDatabase(
@@ -307,8 +294,32 @@ class VisumUtility:
             nonEmptyTablesOnly = False
         )
     @classmethod
+    def GetCOMAttributes(self, Visum):
+        master_attributes = []
+        methods, attributes = self.enumerateCOM(Visum.Net)
+        for (att,) in sorted(attributes):
+            COMobj = getattr(Visum.Net, att)
+            _methods, _attributes = self.enumerateCOM(COMobj)
+            if ("Attributes",) in _attributes:
+                for COMatt in COMobj.Attributes.GetAll:
+                    master_attributes.append((att, COMatt.Code))
+        return master_attributes
+    @classmethod
     def GetUsableAttributes(self, Visum):
-        pass
+        io, path_temp = self.tempfile.mkstemp()
+        io.close()
+        self.GetFullAccessDB(Visum, path_temp)
+        accdb = Access(path_temp)
+        COM_atts = self.GetCOMAttributes(Visum)
+        COM_netobj = dict((netobj.lower(), netobj) for netobj in set(zip(*COM_atts)[0]))
+        
+        for netobj, field, dtype in accdb.iterAllTableFields():
+            if netobj in COM_netobj:
+                print "OK", netobj
+            elif (netobj + 's') in COM_netobj:
+                print "OK (Plural)", netobj
+            else:
+                print "ERROR", netobj
 
 class Access:
     pypyodbc = __import__("pypyodbc")
@@ -414,7 +425,9 @@ class Access:
         cur = self.con_sqlite.cursor()
         cur.execute(self.SQL_SELECT_TBL_FIELDS_COLUMNSxTABLENAMES, (tblname, notNullable))
         payload = cur.fetchall()
-        return payload if leadTableName else map(lambda t,c,d:(c,d), payload)
+        for row in (payload if leadTableName else map(lambda t,c,d:(c,d), payload)):
+            yield row
     def iterAllTableFields(self, notNullable = -1):
         for tblname in self.iterTables():
-            yield self.iterTableFields(tblname, notNullable)
+            for row in self.iterTableFields(tblname, notNullable):
+                yield row
