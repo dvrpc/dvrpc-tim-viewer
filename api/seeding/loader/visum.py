@@ -225,7 +225,7 @@ class VisumDataMiner(threading.Thread):
                 }))
     def _getGeometryFields(self, Visum):
         netobj_geometry = {}
-        attributes = Utility.get_attributes(Visum)
+        attributes = Utility.GetCOMAttributes(Visum)
         wkt_fields = filter(lambda row:"wkt" in row[1].lower(), attributes)
         for netobj in set(zip(*wkt_fields)[0]):
             netobj_geometry[netobj] = zip(*filter(lambda row:row[0] == netobj, wkt_fields))[1]
@@ -267,12 +267,23 @@ class Sponge:
 class Utility:
     tempfile = __import__("tempfile")
     os = __import__("os")
+    # Due to various inconsistencies, manual review is required
+    ATTRIBUTE_PATCH = {
+        "poicategory": "POICategories",
+        "territory": "Territories",
+        "tsys": "TSystems",
+        "validdays": "ValidDaysCont", # (?)
+        "vehcomb": "VehicleCombinations",
+        "vehjourney": "VehicleJourneys",
+        "vehjourneyitem": "VehicleJourneyItems",
+        "vehunit": "VehicleUnits",
+    }
     def __init__(self):
         pass
     @staticmethod
-    def enumerateCOM(object, bruteforcen = 1000):
+    def enumerateCOM(object, bruteForceN = 1000):
         methods, attributes = [], []
-        for i in xrange(bruteforcen):
+        for i in xrange(bruteForceN):
             try:
                 sig = object._lazydata_[0].GetNames(i)
             except:
@@ -306,20 +317,26 @@ class Utility:
         return master_attributes
     @classmethod
     def GetUsableAttributes(self, Visum):
-        io, path_temp = self.tempfile.mkstemp()
-        io.close()
+        filehandle, path_temp = self.tempfile.mkstemp()
+        # Thanks for all the extra bullshit tempfile
+        os.close(filehandle)
+        os.remove(path_temp)
         self.GetFullAccessDB(Visum, path_temp)
         accdb = Access(path_temp)
         COM_atts = self.GetCOMAttributes(Visum)
         COM_netobj = dict((netobj.lower(), netobj) for netobj in set(zip(*COM_atts)[0]))
-        
         for netobj, field, dtype in accdb.iterAllTableFields():
+            netobj = netobj.lower()
             if netobj in COM_netobj:
                 print "OK", netobj
             elif (netobj + 's') in COM_netobj:
                 print "OK (Plural)", netobj
+            elif netobj in self.ATTRIBUTE_PATCH:
+                print "OK (Patched)", netobj
             else:
                 print "ERROR", netobj
+        accdb.close()
+        os.remove(path_temp)
 
 class Access:
     pypyodbc = __import__("pypyodbc")
