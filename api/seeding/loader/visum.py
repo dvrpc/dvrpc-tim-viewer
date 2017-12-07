@@ -13,7 +13,7 @@ MODEL_SRID = 26918
 
 # TOD DEPENDENT
 NETOBJ_ATTRIBUTES = {
-    "Links": ("V0PrT",)
+    "Links": [("V0PrT","DOUBLE PRECISION")]
 }
 
 # TOD DEPENDENT
@@ -47,16 +47,18 @@ MTX_UPPERLIMIT = 1e5
 # Generated automanually using Utility.GetUsableAttributes below
 # and manually finding/translating identifying fields
 # TOD INDEPENDENT
+# Note: Commented out sections threw a Visum COM Error that ultimately relates
+# to licensing. Short story long, I'm just ignoring them for now.
 NETOBJ_IDs = {
-    u'BlockItemTypes': [(u'NO', 'INTEGER')],
-    u'BlockItems': [(u'BLOCKID', 'INTEGER'),
-                    (u'BLOCKINGDAY', 'INTEGER'),
-                    (u'STARTDAYINDEX', 'INTEGER'),
-                    (u'STARTTIME', 'TEXT'),
-                    (u'VEHJOURNEYNO', 'INTEGER'),
-                    (u'VEHJOURNEYSECTIONNO', 'INTEGER')],
-    u'BlockVersions': [(u'ID', 'INTEGER')],
-    u'Blocks': [(u'ID', 'INTEGER')],
+    # u'BlockItemTypes': [(u'NO', 'INTEGER')],
+    # u'BlockItems': [(u'BLOCKID', 'INTEGER'),
+                    # (u'BLOCKINGDAY', 'INTEGER'),
+                    # (u'STARTDAYINDEX', 'INTEGER'),
+                    # (u'STARTTIME', 'TEXT'),
+                    # (u'VEHJOURNEYNO', 'INTEGER'),
+                    # (u'VEHJOURNEYSECTIONNO', 'INTEGER')],
+    # u'BlockVersions': [(u'ID', 'INTEGER')],
+    # u'Blocks': [(u'ID', 'INTEGER')],
     u'Connectors': [(u'ZONENO', 'INTEGER'),
                     (u'NODENO', 'INTEGER'),
                     (u'DIRECTION', 'TEXT')],
@@ -95,9 +97,9 @@ NETOBJ_IDs = {
     u'Operators': [(u'NO', 'INTEGER')],
     u'PathSets': [(u'NO', 'INTEGER')],
     u'Paths': [(u'SETNO', 'INTEGER'), (u'NO', 'INTEGER')],
-    u'PropagationLinkInfos': [(u'FROMNODENO', 'INTEGER'),
-                              (u'TONODENO', 'INTEGER'),
-                              (u'DESTZONENO', 'INTEGER')],
+    # u'PropagationLinkInfos': [(u'FROMNODENO', 'INTEGER'),
+                              # (u'TONODENO', 'INTEGER'),
+                              # (u'DESTZONENO', 'INTEGER')],
     u'Screenlines': [(u'NO', 'INTEGER')],
     u'SignalControls': [(u'NO', 'INTEGER')],
     u'SignalGroups': [(u'SCNO', 'INTEGER'), (u'NO', 'INTEGER')],
@@ -141,7 +143,6 @@ class VisumManager(threading.Thread):
         self._threads = []
     def run(self):
         for TOD in self.TODs:
-            print TOD,
             v = VisumDataMiner(self.path_template.format(**{"tod":TOD}), self.vernum, self.queue)
             v.start()
             self._threads.append(v)
@@ -176,7 +177,8 @@ class VisumDataMiner(threading.Thread):
 
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
-            payload = zip(*map(lambda id:self.GetVisumAttribute(Visum, netobj, id), ids))
+            print netobj
+            payload = zip(*map(lambda (id, dtype):self.GetVisumAttribute(Visum, netobj, id), ids))
             if len(payload) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
@@ -186,7 +188,7 @@ class VisumDataMiner(threading.Thread):
                 }))
     def GetAttributes(self, Visum):
         for netobj, ids in self.iterNetObjGroupAttributes():
-            payload = zip(*map(lambda id:self.GetVisumAttribute(Visum, netobj, id), ids))
+            payload = zip(*map(lambda (id, dtype):self.GetVisumAttribute(Visum, netobj, id), ids))
             if len(payload) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_DATA,
@@ -253,7 +255,7 @@ class VisumDataMiner(threading.Thread):
     @staticmethod
     def iterNetObjIDs():
         for netobj, ids in NETOBJ_IDs.iteritems():
-            for id in ids:
+            for id, dtype in ids:
                 yield netobj, id
     @staticmethod
     def iterNetObjectGroup(dictionary):

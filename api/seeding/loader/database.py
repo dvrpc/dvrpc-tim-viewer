@@ -61,6 +61,7 @@ class Database(threading.Thread):
             print "Whoopsie"
 
     def LoadAttributes(self, payload, con, noTOD = False):
+        return
         if not noTOD:
             print payload.tod,
         print payload.netobj, payload.atts
@@ -93,7 +94,7 @@ class Database(threading.Thread):
         # Reproject the data into a permanent table via internal Postgis
         # Could also use pyproj or something or even reprojecting within Visum itself
 
-        print payload.netobj, payload.atts,
+        print payload.netobj, payload.ids,
         for i, id in enumerate(payload.ids):
             # Begin transaction, temp table, oh god the train is approaching my stop
             print id, payload.data[i]
