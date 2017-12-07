@@ -224,18 +224,25 @@ class VisumDataMiner(threading.Thread):
         for netobj, geomfields in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
             if not netobj in NETOBJ_IDs:
                 print "Warning, {0} not included in NETOBJ_IDs".format(netobj)
-            payload = zip(*map(
-                lambda gfield:map(
-                    lambda v:"SRID={srid};".format(**{"srid":MODEL_SRID}) + v,
-                    self.GetVisumAttribute(Visum, netobj, gfield)
-                ),
-                geomfields
-            ))
+
+            ids = []
+            payload = []
+            for gfield in geomfields:
+                data = self.GetVisumAttribute(Visum, netobj, gfield)
+                if len(data) > 0:
+                    gdtype = set(zip(*map(lambda v:v.split("(",1), data))[0])
+                    # Could warn if len(gdtype) <> 1, I don't think PostGIS likes mix geometry type fields
+                    ids.append((gfield, gdtype))
+                    payload.append(map(
+                        lambda v:"SRID={srid};".format(**{"srid":MODEL_SRID}) + v,
+                        data
+                    ))
+
             if len(payload) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_GEOMETRY,
                     "netobj": netobj,
-                    "ids": geomfields,
+                    "ids": ids,
                     "data": payload
                 }))
     def _getGeometryFields(self, Visum):
