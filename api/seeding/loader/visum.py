@@ -326,11 +326,18 @@ class Access:
     SQL_INSERT_TBL_FIELDS = """
     INSERT INTO fields VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
     """
+    SQL_SELECT_TBL_FIELDS_TABLENAMES = """
+    SELECT DISTINCT(table_name) table_name FROM fields ORDER BY table_name;
+    """
+    SQL_SELECT_TBL_FIELDS_COLUMNSxTABLENAMES = """
+    SELECT table_name, column_name, type_name FROM fields WHERE table_name = ? AND nullable <> ?;
+    """
     def __init__(self, path_accdb, path_sqlite = ":memory:"):
         self.path_accdb = path_accdb
         self.path_sqlite = path_sqlite
         self.con_accdb = self.pypyodbc.win_connect_mdb(path_accdb)
         self.con_sqlite = self.sqlite3.connect(path_sqlite)
+        self._createSQLiteDB()
     def _createSQLiteDB(self):
         cur = self.con_sqlite.cursor()
         cur.execute(self.SQL_CREATE_TBL_FIELDS)
@@ -339,3 +346,22 @@ class Access:
     def close(self):
         self.con_accdb.close()
         self.con_sqlite.close()
+    def iterTables(self):
+        cur = self.con_sqlite.cursor()
+        cur.execute(self.SQL_SELECT_TBL_FIELDS_TABLENAMES)
+        for (tblname,) in cur.fetchall():
+            yield tblname
+    def iterTableFields(self, tblname, notNullable = -1, leadTableName = True):
+        """
+            notNullable:
+               -1: All
+                0: False - Data fields?
+                1: True - Key fields?
+        """
+        cur = self.con_sqlite.cursor()
+        cur.execute(self.SQL_SELECT_TBL_FIELDS_COLUMNSxTABLENAMES, (tblname, notNullable))
+        payload = cur.fetchall()
+        return payload if leadTableName else map(lambda t,c,d:(c,d), payload)
+    def iterAllTableFields(self, notNullable = -1):
+        for tblname in self.iterTables():
+            yield self.iterTableFields(tblname, notNullable)
