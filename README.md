@@ -3,7 +3,7 @@
 
 This is an internal tool for exploring the inputs and outputs of the DVRPC Travel Improvement Model (TIM). Product is in early development.
 
-##Front End
+## Front End
 *Dependencies*
 * Tileserver-php 
     * vector tile host, alternatives available
@@ -16,7 +16,7 @@ This is an internal tool for exploring the inputs and outputs of the DVRPC Trave
 * mbutils 
     * for final dump of Mbtiles for web server
 
-##Back End
+## Back End
 *Dependencies - Core*
 * Python 2.7
     * psycopg2
