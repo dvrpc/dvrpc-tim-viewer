@@ -151,24 +151,29 @@ class VisumManager(threading.Thread):
         semaphore = None
         if (self.single_load_visum):
             semaphore = threading.Semaphore()
+        getnetobj = True
         for TOD in self.TODs:
             v = VisumDataMiner(
                 self.path_template.format(**{"tod":TOD}),
                 self.vernum,
+                getnetobj
                 self.queue,
                 (self.srid, self.prjwkt),
                 semaphore
             )
             v.start()
             self._threads.append(v)
+            if getnetobj:
+                getnetobj = False
         for t in self._threads:
             t.join()
 
 class VisumDataMiner(threading.Thread):
-    def __init__(self, path, vernum, queue, (srid, prjwkt), semaphore):
+    def __init__(self, path, vernum, getnetobj, queue, (srid, prjwkt), semaphore):
         super(VisumDataMiner, self).__init__()
         self.path = path
         self.vernum = vernum
+        self.getnetobj = getnetobj
         self.queue = queue
         self._index_templates = {}
         self.tod = None
@@ -187,10 +192,12 @@ class VisumDataMiner(threading.Thread):
         v.Net.SetProjection(self.prjwkt, calculate = True)
         self.tod = v.Net.AttValue("TOD")
 
-        self.GetNetObjects(v)
+        if self.getnetobj:
+            self.GetNetObjects(v)
         self.GetAttributes(v)
         self.GetMatrices(v)
-        self.GetGeometries(v)
+        if self.getnetobj:
+            self.GetGeometries(v)
         pythoncom.CoUninitialize()
 
     def CreateVisum(self):

@@ -82,10 +82,11 @@ class Database(threading.Thread):
         cur.execute(Utility.formatCreate(tblname, payload.atts))
         for row in payload.data:
             cur.execute(Utility.formatInsert(self.con, tblname, row, payload.atts))
+        self.con.commit()
     def LoadMatrix(self, payload):
-        f = self._bufferMatrix(payload.data)
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
         logger.debug("Database.LoadMatrix(): Importing %s", tblname)
+        f = self._bufferMatrix(payload.data)
         cur = self.con.cursor()
         cur.execute(SQL_CREATE_TBL_MTX.format(tblname))
         cur.copy_from(
