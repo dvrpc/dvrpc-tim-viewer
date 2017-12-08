@@ -6,6 +6,7 @@ import win32com.client
 import numpy
 
 import database
+from common import *
 
 import time
 
@@ -166,15 +167,15 @@ class VisumDataMiner(threading.Thread):
         self.prjwkt = prjwkt
 
     def run(self):
-        sys.coinit_flags = 0
+        sys.coinit_flags = 0 
         pythoncom.CoInitialize()
         v = self.CreateVisum()
         v.Net.SetProjection(self.prjwkt, calculate = True)
         self.tod = v.Net.AttValue("TOD")
 
-        self.GetNetObjects(v)
-        self.GetAttributes(v)
-        self.GetMatrices(v)
+        # self.GetNetObjects(v)
+        # self.GetAttributes(v)
+        # self.GetMatrices(v)
         self.GetGeometries(v)
         pythoncom.CoUninitialize()
 
@@ -187,24 +188,24 @@ class VisumDataMiner(threading.Thread):
         return zip(*map(lambda (_id, dtype):self.GetVisumAttribute(Visum, netobj, _id), ids))
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
-            payload = self._getAttributes(Visum, netobj, ids)
-            if len(payload) > 0:
+            data = self._getAttributes(Visum, netobj, ids)
+            if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
                     "netobj": netobj,
                     "atts": ids,
-                    "data": payload
+                    "data": data
                 }))
     def GetAttributes(self, Visum):
         for netobj, ids in self.iterNetObjGroupAttributes():
-            payload = self._getAttributes(Visum, netobj, ids)
-            if len(payload) > 0:
+            data = self._getAttributes(Visum, netobj, ids)
+            if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_DATA,
                     "tod": self.tod,
                     "netobj": netobj,
                     "atts": ids,
-                    "data": payload
+                    "data": data
                 }))
     def GetMatrices(self, Visum):
         for mtxno in self.iterMatrices():
@@ -232,24 +233,32 @@ class VisumDataMiner(threading.Thread):
         # Need to include the related network object identifiers
         for netobj, geomfields in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
             if not getattr(Visum.Net, netobj).Count > 0:
+                print "Warning, {0} as no objects".format(netobj)
                 continue
             if not netobj in NETOBJ_IDs:
                 print "Warning, {0} not included in NETOBJ_IDs".format(netobj)
-            ids = []
-            payload = []
+                continue
+            gatts = []
+            gdata = []
+            atts = NETOBJ_IDs[netobj]
+            data = self._getAttributes(Visum, netobj, atts)
             for gfield in geomfields:
-                data = self.GetVisumAttribute(Visum, netobj, gfield)
-                gdtype = self._extractFeatureType(data)
-                ids.append((gfield, gdtype))
-                payload.append(map(
+                _data = self.GetVisumAttribute(Visum, netobj, gfield)
+                gdtype = self._extractFeatureType(_data)
+                gatts.append((gfield, gdtype))
+                gdata.append(map(
                     lambda v:"SRID={srid};".format(**{"srid":self.srid}) + v,
-                    data
+                    _data
                 ))
             self.queue.put(Sponge(**{
                 "type": database.TBL_GEOMETRY,
                 "netobj": netobj,
-                "ids": ids,
-                "data": payload,
+                "atts": atts,
+                "data": data,
+                "gatts": gatts,
+                # Internal debate about this, it'll get 'appended' to data which involves zip(*args) both
+                # For now, transpose for consistency sake
+                "gdata": zip(*gdata),
                 "srid": self.srid
             }))
     def _getGeometryFields(self, Visum):
@@ -290,13 +299,6 @@ class VisumDataMiner(threading.Thread):
     def iterMatrices():
         for mtxno in MTXs:
             yield mtxno
-
-class Sponge:
-    def __init__(self, **kwds):
-        for k, v in kwds.iteritems():
-            setattr(self, k, v)
-    def __contains__(self, key):
-        return hasattr(self, key)
 
 class Utility:
     tempfile = __import__("tempfile")

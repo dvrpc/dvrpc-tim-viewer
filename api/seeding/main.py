@@ -15,11 +15,14 @@ PSQL_CNX = {
 }
 PSQL_SRID = 4326
 
+MAX_QUEUE_DEPTH = 100
+
+SINGLE_LOAD_VISUM = True
+
 def main():
     # Initialisation
     Q = Queue.Queue()
     D = loader.database.Database(PSQL_CNX, Q)
-    time.sleep(1)
     spatial_ref = (PSQL_SRID, D.getProjectionWKT(PSQL_SRID))
     VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, 15, Q, spatial_ref)
 

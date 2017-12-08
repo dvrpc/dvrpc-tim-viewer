@@ -9,6 +9,8 @@ import threading
 
 import psycopg2 as psql
 
+from common import *
+
 import time
 
 # TOD agnostic
@@ -100,16 +102,18 @@ class Database(threading.Thread):
         return f
 
     def LoadGeometries(self, payload):
-        # Create temporary table for model SRID
-        # Reproject the data into a permanent table via internal Postgis
-        # Could also use pyproj or something or even reprojecting within Visum itself
-
-        geometry({ftype},{srid})
-        print payload.netobj, payload.ids,
-        for i, (fname, gtype) in enumerate(payload.ids):
-            # Begin transaction, temp table, oh god the train is approaching my stop
-            # "ST_GeomFromEWKT('{wkt}')".format(**{"wkt": ewkt})
-            pass
+        assert len(payload.data) == len(payload.gdata), "Warning: Count mismatch"
+        atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
+        # self.LoadAttributes(Sponge(**{
+            # "netobj": payload.netobj,
+            # "atts": atts,
+            # See note in visum.VisumDataMiner.GetGeometries
+            # "data": zip(*(zip(*payload.data) + zip(*payload.gdata)))
+        # }), noTOD = True)
+        print Utility.formatCreate(payload.netobj, atts)
+        for i in xrange(len(payload.data)):
+            print Utility.formatGeometryInsert(self.con, payload.netobj, payload.data[i], payload.gdata[i], atts)
+            break
 
     @classmethod
     def log(self, message):
@@ -128,10 +132,16 @@ class Utility:
         pass
     @staticmethod
     def _strFieldDtypes(field_dtypes):
-        return ", ".join(map(lambda fd:" ".join(["{{{0}}}".format(i) for i in xrange(len(fd))]).format(*fd), field_dtypes))
+        return ", ".join(map(
+            lambda fd:" ".join(["{{{0}}}".format(i) for i in xrange(len(fd))]).format(*fd),
+            field_dtypes
+        ))
     @classmethod
     def _strFields(self, field_dtypes):
         return "({0})".format(self._strFieldDtypes(map(lambda v:(v,), zip(*field_dtypes)[0]))) if field_dtypes is not None else ""
+    @classmethod
+    def _strGeos(self, cur, values, postgisfn):
+        return "," + cur.mogrify(",".join(postgisfn for _ in values), values) if values else ""
     @classmethod
     def formatCreate(self, tblname, field_dtypes, soft_touch = True):
         qry = "CREATE TABLE {ifne} {tname} ({fdefs});"
@@ -141,13 +151,20 @@ class Utility:
             "fdefs": self._strFieldDtypes(field_dtypes)
         })
     @classmethod
-    def formatInsert(self, con, tblname, values, field_dtypes = None):
+    def _formatInsert(self, con, tblname, values, geoms = None, field_dtypes = None, postgisfn = None):
         # cur.mogrify requires a valid psycopg2.extensions.connection
         # (it does stuff like read the encoding from the connection)
         cur = con.cursor()
-        qry = "INSERT INTO {tname} {fdefs} VALUES ({vals})"
-        return qry.format(**{
+        return "INSERT INTO {tname} {fdefs} VALUES ({vals}{geos})".format(**{
             "tname": tblname,
             "fdefs": self._strFields(field_dtypes),
-            "vals": cur.mogrify(",".join("%s" for _ in values), values)
+            "vals": cur.mogrify(",".join("%s" for _ in values), values),
+            "geos": self._strGeos(cur, geoms, postgisfn),
         })
+    @classmethod
+    def formatInsert(self, con, tblname, values, field_dtypes = None):
+        return self._formatInsert(con, tblname, values, field_dtypes = field_dtypes)
+
+    @classmethod
+    def formatGeometryInsert(self, *args, **kwds):
+        return self._formatInsert(*args, postgisfn = "ST_GeomFromEWKT(%s)", **kwds)
