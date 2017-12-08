@@ -39,20 +39,19 @@ class Database(threading.Thread):
         super(Database, self).__init__()
         self.db_credentials = db_credentials
         self.queue = queue
-        self.con = None
+        self.con = psql.connect(**self.db_credentials)
 
     def run(self):
-        with psql.connect(**self.db_credentials) as con:
-            self.con = con
-            while True:
-                payload = self.queue.get()
-                if payload is None:
-                    con.commit()
-                    break
-                if "type" in payload:
-                    self.process(payload)
-                else:
-                    self.log("Missing payload type")
+        while True:
+            payload = self.queue.get()
+            if payload is None:
+                self.con.commit()
+                self.con.close()
+                break
+            if "type" in payload:
+                self.process(payload)
+            else:
+                self.log("Missing payload type")
 
     def process(self, payload):
         # Oh switch statement, where art thou?
@@ -105,14 +104,21 @@ class Database(threading.Thread):
         # Reproject the data into a permanent table via internal Postgis
         # Could also use pyproj or something or even reprojecting within Visum itself
 
+        geometry({ftype},{srid})
         print payload.netobj, payload.ids,
         for i, (fname, gtype) in enumerate(payload.ids):
             # Begin transaction, temp table, oh god the train is approaching my stop
             # "ST_GeomFromEWKT('{wkt}')".format(**{"wkt": ewkt})
+            pass
 
     @classmethod
     def log(self, message):
         print "Database:", message
+    def getProjectionWKT(self, srid):
+        cur = self.con.cursor()
+        cur.execute("SELECT srtext FROM spatial_ref_sys WHERE srid = %s", (srid,))
+        (prjwkt,) = cur.fetchone()
+        return prjwkt
 
 class Utility:
     def __init__(self):

@@ -13,12 +13,15 @@ PSQL_CNX = {
     "user": "postgres",
     "password": "sergt",
 }
+PSQL_SRID = 4326
 
 def main():
     # Initialisation
     Q = Queue.Queue()
     D = loader.database.Database(PSQL_CNX, Q)
-    VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, 15, Q)
+    time.sleep(1)
+    spatial_ref = (PSQL_SRID, D.getProjectionWKT(PSQL_SRID))
+    VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, 15, Q, spatial_ref)
 
     # Start Database IO Agent
     D.start()

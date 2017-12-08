@@ -9,8 +9,6 @@ import database
 
 import time
 
-MODEL_SRID = 26918
-
 # TOD DEPENDENT
 NETOBJ_ATTRIBUTES = {
     "Links": [("V0PrT","DOUBLE PRECISION")]
@@ -135,38 +133,48 @@ NETOBJ_IDs = {
 # I knew I wanted a thread manager
 class VisumManager(threading.Thread):
     TODs = ["AM","MD","PM","NT"]
-    def __init__(self, path_template, vernum, queue):
+    def __init__(self, path_template, vernum, queue, (srid, prjwkt)):
         super(VisumManager, self).__init__()
         self.path_template = path_template
         self.vernum = vernum
         self.queue = queue
         self._threads = []
+        self.srid = srid
+        self.prjwkt = prjwkt
     def run(self):
         for TOD in self.TODs:
-            v = VisumDataMiner(self.path_template.format(**{"tod":TOD}), self.vernum, self.queue)
+            v = VisumDataMiner(
+                self.path_template.format(**{"tod":TOD}),
+                self.vernum,
+                self.queue,
+                (self.srid, self.prjwkt)
+            )
             v.start()
             self._threads.append(v)
         for t in self._threads:
             t.join()
 
 class VisumDataMiner(threading.Thread):
-    def __init__(self, path, vernum, queue):
+    def __init__(self, path, vernum, queue, (srid, prjwkt)):
         super(VisumDataMiner, self).__init__()
         self.path = path
         self.vernum = vernum
         self.queue = queue
         self._index_templates = {}
         self.tod = None
+        self.srid = srid
+        self.prjwkt = prjwkt
 
     def run(self):
         sys.coinit_flags = 0
         pythoncom.CoInitialize()
         v = self.CreateVisum()
+        v.Net.SetProjection(self.prjwkt, calculate = True)
         self.tod = v.Net.AttValue("TOD")
 
         self.GetNetObjects(v)
         self.GetAttributes(v)
-        # self.GetMatrices(v)
+        self.GetMatrices(v)
         self.GetGeometries(v)
         pythoncom.CoUninitialize()
 
@@ -234,14 +242,15 @@ class VisumDataMiner(threading.Thread):
                 gdtype = self._extractFeatureType(data)
                 ids.append((gfield, gdtype))
                 payload.append(map(
-                    lambda v:"SRID={srid};".format(**{"srid":MODEL_SRID}) + v,
+                    lambda v:"SRID={srid};".format(**{"srid":self.srid}) + v,
                     data
                 ))
             self.queue.put(Sponge(**{
                 "type": database.TBL_GEOMETRY,
                 "netobj": netobj,
                 "ids": ids,
-                "data": payload
+                "data": payload,
+                "srid": self.srid
             }))
     def _getGeometryFields(self, Visum):
         netobj_geometry = {}
