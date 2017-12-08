@@ -28,7 +28,7 @@ This is an internal tool for exploring the inputs and outputs of the DVRPC Trave
 *Dependencies - Utilities*
 * Python 2.7
     * MS Access ODBC
-        * pypyodbc [Github](https://github.com/jiangwen365/pypyodbc)
+        * pypyodbc [PyPi](https://pypi.python.org/pypi/pypyodbc) [Github](https://github.com/jiangwen365/pypyodbc)
         * Microsoft Access Database Engine (for your flavour of Microsoft Office)
             Note: You may need to add the `/passive` switch to install e.g. `AccessDatabaseEngine_x64.exe /passive`
 

@@ -48,7 +48,7 @@ MTX_UPPERLIMIT = 1e5
 # and manually finding/translating identifying fields
 # TOD INDEPENDENT
 # Note: Commented out sections threw a Visum COM Error that ultimately relates
-# to licensing. Short story long, I'm just ignoring them for now.
+# to licensing. Short story long, it was not used, I'm ignoring them.
 NETOBJ_IDs = {
     # u'BlockItemTypes': [(u'NO', 'INTEGER')],
     # u'BlockItems': [(u'BLOCKID', 'INTEGER'),
@@ -441,6 +441,16 @@ class Access:
         "LONGCHAR": "TEXT",
         "VARCHAR": "TEXT"
     }
+    ACCESS_PYTHON_DTYPES = {
+        "COUNTER": int, # Unsure
+        "DATETIME": str, # Unsure
+        "DOUBLE": float,
+        "INTEGER": int,
+        "LONGBINARY": lambda v:v, # NOOP
+        "LONGCHAR": str,
+        "VARCHAR": str
+    }
+
     def __init__(self, path_accdb, path_sqlite = ":memory:"):
         self.path_accdb = path_accdb
         self.path_sqlite = path_sqlite

@@ -27,6 +27,9 @@ TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex smallint, val double precision);"
 SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (oindex ASC NULLS LAST);"
 SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dindex ASC NULLS LAST);"
+SQL_CREATE_TBL_GENERIC = "CREATE TABLE IF NOT EXISTS {tblname} ({coldef});"
+SQL_INSERT_TBL_GENERIC = "INSERT INTO {tblname} 
+
 
 class Database(threading.Thread):
     MTX_DEFAULT_COLUMNS = ["oindex", "dindex", "val"]
@@ -109,4 +112,11 @@ class Utility:
         pass
     @staticmethod
     def guessDType(field):
+        pass
+    @staticmethod
+    def formatCreate(con, tblname, field_dtypes, soft_touch = True):
+        qry = "CREATE TABLE " + ("IF NOT EXISTS " if soft_touch else "") + tblname
+        pass
+    @staticmethod
+    def formatInsert(con, tblname, values, field_dtypes = None):
         pass
