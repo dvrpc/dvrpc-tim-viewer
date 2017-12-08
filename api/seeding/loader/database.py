@@ -73,11 +73,10 @@ class Database(threading.Thread):
             tblname = TBL_NAMETMPLT_NETOBJ.format(**{'netobj':payload.netobj})
         else:
             tblname = TBL_NAMETMPLT_DATA.format(**{'netobj':payload.netobj,'tod':payload.tod})
-        print Utility.formatCreate(tblname, payload.atts)
+        cur = self.con.cursor()
+        cur.execute(Utility.formatCreate(tblname, payload.atts))
         for row in payload.data:
-            print Utility.formatInsert(self.con, tblname, row, payload.atts)
-            break
-
+            cur.execute(Utility.formatInsert(self.con, tblname, row, payload.atts))
     def LoadMatrix(self, payload):
         f = self._bufferMatrix(payload.data)
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
@@ -93,36 +92,36 @@ class Database(threading.Thread):
         cur.execute(SQL_CREATE_IDX_MTX_O.format(tblname))
         cur.execute(SQL_CREATE_IDX_MTX_D.format(tblname))
         self.con.commit()
-
+    def LoadGeometries(self, payload):
+        assert len(payload.data) == len(payload.gdata), "Warning: Count mismatch"
+        tblname = TBL_NAMETMPLT_GEOMETRY.format(**{'netobj':payload.netobj})
+        atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
+        cur = self.con.cursor()
+        cur.execute(Utility.formatCreate(tblname, atts))
+        for i in xrange(len(payload.data)):
+            cur.execute(Utility.formatGeometryInsert(self.con, tblname, payload.data[i], payload.gdata[i], atts))
+        self.con.commit()
     def _bufferMatrix(self, mtx_listing):
         f = StringIO.StringIO()
         w = csv.writer(f)
         w.writerows(mtx_listing)
         f.seek(0)
         return f
-
-    def LoadGeometries(self, payload):
-        assert len(payload.data) == len(payload.gdata), "Warning: Count mismatch"
-        atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
-        # self.LoadAttributes(Sponge(**{
-            # "netobj": payload.netobj,
-            # "atts": atts,
-            # See note in visum.VisumDataMiner.GetGeometries
-            # "data": zip(*(zip(*payload.data) + zip(*payload.gdata)))
-        # }), noTOD = True)
-        print Utility.formatCreate(payload.netobj, atts)
-        for i in xrange(len(payload.data)):
-            print Utility.formatGeometryInsert(self.con, payload.netobj, payload.data[i], payload.gdata[i], atts)
-            break
-
     @classmethod
     def log(self, message):
         print "Database:", message
+
     def getProjectionWKT(self, srid):
         cur = self.con.cursor()
         cur.execute("SELECT srtext FROM spatial_ref_sys WHERE srid = %s", (srid,))
         (prjwkt,) = cur.fetchone()
         return prjwkt
+    def nukeDatabase(self):
+        cur = self.con.cursor()
+        cur.execute("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' and tablename <> 'spatial_ref_sys';")
+        for table, in cur.fetchall():
+            cur.execute("DROP TABLE {0}".format(table))
+        self.con.commit()
 
 class Utility:
     def __init__(self):
@@ -164,7 +163,6 @@ class Utility:
     @classmethod
     def formatInsert(self, con, tblname, values, field_dtypes = None):
         return self._formatInsert(con, tblname, values, field_dtypes = field_dtypes)
-
     @classmethod
     def formatGeometryInsert(self, *args, **kwds):
         return self._formatInsert(*args, postgisfn = "ST_GeomFromEWKT(%s)", **kwds)

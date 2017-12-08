@@ -173,9 +173,9 @@ class VisumDataMiner(threading.Thread):
         v.Net.SetProjection(self.prjwkt, calculate = True)
         self.tod = v.Net.AttValue("TOD")
 
-        # self.GetNetObjects(v)
-        # self.GetAttributes(v)
-        # self.GetMatrices(v)
+        self.GetNetObjects(v)
+        self.GetAttributes(v)
+        self.GetMatrices(v)
         self.GetGeometries(v)
         pythoncom.CoUninitialize()
 

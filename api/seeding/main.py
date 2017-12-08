@@ -23,6 +23,10 @@ def main():
     # Initialisation
     Q = Queue.Queue()
     D = loader.database.Database(PSQL_CNX, Q)
+
+    # WARNING
+    D.nukeDatabase()
+
     spatial_ref = (PSQL_SRID, D.getProjectionWKT(PSQL_SRID))
     VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, 15, Q, spatial_ref)
 
