@@ -22,13 +22,13 @@ SINGLE_LOAD_VISUM = True
 def main():
     # Initialisation
     Q = Queue.Queue()
-    D = loader.database.Database(PSQL_CNX, Q)
+    D = loader.database.Database(PSQL_CNX, Q, MAX_QUEUE_DEPTH)
 
     # WARNING
     D.nukeDatabase()
 
     spatial_ref = (PSQL_SRID, D.getProjectionWKT(PSQL_SRID))
-    VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, 15, Q, spatial_ref)
+    VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, 15, Q, spatial_ref, MAX_QUEUE_DEPTH, SINGLE_LOAD_VISUM)
 
     # Start Database IO Agent
     D.start()

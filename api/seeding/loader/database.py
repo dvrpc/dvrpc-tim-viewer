@@ -37,11 +37,12 @@ SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dind
 
 class Database(threading.Thread):
     MTX_DEFAULT_COLUMNS = ["oindex", "dindex", "val"]
-    def __init__(self, db_credentials, queue):
+    def __init__(self, db_credentials, queue, max_queue_depth):
         super(Database, self).__init__()
         self.db_credentials = db_credentials
         self.queue = queue
         self.con = psql.connect(**self.db_credentials)
+        self.max_queue_depth = max_queue_depth
 
     def run(self):
         while True:

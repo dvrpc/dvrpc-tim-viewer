@@ -134,7 +134,7 @@ NETOBJ_IDs = {
 # I knew I wanted a thread manager
 class VisumManager(threading.Thread):
     TODs = ["AM","MD","PM","NT"]
-    def __init__(self, path_template, vernum, queue, (srid, prjwkt)):
+    def __init__(self, path_template, vernum, queue, (srid, prjwkt), max_queue_depth, single_load_visum):
         super(VisumManager, self).__init__()
         self.path_template = path_template
         self.vernum = vernum
@@ -142,13 +142,19 @@ class VisumManager(threading.Thread):
         self._threads = []
         self.srid = srid
         self.prjwkt = prjwkt
+        self.max_queue_depth = max_queue_depth
+        self.single_load_visum = single_load_visum
     def run(self):
+        semaphore = None
+        if (self.single_load_visum):
+            semaphore = threading.Semaphore()
         for TOD in self.TODs:
             v = VisumDataMiner(
                 self.path_template.format(**{"tod":TOD}),
                 self.vernum,
                 self.queue,
-                (self.srid, self.prjwkt)
+                (self.srid, self.prjwkt),
+                semaphore
             )
             v.start()
             self._threads.append(v)
@@ -156,7 +162,7 @@ class VisumManager(threading.Thread):
             t.join()
 
 class VisumDataMiner(threading.Thread):
-    def __init__(self, path, vernum, queue, (srid, prjwkt)):
+    def __init__(self, path, vernum, queue, (srid, prjwkt), semaphore):
         super(VisumDataMiner, self).__init__()
         self.path = path
         self.vernum = vernum
@@ -165,11 +171,15 @@ class VisumDataMiner(threading.Thread):
         self.tod = None
         self.srid = srid
         self.prjwkt = prjwkt
+        self.semaphore = semaphore
 
     def run(self):
         sys.coinit_flags = 0 
         pythoncom.CoInitialize()
+        if self.semaphore:
+            self.semaphore.acquire()
         v = self.CreateVisum()
+        self.semaphore.release()
         v.Net.SetProjection(self.prjwkt, calculate = True)
         self.tod = v.Net.AttValue("TOD")
 
