@@ -156,7 +156,7 @@ class VisumManager(threading.Thread):
             v = VisumDataMiner(
                 self.path_template.format(**{"tod":TOD}),
                 self.vernum,
-                getnetobj
+                getnetobj,
                 self.queue,
                 (self.srid, self.prjwkt),
                 semaphore
@@ -408,7 +408,10 @@ class Utility:
         return netobj_ids
 
 class Access:
-    pypyodbc = __import__("pypyodbc")
+    try:
+        pypyodbc = __import__("pypyodbc")
+    except:
+        pypyodbc = None
     sqlite3 = __import__("sqlite3")
     ACCESS_SYS_TABLES = [
         "msysaccessstorage",
@@ -491,6 +494,7 @@ class Access:
     }
 
     def __init__(self, path_accdb, path_sqlite = ":memory:"):
+        assert pypyodbc is not None, "Module pypyodbc not found"
         self.path_accdb = path_accdb
         self.path_sqlite = path_sqlite
         self.con_accdb = self.pypyodbc.win_connect_mdb(path_accdb)
