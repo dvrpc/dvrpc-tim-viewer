@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger(__name__)
 import pythoncom
 import sys
 import threading
@@ -144,6 +146,7 @@ class VisumManager(threading.Thread):
         self.prjwkt = prjwkt
         self.max_queue_depth = max_queue_depth
         self.single_load_visum = single_load_visum
+        logger.debug("VisumManager.__init__(): Done")
     def run(self):
         semaphore = None
         if (self.single_load_visum):
@@ -172,6 +175,7 @@ class VisumDataMiner(threading.Thread):
         self.srid = srid
         self.prjwkt = prjwkt
         self.semaphore = semaphore
+        logger.debug("VisumDataMiner.__init__(): Done")
 
     def run(self):
         sys.coinit_flags = 0 
@@ -198,6 +202,7 @@ class VisumDataMiner(threading.Thread):
         return zip(*map(lambda (_id, dtype):self.GetVisumAttribute(Visum, netobj, _id), ids))
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
+            logger.info("VisumDataMiner.GetNetObjects(): Exporting NetObj %s", netobj)
             data = self._getAttributes(Visum, netobj, ids)
             if len(data) > 0:
                 self.queue.put(Sponge(**{
@@ -208,6 +213,7 @@ class VisumDataMiner(threading.Thread):
                 }))
     def GetAttributes(self, Visum):
         for netobj, ids in self.iterNetObjGroupAttributes():
+            logger.info("VisumDataMiner.GetAttributes(): (%s) Exporting NetObj %s", self.tod, netobj)
             data = self._getAttributes(Visum, netobj, ids)
             if len(data) > 0:
                 self.queue.put(Sponge(**{
@@ -219,6 +225,7 @@ class VisumDataMiner(threading.Thread):
                 }))
     def GetMatrices(self, Visum):
         for mtxno in self.iterMatrices():
+            logger.info("VisumDataMiner.GetMatrices(): (%s) Exporting Matrix %s", self.tod, mtxno)
             mtx_listing = self._getMatrix(Visum, mtxno)
             self.queue.put(Sponge(**{
                 "type": database.TBL_MATRIX,
@@ -240,14 +247,15 @@ class VisumDataMiner(threading.Thread):
         mtx_listing = numpy.array((x,y,z,), dtype = object).T
         return mtx_listing[numpy.where(mtx_listing[:,2] < MTX_UPPERLIMIT)]
     def GetGeometries(self, Visum):
-        # Need to include the related network object identifiers
+        logger.info("VisumDataMiner.GetGeometries(): Started")
         for netobj, geomfields in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
             if not getattr(Visum.Net, netobj).Count > 0:
-                print "Warning, {0} as no objects".format(netobj)
+                logger.info("{0} has no objects".format(netobj))
                 continue
             if not netobj in NETOBJ_IDs:
-                print "Warning, {0} not included in NETOBJ_IDs".format(netobj)
+                logger.warning("Warning, {0} not included in NETOBJ_IDs".format(netobj))
                 continue
+            logger.debug("VisumDataMiner.GetGeometries(): Exporting geometries from Netobj %s", netobj)
             gatts = []
             gdata = []
             atts = NETOBJ_IDs[netobj]

@@ -1,3 +1,7 @@
+import logging
+logging.basicConfig(format = "%(asctime)s:%(levelname)s:%(name)s:%(message)s")
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 import Queue
 import time
 
@@ -21,6 +25,7 @@ SINGLE_LOAD_VISUM = True
 
 def main():
     # Initialisation
+    logger.debug("Hi")
     Q = Queue.Queue()
     D = loader.database.Database(PSQL_CNX, Q, MAX_QUEUE_DEPTH)
 
@@ -35,10 +40,12 @@ def main():
     # Start Visum data streamer
     VM.start()
     VM.join()
+    logger.debug("visum.VisumManager(): Finished")
     # When data has been exported from Visum, flag shutdown
     Q.put(None)
     # Wait for DB Agent to finish doing its thing
     D.join()
+    logger.debug("Bye")
 
 if __name__ == "__main__":
     main()

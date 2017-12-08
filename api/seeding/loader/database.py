@@ -4,6 +4,8 @@
 # e.g. PostGIS overhead
 
 import csv
+import logging
+logger = logging.getLogger(__name__)
 import StringIO
 import threading
 
@@ -43,6 +45,7 @@ class Database(threading.Thread):
         self.queue = queue
         self.con = psql.connect(**self.db_credentials)
         self.max_queue_depth = max_queue_depth
+        logger.debug("Database.__init__(): Done")
 
     def run(self):
         while True:
@@ -54,7 +57,7 @@ class Database(threading.Thread):
             if "type" in payload:
                 self.process(payload)
             else:
-                self.log("Missing payload type")
+                logger.error("Database.run(): Missing payload type")
 
     def process(self, payload):
         # Oh switch statement, where art thou?
@@ -67,13 +70,14 @@ class Database(threading.Thread):
         elif payload.type == TBL_GEOMETRY:
             self.LoadGeometries(payload)
         else:
-            print "Whoopsie"
+            logger.error("Database.process(): Invalid table type (%s)", payload.type)
 
     def LoadAttributes(self, payload, noTOD = False):
         if noTOD:
             tblname = TBL_NAMETMPLT_NETOBJ.format(**{'netobj':payload.netobj})
         else:
             tblname = TBL_NAMETMPLT_DATA.format(**{'netobj':payload.netobj,'tod':payload.tod})
+        logger.debug("Database.LoadAttributes(): Importing %s", tblname)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, payload.atts))
         for row in payload.data:
@@ -81,6 +85,7 @@ class Database(threading.Thread):
     def LoadMatrix(self, payload):
         f = self._bufferMatrix(payload.data)
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
+        logger.debug("Database.LoadMatrix(): Importing %s", tblname)
         cur = self.con.cursor()
         cur.execute(SQL_CREATE_TBL_MTX.format(tblname))
         cur.copy_from(
@@ -96,6 +101,7 @@ class Database(threading.Thread):
     def LoadGeometries(self, payload):
         assert len(payload.data) == len(payload.gdata), "Warning: Count mismatch"
         tblname = TBL_NAMETMPLT_GEOMETRY.format(**{'netobj':payload.netobj})
+        logger.debug("Database.LoadGeometries(): Importing %s", tblname)
         atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, atts))
@@ -108,9 +114,6 @@ class Database(threading.Thread):
         w.writerows(mtx_listing)
         f.seek(0)
         return f
-    @classmethod
-    def log(self, message):
-        print "Database:", message
 
     def getProjectionWKT(self, srid):
         cur = self.con.cursor()
