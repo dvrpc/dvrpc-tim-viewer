@@ -114,9 +114,24 @@ class Utility:
     def guessDType(field):
         pass
     @staticmethod
-    def formatCreate(con, tblname, field_dtypes, soft_touch = True):
-        qry = "CREATE TABLE " + ("IF NOT EXISTS " if soft_touch else "") + tblname
-        pass
-    @staticmethod
-    def formatInsert(con, tblname, values, field_dtypes = None):
-        pass
+    def _strFieldDtypes(field_dtypes):
+        return ", ".join(map(lambda fd:" ".join(["{{{0}}}".format(i) for i in xrange(len(fd))]).format(*fd), field_dtypes))
+    @classmethod
+    def formatCreate(self, tblname, field_dtypes, soft_touch = True):
+        qry = "CREATE TABLE {ifne} {tname} ({fdefs});"
+        return qry.format(**{
+            "ifne": "IF NOT EXISTS " if soft_touch else "",
+            "tname": tblname,
+            "fdefs": self._strFieldDtypes(field_dtypes)
+        })
+    @classmethod
+    def formatInsert(self, con, tblname, values, field_dtypes = None):
+        # cur.mogrify requires a valid psycopg2.extensions.connection
+        # (it does stuff like read the encoding from the connection)
+        cur = con.cursor()
+        qry = "INSERT INTO {tname} {fdefs} VALUES ({vals})"
+        return qry.format(**{
+            "tname": tblname,
+            "fdefs": "({0})".format(self._strFieldDtypes(zip(*field_dtypes)[0])) if field_dtypes is not None else "",
+            "vals": cur.mogrify(",".join("%s" for _ in values), values)
+        })
