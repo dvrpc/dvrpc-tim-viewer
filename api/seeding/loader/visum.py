@@ -167,7 +167,7 @@ class VisumDataMiner(threading.Thread):
         self.GetNetObjects(v)
         self.GetAttributes(v)
         self.GetMatrices(v)
-        self.GetGeometries(v)
+        # self.GetGeometries(v)
         pythoncom.CoUninitialize()
 
     def CreateVisum(self):
@@ -177,7 +177,6 @@ class VisumDataMiner(threading.Thread):
 
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
-            print netobj
             payload = zip(*map(lambda (id, dtype):self.GetVisumAttribute(Visum, netobj, id), ids))
             if len(payload) > 0:
                 self.queue.put(Sponge(**{

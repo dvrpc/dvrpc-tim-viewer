@@ -27,9 +27,6 @@ TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex smallint, val double precision);"
 SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (oindex ASC NULLS LAST);"
 SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dindex ASC NULLS LAST);"
-SQL_CREATE_TBL_GENERIC = "CREATE TABLE IF NOT EXISTS {tblname} ({coldef});"
-SQL_INSERT_TBL_GENERIC = "INSERT INTO {tblname} 
-
 
 class Database(threading.Thread):
     MTX_DEFAULT_COLUMNS = ["oindex", "dindex", "val"]
@@ -37,42 +34,44 @@ class Database(threading.Thread):
         super(Database, self).__init__()
         self.db_credentials = db_credentials
         self.queue = queue
+        self.con = None
 
     def run(self):
         with psql.connect(**self.db_credentials) as con:
+            self.con = con
             while True:
                 payload = self.queue.get()
                 if payload is None:
                     con.commit()
                     break
                 if "type" in payload:
-                    self.process(con, payload)
+                    self.process(payload)
                 else:
                     self.log("Missing payload type")
 
-    def process(self, con, payload):
+    def process(self, payload):
         # Oh switch statement, where art thou?
         if   payload.type == TBL_NETOBJ:
-            self.LoadAttributes(payload, con, True)
+            self.LoadAttributes(payload, True)
         elif payload.type == TBL_DATA:
-            self.LoadAttributes(payload, con)
+            self.LoadAttributes(payload)
         elif payload.type == TBL_MATRIX:
-            self.LoadMatrix(payload, con)
+            self.LoadMatrix(payload)
         elif payload.type == TBL_GEOMETRY:
-            self.LoadGeometries(payload, con)
+            self.LoadGeometries(payload)
         else:
             print "Whoopsie"
 
-    def LoadAttributes(self, payload, con, noTOD = False):
-        return
-        if not noTOD:
-            print payload.tod,
-        print payload.netobj, payload.atts
+    def LoadAttributes(self, payload, noTOD = False):
+        print Utility.formatCreate(payload.netobj, payload.atts)
+        for row in payload.data:
+            print Utility.formatInsert(self.con, payload.netobj, row, payload.atts)
+            break
 
-    def LoadMatrix(self, payload, con):
+    def LoadMatrix(self, payload):
         f = self._bufferMatrix(payload.data)
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
-        cur = con.cursor()
+        cur = self.con.cursor()
         cur.execute(SQL_CREATE_TBL_MTX.format(tblname))
         cur.copy_from(
             f,
@@ -83,7 +82,7 @@ class Database(threading.Thread):
         f.close()
         cur.execute(SQL_CREATE_IDX_MTX_O.format(tblname))
         cur.execute(SQL_CREATE_IDX_MTX_D.format(tblname))
-        con.commit()
+        self.con.commit()
 
     def _bufferMatrix(self, mtx_listing):
         f = StringIO.StringIO()
@@ -92,7 +91,7 @@ class Database(threading.Thread):
         f.seek(0)
         return f
 
-    def LoadGeometries(self, payload, con):
+    def LoadGeometries(self, payload):
         # Create temporary table for model SRID
         # Reproject the data into a permanent table via internal Postgis
         # Could also use pyproj or something or even reprojecting within Visum itself
@@ -117,6 +116,9 @@ class Utility:
     def _strFieldDtypes(field_dtypes):
         return ", ".join(map(lambda fd:" ".join(["{{{0}}}".format(i) for i in xrange(len(fd))]).format(*fd), field_dtypes))
     @classmethod
+    def _strFields(self, field_dtypes):
+        return "({0})".format(self._strFieldDtypes(map(lambda v:(v,), zip(*field_dtypes)[0]))) if field_dtypes is not None else ""
+    @classmethod
     def formatCreate(self, tblname, field_dtypes, soft_touch = True):
         qry = "CREATE TABLE {ifne} {tname} ({fdefs});"
         return qry.format(**{
@@ -132,6 +134,6 @@ class Utility:
         qry = "INSERT INTO {tname} {fdefs} VALUES ({vals})"
         return qry.format(**{
             "tname": tblname,
-            "fdefs": "({0})".format(self._strFieldDtypes(zip(*field_dtypes)[0])) if field_dtypes is not None else "",
+            "fdefs": self._strFields(field_dtypes),
             "vals": cur.mogrify(",".join("%s" for _ in values), values)
         })
