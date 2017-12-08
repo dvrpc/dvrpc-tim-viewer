@@ -166,8 +166,8 @@ class VisumDataMiner(threading.Thread):
 
         self.GetNetObjects(v)
         self.GetAttributes(v)
-        self.GetMatrices(v)
-        # self.GetGeometries(v)
+        # self.GetMatrices(v)
+        self.GetGeometries(v)
         pythoncom.CoUninitialize()
 
     def CreateVisum(self):
@@ -175,9 +175,11 @@ class VisumDataMiner(threading.Thread):
         v.LoadVersion(self.path)
         return v
 
+    def _getAttributes(self, Visum, netobj, ids):
+        return zip(*map(lambda (_id, dtype):self.GetVisumAttribute(Visum, netobj, _id), ids))
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
-            payload = zip(*map(lambda (id, dtype):self.GetVisumAttribute(Visum, netobj, id), ids))
+            payload = self._getAttributes(Visum, netobj, ids)
             if len(payload) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
@@ -187,7 +189,7 @@ class VisumDataMiner(threading.Thread):
                 }))
     def GetAttributes(self, Visum):
         for netobj, ids in self.iterNetObjGroupAttributes():
-            payload = zip(*map(lambda (id, dtype):self.GetVisumAttribute(Visum, netobj, id), ids))
+            payload = self._getAttributes(Visum, netobj, ids)
             if len(payload) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_DATA,
@@ -221,29 +223,26 @@ class VisumDataMiner(threading.Thread):
     def GetGeometries(self, Visum):
         # Need to include the related network object identifiers
         for netobj, geomfields in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
+            if not getattr(Visum.Net, netobj).Count > 0:
+                continue
             if not netobj in NETOBJ_IDs:
                 print "Warning, {0} not included in NETOBJ_IDs".format(netobj)
-
             ids = []
             payload = []
             for gfield in geomfields:
                 data = self.GetVisumAttribute(Visum, netobj, gfield)
-                if len(data) > 0:
-                    gdtype = set(zip(*map(lambda v:v.split("(",1), data))[0])
-                    # Could warn if len(gdtype) <> 1, I don't think PostGIS likes mix geometry type fields
-                    ids.append((gfield, gdtype))
-                    payload.append(map(
-                        lambda v:"SRID={srid};".format(**{"srid":MODEL_SRID}) + v,
-                        data
-                    ))
-
-            if len(payload) > 0:
-                self.queue.put(Sponge(**{
-                    "type": database.TBL_GEOMETRY,
-                    "netobj": netobj,
-                    "ids": ids,
-                    "data": payload
-                }))
+                gdtype = self._extractFeatureType(data)
+                ids.append((gfield, gdtype))
+                payload.append(map(
+                    lambda v:"SRID={srid};".format(**{"srid":MODEL_SRID}) + v,
+                    data
+                ))
+            self.queue.put(Sponge(**{
+                "type": database.TBL_GEOMETRY,
+                "netobj": netobj,
+                "ids": ids,
+                "data": payload
+            }))
     def _getGeometryFields(self, Visum):
         netobj_geometry = {}
         attributes = Utility.GetCOMAttributes(Visum)
@@ -253,6 +252,11 @@ class VisumDataMiner(threading.Thread):
         return netobj_geometry
 
     @staticmethod
+    def _extractFeatureType(features):
+        gdtype = set(zip(*map(lambda v:v.split("(",1), features))[0])
+        assert len(gdtype) == 1, "Too many feature types"
+        return list(gdtype)[0]
+    @staticmethod
     def GetVisumAttribute(Visum, netobj, att):
         return map(lambda (i,v):v, getattr(Visum.Net, netobj).GetMultiAttValues(att))
     @staticmethod
@@ -261,8 +265,8 @@ class VisumDataMiner(threading.Thread):
     @staticmethod
     def iterNetObjIDs():
         for netobj, ids in NETOBJ_IDs.iteritems():
-            for id, dtype in ids:
-                yield netobj, id
+            for _id, dtype in ids:
+                yield netobj, _id
     @staticmethod
     def iterNetObjectGroup(dictionary):
         for netobj, ids in dictionary.iteritems():

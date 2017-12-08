@@ -1,3 +1,8 @@
+# Note:
+# All data processing should take place in Visum.py
+# Only database-specific processing should be here
+# e.g. PostGIS overhead
+
 import csv
 import StringIO
 import threading
@@ -63,9 +68,13 @@ class Database(threading.Thread):
             print "Whoopsie"
 
     def LoadAttributes(self, payload, noTOD = False):
-        print Utility.formatCreate(payload.netobj, payload.atts)
+        if noTOD:
+            tblname = TBL_NAMETMPLT_NETOBJ.format(**{'netobj':payload.netobj})
+        else:
+            tblname = TBL_NAMETMPLT_DATA.format(**{'netobj':payload.netobj,'tod':payload.tod})
+        print Utility.formatCreate(tblname, payload.atts)
         for row in payload.data:
-            print Utility.formatInsert(self.con, payload.netobj, row, payload.atts)
+            print Utility.formatInsert(self.con, tblname, row, payload.atts)
             break
 
     def LoadMatrix(self, payload):
@@ -97,9 +106,8 @@ class Database(threading.Thread):
         # Could also use pyproj or something or even reprojecting within Visum itself
 
         print payload.netobj, payload.ids,
-        for i, id in enumerate(payload.ids):
+        for i, (fname, gtype) in enumerate(payload.ids):
             # Begin transaction, temp table, oh god the train is approaching my stop
-            print id, payload.data[i]
             # "ST_GeomFromEWKT('{wkt}')".format(**{"wkt": ewkt})
 
     @classmethod
