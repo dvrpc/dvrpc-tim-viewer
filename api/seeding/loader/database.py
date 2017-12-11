@@ -108,7 +108,7 @@ class Database(threading.Thread):
                 self.process(payload)
             else:
                 logger.error("Database.run(): Missing payload type")
-        logger.debug("Database.run(): Done")
+        logger.debug("Database-%d.run(): Done", self.ident)
 
     def process(self, payload):
         # Oh switch statement, where art thou?
@@ -128,20 +128,23 @@ class Database(threading.Thread):
         else:
             tblname = TBL_NAMETMPLT_DATA.format(**{'netobj':payload.netobj,'tod':payload.tod})
         if self.skipTable(tblname):
-            logger.debug("Database.LoadAttributes(): Exists, skipped %s", tblname)
+            logger.debug("Database-%d.LoadAttributes(): Exists, skipped %s", self.ident, tblname)
             return
-        logger.debug("Database.LoadAttributes(): Importing %s", tblname)
+        logger.debug("Database-%d.LoadAttributes(): Importing %s", self.ident, tblname)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, payload.atts))
-        for row in payload.data:
-            cur.execute(Utility.formatInsert(self.con, tblname, row, payload.atts))
+
+        cur.execute(Utility.formatMultiInsert(self.con, tblname, payload.data, payload.atts))
+        # for row in payload.data:
+            # cur.execute(Utility.formatInsert(self.con, tblname, row, payload.atts))
+
         self.con.commit()
     def LoadMatrix(self, payload):
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
         if self.skipTable(tblname):
-            logger.debug("Database.LoadMatrix(): Exists, skipped %s", tblname)
+            logger.debug("Database-%d.LoadMatrix(): Exists, skipped %s", self.ident, tblname)
             return
-        logger.debug("Database.LoadMatrix(): Importing %s", tblname)
+        logger.debug("Database-%d.LoadMatrix(): Importing %s", self.ident, tblname)
         f = self._bufferMatrix(payload.data)
         cur = self.con.cursor()
         cur.execute(SQL_CREATE_TBL_MTX.format(tblname))
@@ -159,14 +162,15 @@ class Database(threading.Thread):
         assert len(payload.data) == len(payload.gdata), "Error: Count mismatch"
         tblname = TBL_NAMETMPLT_GEOMETRY.format(**{'netobj':payload.netobj})
         if self.skipTable(tblname):
-            logger.debug("Database.LoadGeometries(): Exists, skipped %s", tblname)
+            logger.debug("Database-%d.LoadGeometries(): Exists, skipped %s", self.ident, tblname)
             return
-        logger.debug("Database.LoadGeometries(): Importing %s", tblname)
+        logger.debug("Database-%d.LoadGeometries(): Importing %s", self.ident, tblname)
         atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, atts))
-        for i in xrange(len(payload.data)):
-            cur.execute(Utility.formatGeometryInsert(self.con, tblname, payload.data[i], payload.gdata[i], atts))
+        cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, payload.data, payload.gdata, atts))
+        # for i in xrange(len(payload.data)):
+            # cur.execute(Utility.formatGeometryInsert(self.con, tblname, payload.data[i], payload.gdata[i], atts))
         self.con.commit()
     def _bufferMatrix(self, mtx_listing):
         f = StringIO.StringIO()
@@ -204,22 +208,41 @@ class Utility:
             "tname": tblname,
             "fdefs": self._strFieldDtypes(field_dtypes)
         })
+    @staticmethod
+    def _iterRecordGeoms(records, geom_records = None):
+        _geom = True if geom_records else False
+        for i, values in enumerate(records):
+            if _geom:
+                yield (values, geom_records[i])
+            else:
+                yield (values, None)
     @classmethod
-    def _formatInsert(self, con, tblname, values, geoms = None, field_dtypes = None, postgisfn = None):
+    def _formatInsert(self, con, tblname, records, geom_records = None, field_dtypes = None, postgisfn = None):
         # cur.mogrify requires a valid psycopg2.extensions.connection
         # (it does stuff like read the encoding from the connection)
         cur = con.cursor()
-        return "INSERT INTO {tname} {fdefs} VALUES ({vals}{geos})".format(**{
+        values = ",".join([
+            "({0}{1})".format(
+                cur.mogrify(",".join("%s" for _ in r), r),
+                self._strGeos(cur, g, postgisfn)
+            ) for r, g in self._iterRecordGeoms(records, geom_records)
+        ])
+        return "INSERT INTO {tname} {fdefs} VALUES {values}".format(**{
             "tname": tblname,
             "fdefs": self._strFields(field_dtypes),
-            "vals": cur.mogrify(",".join("%s" for _ in values), values),
-            "geos": self._strGeos(cur, geoms, postgisfn),
+            "values": values
         })
     @classmethod
     def formatInsert(self, con, tblname, values, field_dtypes = None):
-        return self._formatInsert(con, tblname, values, field_dtypes = field_dtypes)
+        return self._formatInsert(con, tblname, (values,), field_dtypes = field_dtypes)
     @classmethod
-    def formatGeometryInsert(self, *args, **kwds):
+    def formatMultiInsert(self, con, tblname, records, field_dtypes = None):
+        return self._formatInsert(con, tblname, records, field_dtypes = field_dtypes)
+    @classmethod
+    def formatGeometryInsert(self, con, tblname, values, geoms, field_dtypes):
+        return self._formatInsert(con, tblname, (values,), (geoms,), field_dtypes, postgisfn = "ST_GeomFromEWKT(%s)")
+    @classmethod
+    def formatMultiGeometryInsert(self, *args, **kwds):
         return self._formatInsert(*args, postgisfn = "ST_GeomFromEWKT(%s)", **kwds)
     @staticmethod
     def doesTableExist(con, tblname):
