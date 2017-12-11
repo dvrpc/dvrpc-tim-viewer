@@ -44,6 +44,7 @@ MTXs = [
 ]
 
 MTX_UPPERLIMIT = 1e5
+COORD_DEC_PRECISION = 6
 
 # Generated automanually using Utility.GetUsableAttributes below
 # and manually finding/translating identifying fields
@@ -191,7 +192,7 @@ class VisumDataMiner(threading.Thread):
         self.semaphore.release()
         v.Net.SetProjection(self.prjwkt, calculate = True)
         self.tod = v.Net.AttValue("TOD")
-
+        v.Net.SetAttValue("CoordDecPlaces", COORD_DEC_PRECISION)
         if self.getnetobj:
             self.GetNetObjects(v)
         self.GetAttributes(v)
