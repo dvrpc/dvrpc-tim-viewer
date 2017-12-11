@@ -39,12 +39,13 @@ SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dind
 
 class Database(threading.Thread):
     MTX_DEFAULT_COLUMNS = ["oindex", "dindex", "val"]
-    def __init__(self, db_credentials, queue, max_queue_depth):
+    def __init__(self, db_credentials, queue, max_queue_depth, overwrite_existing):
         super(Database, self).__init__()
         self.db_credentials = db_credentials
         self.queue = queue
         self.con = psql.connect(**self.db_credentials)
         self.max_queue_depth = max_queue_depth
+        self.overwrite_existing = overwrite_existing
         logger.debug("Database.__init__(): Done")
 
     def run(self):
@@ -77,6 +78,12 @@ class Database(threading.Thread):
             tblname = TBL_NAMETMPLT_NETOBJ.format(**{'netobj':payload.netobj})
         else:
             tblname = TBL_NAMETMPLT_DATA.format(**{'netobj':payload.netobj,'tod':payload.tod})
+        if Utility.doesTableExist(self.con, tblname):
+            if self.overwrite_existing:
+                # Drop table? and Proceed normally forward?
+            else:
+                logger.debug("Database.LoadAttributes(): Exists, skipped %s", tblname)
+                return
         logger.debug("Database.LoadAttributes(): Importing %s", tblname)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, payload.atts))
@@ -85,6 +92,8 @@ class Database(threading.Thread):
         self.con.commit()
     def LoadMatrix(self, payload):
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
+        if self.skipTable(tblname):
+            return
         logger.debug("Database.LoadMatrix(): Importing %s", tblname)
         f = self._bufferMatrix(payload.data)
         cur = self.con.cursor()
@@ -115,7 +124,12 @@ class Database(threading.Thread):
         w.writerows(mtx_listing)
         f.seek(0)
         return f
-
+    def skipTable(self, tblname):
+        if Utility.doesTableExist(self.con, tblname):
+            if self.overwrite_existing:
+                pass
+            else:
+                logger.debug("Database.LoadMatrix(): Exists, skipping %s", tblname)
     def getProjectionWKT(self, srid):
         cur = self.con.cursor()
         cur.execute("SELECT srtext FROM spatial_ref_sys WHERE srid = %s", (srid,))
@@ -171,3 +185,10 @@ class Utility:
     @classmethod
     def formatGeometryInsert(self, *args, **kwds):
         return self._formatInsert(*args, postgisfn = "ST_GeomFromEWKT(%s)", **kwds)
+    @staticmethod
+    def doesTableExist(con, tblname):
+        cur = con.cursor()
+        # Added in Postgres 9.4, returns None if not found
+        cur.execute("SELECT to_regclass(%s)", (tblname,))
+        (found,) = cur.fetchone()
+        return True if found else False
