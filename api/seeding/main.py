@@ -7,16 +7,10 @@ import time
 
 import loader.database
 import loader.visum
+from credentials import PSQL_CNX
 
 MODEL_PATH_TEMPLATE = r"D:\William\Documents\_DVRPC_Mini14\DV_38_125_pruned_toynetwork_{tod}.ver"
 
-PSQL_CNX = {
-    "host": "localhost",
-    "port": 5432,
-    "database": "postgres",
-    "user": "postgres",
-    "password": "sergt",
-}
 PSQL_SRID = 4326
 
 MAX_QUEUE_DEPTH = 100
