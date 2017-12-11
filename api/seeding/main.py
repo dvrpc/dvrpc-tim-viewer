@@ -22,29 +22,31 @@ PSQL_SRID = 4326
 MAX_QUEUE_DEPTH = 100
 
 SINGLE_LOAD_VISUM = True
+DB_THREADS = 4
+OVERWRITE_EXISTING_TABLES = False
 
 def main():
     # Initialisation
     logger.debug("Hi")
     Q = Queue.Queue()
-    D = loader.database.Database(PSQL_CNX, Q, MAX_QUEUE_DEPTH)
+    DM = loader.database.DatabaseManager(PSQL_CNX, Q, MAX_QUEUE_DEPTH, DB_THREADS, OVERWRITE_EXISTING_TABLES)
 
     # WARNING
-    D.nukeDatabase()
+    DM.nukeDatabase()
 
-    spatial_ref = (PSQL_SRID, D.getProjectionWKT(PSQL_SRID))
+    spatial_ref = (PSQL_SRID, DM.getProjectionWKT(PSQL_SRID))
     VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, 15, Q, spatial_ref, MAX_QUEUE_DEPTH, SINGLE_LOAD_VISUM)
 
-    # Start Database IO Agent
-    D.start()
+    # Start Database IO Agent Manager
+    DM.start()
     # Start Visum data streamer
     VM.start()
     VM.join()
     logger.debug("visum.VisumManager(): Finished")
     # When data has been exported from Visum, flag shutdown
     Q.put(None)
-    # Wait for DB Agent to finish doing its thing
-    D.join()
+    # Wait for DB Agents to finish doing its thing
+    DM.join()
     logger.debug("Bye")
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@
 import csv
 import logging
 logger = logging.getLogger(__name__)
+import Queue
 import StringIO
 import threading
 
@@ -37,15 +38,63 @@ SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex sm
 SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (oindex ASC NULLS LAST);"
 SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dindex ASC NULLS LAST);"
 
+class DatabaseManager(threading.Thread):
+    def __init__(self, db_credentials, queue, max_queue_depth, num_threads, overwrite_existing_tables):
+        super(DatabaseManager, self).__init__()
+        self.db_credentials = db_credentials
+        self.queue = queue
+        self.max_queue_depth = max_queue_depth
+        self.num_threads = num_threads
+        self.overwrite_existing_tables = overwrite_existing_tables
+        self._queue = Queue.Queue()
+        self._threads = []
+        self._initialiseWorkers()
+        self._con = psql.connect(**db_credentials)
+        logger.debug("DatabaseManager.__init__(): Done")
+    def run(self):
+        while True:
+            payload = self.queue.get()
+            if payload is None:
+                for _ in self._threads:
+                    self._queue.put(None)
+                break
+            else:
+                self._queue.put(payload)
+        for t in self._threads:
+            t.join()
+        logger.debug("DatabaseManager.run(): Done")
+    def _initialiseWorkers(self):
+        for i in xrange(self.num_threads):
+            self._threads.append(Database(
+                self.db_credentials,
+                self._queue,
+                self.max_queue_depth,
+                self.overwrite_existing_tables
+            ))
+        for t in self._threads:
+            t.start()
+        return
+    def getProjectionWKT(self, srid):
+        cur = self._con.cursor()
+        cur.execute("SELECT srtext FROM spatial_ref_sys WHERE srid = %s", (srid,))
+        (prjwkt,) = cur.fetchone()
+        return prjwkt
+    def nukeDatabase(self):
+        cur = self._con.cursor()
+        cur.execute("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' and tablename <> 'spatial_ref_sys';")
+        for table, in cur.fetchall():
+            cur.execute("DROP TABLE {0}".format(table))
+        self._con.commit()
+
 class Database(threading.Thread):
     MTX_DEFAULT_COLUMNS = ["oindex", "dindex", "val"]
-    def __init__(self, db_credentials, queue, max_queue_depth, overwrite_existing):
+    def __init__(self, db_credentials, queue, max_queue_depth, overwrite_existing_tables):
         super(Database, self).__init__()
         self.db_credentials = db_credentials
         self.queue = queue
         self.con = psql.connect(**self.db_credentials)
         self.max_queue_depth = max_queue_depth
-        self.overwrite_existing = overwrite_existing
+        self.overwrite_existing = overwrite_existing_tables
         logger.debug("Database.__init__(): Done")
 
     def run(self):
@@ -59,6 +108,7 @@ class Database(threading.Thread):
                 self.process(payload)
             else:
                 logger.error("Database.run(): Missing payload type")
+        logger.debug("Database.run(): Done")
 
     def process(self, payload):
         # Oh switch statement, where art thou?
@@ -72,18 +122,14 @@ class Database(threading.Thread):
             self.LoadGeometries(payload)
         else:
             logger.error("Database.process(): Invalid table type (%s)", payload.type)
-
     def LoadAttributes(self, payload, noTOD = False):
         if noTOD:
             tblname = TBL_NAMETMPLT_NETOBJ.format(**{'netobj':payload.netobj})
         else:
             tblname = TBL_NAMETMPLT_DATA.format(**{'netobj':payload.netobj,'tod':payload.tod})
-        if Utility.doesTableExist(self.con, tblname):
-            if self.overwrite_existing:
-                # Drop table? and Proceed normally forward?
-            else:
-                logger.debug("Database.LoadAttributes(): Exists, skipped %s", tblname)
-                return
+        if self.skipTable(tblname):
+            logger.debug("Database.LoadAttributes(): Exists, skipped %s", tblname)
+            return
         logger.debug("Database.LoadAttributes(): Importing %s", tblname)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, payload.atts))
@@ -93,6 +139,7 @@ class Database(threading.Thread):
     def LoadMatrix(self, payload):
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
         if self.skipTable(tblname):
+            logger.debug("Database.LoadMatrix(): Exists, skipped %s", tblname)
             return
         logger.debug("Database.LoadMatrix(): Importing %s", tblname)
         f = self._bufferMatrix(payload.data)
@@ -109,8 +156,11 @@ class Database(threading.Thread):
         cur.execute(SQL_CREATE_IDX_MTX_D.format(tblname))
         self.con.commit()
     def LoadGeometries(self, payload):
-        assert len(payload.data) == len(payload.gdata), "Warning: Count mismatch"
+        assert len(payload.data) == len(payload.gdata), "Error: Count mismatch"
         tblname = TBL_NAMETMPLT_GEOMETRY.format(**{'netobj':payload.netobj})
+        if self.skipTable(tblname):
+            logger.debug("Database.LoadGeometries(): Exists, skipped %s", tblname)
+            return
         logger.debug("Database.LoadGeometries(): Importing %s", tblname)
         atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
         cur = self.con.cursor()
@@ -125,22 +175,8 @@ class Database(threading.Thread):
         f.seek(0)
         return f
     def skipTable(self, tblname):
-        if Utility.doesTableExist(self.con, tblname):
-            if self.overwrite_existing:
-                pass
-            else:
-                logger.debug("Database.LoadMatrix(): Exists, skipping %s", tblname)
-    def getProjectionWKT(self, srid):
-        cur = self.con.cursor()
-        cur.execute("SELECT srtext FROM spatial_ref_sys WHERE srid = %s", (srid,))
-        (prjwkt,) = cur.fetchone()
-        return prjwkt
-    def nukeDatabase(self):
-        cur = self.con.cursor()
-        cur.execute("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' and tablename <> 'spatial_ref_sys';")
-        for table, in cur.fetchall():
-            cur.execute("DROP TABLE {0}".format(table))
-        self.con.commit()
+        return self.overwrite_existing_tables if Utility.doesTableExist(self.con, tblname) else False
+
 
 class Utility:
     def __init__(self):
