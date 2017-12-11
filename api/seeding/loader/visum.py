@@ -209,7 +209,7 @@ class VisumDataMiner(threading.Thread):
         return zip(*map(lambda (_id, dtype):self.GetVisumAttribute(Visum, netobj, _id), ids))
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
-            logger.info("VisumDataMiner.GetNetObjects(): Exporting NetObj %s", netobj)
+            logger.info("VisumDataMiner-%s.GetNetObjects(): Exporting NetObj %s", self.tod, netobj)
             data = self._getAttributes(Visum, netobj, ids)
             if len(data) > 0:
                 self.queue.put(Sponge(**{
@@ -220,7 +220,7 @@ class VisumDataMiner(threading.Thread):
                 }))
     def GetAttributes(self, Visum):
         for netobj, ids in self.iterNetObjGroupAttributes():
-            logger.info("VisumDataMiner.GetAttributes(): (%s) Exporting NetObj %s", self.tod, netobj)
+            logger.info("VisumDataMiner-%s.GetAttributes(): Exporting NetObj %s", self.tod, netobj)
             data = self._getAttributes(Visum, netobj, ids)
             if len(data) > 0:
                 self.queue.put(Sponge(**{
@@ -232,7 +232,7 @@ class VisumDataMiner(threading.Thread):
                 }))
     def GetMatrices(self, Visum):
         for mtxno in self.iterMatrices():
-            logger.info("VisumDataMiner.GetMatrices(): (%s) Exporting Matrix %s", self.tod, mtxno)
+            logger.info("VisumDataMiner-%s.GetMatrices(): Exporting Matrix %s", self.tod, mtxno)
             mtx_listing = self._getMatrix(Visum, mtxno)
             self.queue.put(Sponge(**{
                 "type": database.TBL_MATRIX,
@@ -254,15 +254,15 @@ class VisumDataMiner(threading.Thread):
         mtx_listing = numpy.array((x,y,z,), dtype = object).T
         return mtx_listing[numpy.where(mtx_listing[:,2] < MTX_UPPERLIMIT)]
     def GetGeometries(self, Visum):
-        logger.info("VisumDataMiner.GetGeometries(): Started")
+        logger.info("VisumDataMiner-%s.GetGeometries(): Started", self.tod)
         for netobj, geomfields in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
             if not getattr(Visum.Net, netobj).Count > 0:
-                logger.info("{0} has no objects".format(netobj))
+                logger.info("VisumDataMiner-%s.GetGeometries():{0} has no objects".format(netobj), self.tod)
                 continue
             if not netobj in NETOBJ_IDs:
-                logger.warning("Warning, {0} not included in NETOBJ_IDs".format(netobj))
+                logger.warning("VisumDataMiner-%s.GetGeometries(): Warning, {0} not included in NETOBJ_IDs".format(netobj), self.tod)
                 continue
-            logger.debug("VisumDataMiner.GetGeometries(): Exporting geometries from Netobj %s", netobj)
+            logger.debug("VisumDataMiner-%s.GetGeometries(): Exporting geometries from Netobj %s", self.tod, netobj)
             gatts = []
             gdata = []
             atts = NETOBJ_IDs[netobj]

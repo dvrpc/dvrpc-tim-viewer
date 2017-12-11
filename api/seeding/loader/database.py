@@ -16,6 +16,8 @@ from common import *
 
 import time
 
+INSERT_BATCH_SIZE = 10000
+
 # TOD agnostic
 TBL_NETOBJ = "net"
 # TOD dependent
@@ -133,11 +135,8 @@ class Database(threading.Thread):
         logger.debug("Database-%d.LoadAttributes(): Importing %s", self.ident, tblname)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, payload.atts))
-
-        cur.execute(Utility.formatMultiInsert(self.con, tblname, payload.data, payload.atts))
-        # for row in payload.data:
-            # cur.execute(Utility.formatInsert(self.con, tblname, row, payload.atts))
-
+        for data in self._iterPayload(payload.data):
+            cur.execute(Utility.formatMultiInsert(self.con, tblname, data, payload.atts))
         self.con.commit()
     def LoadMatrix(self, payload):
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
@@ -168,9 +167,8 @@ class Database(threading.Thread):
         atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, atts))
-        cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, payload.data, payload.gdata, atts))
-        # for i in xrange(len(payload.data)):
-            # cur.execute(Utility.formatGeometryInsert(self.con, tblname, payload.data[i], payload.gdata[i], atts))
+        for data in self._iterPayload(payload.data):
+            cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, data, payload.gdata, atts))
         self.con.commit()
     def _bufferMatrix(self, mtx_listing):
         f = StringIO.StringIO()
@@ -178,6 +176,9 @@ class Database(threading.Thread):
         w.writerows(mtx_listing)
         f.seek(0)
         return f
+    def _iterPayload(self, data):
+        for i in xrange(0, len(data), INSERT_BATCH_SIZE):
+            yield data[i:i+INSERT_BATCH_SIZE]
     def skipTable(self, tblname):
         return self.overwrite_existing_tables if Utility.doesTableExist(self.con, tblname) else False
 
