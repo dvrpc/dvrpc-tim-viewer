@@ -101,6 +101,7 @@ class Database(threading.Thread):
 
     def run(self):
         while True:
+            logger.debug("Database-%d.run(): Waiting...", self.ident)
             payload = self.queue.get()
             if payload is None:
                 self.con.commit()
