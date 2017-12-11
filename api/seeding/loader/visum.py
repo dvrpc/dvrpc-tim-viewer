@@ -221,6 +221,10 @@ class VisumDataMiner(threading.Thread):
     def GetAttributes(self, Visum):
         for netobj, ids in self.iterNetObjGroupAttributes():
             logger.info("VisumDataMiner-%s.GetAttributes(): Exporting NetObj %s", self.tod, netobj)
+            if not netobj in NETOBJ_IDs:
+                logger.error("VisumDataMiner-%s.GetAttributes(): Error, {0} not included in NETOBJ_IDs".format(netobj), self.tod)
+                continue
+            ids = NETOBJ_IDs[netobj] + ids
             data = self._getAttributes(Visum, netobj, ids)
             if len(data) > 0:
                 self.queue.put(Sponge(**{
@@ -257,7 +261,7 @@ class VisumDataMiner(threading.Thread):
         logger.info("VisumDataMiner-%s.GetGeometries(): Started", self.tod)
         for netobj, geomfields in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
             if not getattr(Visum.Net, netobj).Count > 0:
-                logger.info("VisumDataMiner-%s.GetGeometries():{0} has no objects".format(netobj), self.tod)
+                logger.info("VisumDataMiner-%s.GetGeometries(): {0} has no objects".format(netobj), self.tod)
                 continue
             if not netobj in NETOBJ_IDs:
                 logger.warning("VisumDataMiner-%s.GetGeometries(): Warning, {0} not included in NETOBJ_IDs".format(netobj), self.tod)
