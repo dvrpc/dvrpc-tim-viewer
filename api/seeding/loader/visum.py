@@ -193,12 +193,14 @@ class VisumDataMiner(threading.Thread):
         v.Net.SetProjection(self.prjwkt, calculate = True)
         self.tod = v.Net.AttValue("TOD")
         v.Net.SetAttValue("CoordDecPlaces", COORD_DEC_PRECISION)
-        if self.getnetobj:
-            self.GetNetObjects(v)
-        self.GetAttributes(v)
-        self.GetMatrices(v)
+
+        # if self.getnetobj:
+        #     self.GetNetObjects(v)
+        # self.GetAttributes(v)
+        # self.GetMatrices(v)
         if self.getnetobj:
             self.GetGeometries(v)
+
         pythoncom.CoUninitialize()
 
     def CreateVisum(self):
@@ -260,12 +262,17 @@ class VisumDataMiner(threading.Thread):
         return mtx_listing[numpy.where(mtx_listing[:,2] < MTX_UPPERLIMIT)]
     def GetGeometries(self, Visum):
         logger.info("VisumDataMiner-%s.GetGeometries(): Started", self.tod)
-        for netobj, geomfields in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
+        # for netobj, geomfields in self.iterNetObjectGroup(self._getGeometryFields(Visum)):
+        for netobj, ids in self.iterNetObjGroupIDs():
+            geomfields = list(Utility.FindWKT(Visum, netobj))
+            if not len(geomfields) > 0:
+                logger.info("VisumDataMiner-%s.GetGeometries(): %s has no geometry", self.tod, netobj)
+                continue
             if not getattr(Visum.Net, netobj).Count > 0:
-                logger.info("VisumDataMiner-%s.GetGeometries(): {0} has no objects".format(netobj), self.tod)
+                logger.info("VisumDataMiner-%s.GetGeometries(): %s has no objects", self.tod, netobj)
                 continue
             if not netobj in NETOBJ_IDs:
-                logger.warning("VisumDataMiner-%s.GetGeometries(): Warning, {0} not included in NETOBJ_IDs".format(netobj), self.tod)
+                logger.warning("VisumDataMiner-%s.GetGeometries(): Warning, %s not included in NETOBJ_IDs", self.tod, netobj)
                 continue
             logger.debug("VisumDataMiner-%s.GetGeometries(): Exporting geometries from Netobj %s", self.tod, netobj)
             gatts = []
@@ -295,6 +302,7 @@ class VisumDataMiner(threading.Thread):
         netobj_geometry = {}
         attributes = Utility.GetCOMAttributes(Visum)
         wkt_fields = filter(lambda row:"wkt" in row[1].lower(), attributes)
+        logger.info("VisumDataMiner-%s._getGeometryFields(): Found %s geometry fields", self.tod, len(wkt_fields))
         for netobj in set(zip(*wkt_fields)[0]):
             netobj_geometry[netobj] = zip(*filter(lambda row:row[0] == netobj, wkt_fields))[1]
         return netobj_geometry
@@ -346,6 +354,11 @@ class Utility:
     }
     def __init__(self):
         pass
+    # Note:
+    # When I run this on my local (work) machine, it works. (Visum 15.22-x64)
+    #   Win 7 Pro; i7-3770; 32 GB; OEM Python 2.7 x64
+    # When I run this on one of the workstations, it fails. (Visum 15.14 x64, Visum 15.22 x64)
+    #   Win 7 Pro; e5-2687W v4; 256 (192) GB; Continuum Anaconda 2.7 x64
     @staticmethod
     def enumerateCOM(object, bruteForceN = 1000):
         methods, attributes = [], []
@@ -370,6 +383,11 @@ class Utility:
             activeNetElemsOnly = False,
             nonEmptyTablesOnly = False
         )
+    @staticmethod
+    def FindWKT(Visum, netobj):
+        for att in getattr(Visum.Net, netobj).Attributes.GetAll:
+            if "wkt" in att.Code.lower():
+                yield att
     @classmethod
     def GetCOMAttributes(self, Visum):
         master_attributes = []
