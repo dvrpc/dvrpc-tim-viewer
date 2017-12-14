@@ -1,6 +1,7 @@
 import logging
 logger = logging.getLogger(__name__)
 import pythoncom
+import re
 import sys
 import threading
 import win32com.client
@@ -194,10 +195,10 @@ class VisumDataMiner(threading.Thread):
         self.tod = v.Net.AttValue("TOD")
         v.Net.SetAttValue("CoordDecPlaces", COORD_DEC_PRECISION)
 
-        # if self.getnetobj:
-        #     self.GetNetObjects(v)
-        # self.GetAttributes(v)
-        # self.GetMatrices(v)
+        if self.getnetobj:
+            self.GetNetObjects(v)
+        self.GetAttributes(v)
+        self.GetMatrices(v)
         if self.getnetobj:
             self.GetGeometries(v)
 
@@ -277,8 +278,9 @@ class VisumDataMiner(threading.Thread):
             logger.debug("VisumDataMiner-%s.GetGeometries(): Exporting geometries from Netobj %s", self.tod, netobj)
             gatts = []
             gdata = []
-            atts = NETOBJ_IDs[netobj]
-            data = self._getAttributes(Visum, netobj, atts)
+            # atts = NETOBJ_IDs[netobj]
+            # data = self._getAttributes(Visum, netobj, atts)
+            data = self._getAttributes(Visum, netobj, ids)
             for gfield in geomfields:
                 _data = self.GetVisumAttribute(Visum, netobj, gfield)
                 gdtype = self._extractFeatureType(_data)
@@ -290,7 +292,7 @@ class VisumDataMiner(threading.Thread):
             self.queue.put(Sponge(**{
                 "type": database.TBL_GEOMETRY,
                 "netobj": netobj,
-                "atts": atts,
+                "atts": ids,
                 "data": data,
                 "gatts": gatts,
                 # Internal debate about this, it'll get 'appended' to data which involves zip(*args) both
@@ -309,8 +311,9 @@ class VisumDataMiner(threading.Thread):
 
     @staticmethod
     def _extractFeatureType(features):
-        gdtype = set(zip(*map(lambda v:v.split("(",1), features))[0])
-        assert len(gdtype) == 1, "Too many feature types"
+        # gdtype = set(zip(*map(lambda v:v.split("(",1), features))[0])
+        gdtype = set(zip(*map(lambda v:re.split(" |\(", v, 1), features))[0])
+        assert len(gdtype) == 1, "Too many feature types (%s)" % str(gdtype)
         return list(gdtype)[0]
     @staticmethod
     def GetVisumAttribute(Visum, netobj, att):
@@ -387,7 +390,7 @@ class Utility:
     def FindWKT(Visum, netobj):
         for att in getattr(Visum.Net, netobj).Attributes.GetAll:
             if "wkt" in att.Code.lower():
-                yield att
+                yield att.Code.lower()
     @classmethod
     def GetCOMAttributes(self, Visum):
         master_attributes = []
