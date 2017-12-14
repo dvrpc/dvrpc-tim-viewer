@@ -97,7 +97,7 @@ class Database(threading.Thread):
         self.queue = queue
         self.con = psql.connect(**self.db_credentials)
         self.max_queue_depth = max_queue_depth
-        self.overwrite_existing = overwrite_existing_tables
+        self.overwrite_existing_tables = overwrite_existing_tables
         logger.debug("Database.__init__(): Done")
 
     def run(self):
