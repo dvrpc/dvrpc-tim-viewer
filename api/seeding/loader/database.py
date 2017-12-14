@@ -16,6 +16,8 @@ from common import *
 
 import time
 
+INSERT_BATCH_SIZE = 10000
+
 # TOD agnostic
 TBL_NETOBJ = "net"
 # TOD dependent
@@ -37,6 +39,7 @@ TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex smallint, val double precision);"
 SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (oindex ASC NULLS LAST);"
 SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dindex ASC NULLS LAST);"
+SQL_CREATE_IDX_GEOM = "CREATE INDEX {tblname}_{field}_gidx ON {tblname} USING GIST ({field});"
 
 class DatabaseManager(threading.Thread):
     def __init__(self, db_credentials, queue, max_queue_depth, num_threads, overwrite_existing_tables):
@@ -94,11 +97,12 @@ class Database(threading.Thread):
         self.queue = queue
         self.con = psql.connect(**self.db_credentials)
         self.max_queue_depth = max_queue_depth
-        self.overwrite_existing = overwrite_existing_tables
+        self.overwrite_existing_tables = overwrite_existing_tables
         logger.debug("Database.__init__(): Done")
 
     def run(self):
         while True:
+            logger.debug("Database-%d.run(): Waiting...", self.ident)
             payload = self.queue.get()
             if payload is None:
                 self.con.commit()
@@ -133,11 +137,8 @@ class Database(threading.Thread):
         logger.debug("Database-%d.LoadAttributes(): Importing %s", self.ident, tblname)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, payload.atts))
-
-        cur.execute(Utility.formatMultiInsert(self.con, tblname, payload.data, payload.atts))
-        # for row in payload.data:
-            # cur.execute(Utility.formatInsert(self.con, tblname, row, payload.atts))
-
+        for data in self._iterPayload(payload.data):
+            cur.execute(Utility.formatMultiInsert(self.con, tblname, data, payload.atts))
         self.con.commit()
     def LoadMatrix(self, payload):
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
@@ -168,9 +169,11 @@ class Database(threading.Thread):
         atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, atts))
-        cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, payload.data, payload.gdata, atts))
-        # for i in xrange(len(payload.data)):
-            # cur.execute(Utility.formatGeometryInsert(self.con, tblname, payload.data[i], payload.gdata[i], atts))
+        for _data in self._iterPayload(zip(payload.data, payload.gdata)):
+            data, gdata = zip(*_data)
+            cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, data, gdata, atts))
+        for field, dtype in payload.gatts:
+            cur.execute(SQL_CREATE_IDX_GEOM.format(**{"tblname": tblname, "field": field}))
         self.con.commit()
     def _bufferMatrix(self, mtx_listing):
         f = StringIO.StringIO()
@@ -178,6 +181,9 @@ class Database(threading.Thread):
         w.writerows(mtx_listing)
         f.seek(0)
         return f
+    def _iterPayload(self, data):
+        for i in xrange(0, len(data), INSERT_BATCH_SIZE):
+            yield data[i:i+INSERT_BATCH_SIZE]
     def skipTable(self, tblname):
         return self.overwrite_existing_tables if Utility.doesTableExist(self.con, tblname) else False
 
