@@ -1,7 +1,12 @@
 import logging
-logging.basicConfig(format = "%(asctime)s:%(levelname)s:%(name)s:%(message)s")
+logFormat = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
+logging.basicConfig(format = logFormat)
+fileHandler = logging.FileHandler('stdout.log')
+fileHandler.setFormatter(logging.Formatter(logFormat))
 logger = logging.getLogger()
+logger.addHandler(fileHandler)
 logger.setLevel(logging.DEBUG)
+
 import Queue
 import time
 
