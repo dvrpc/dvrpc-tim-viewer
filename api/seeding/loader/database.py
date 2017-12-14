@@ -171,7 +171,7 @@ class Database(threading.Thread):
         cur.execute(Utility.formatCreate(tblname, atts))
         for _data in self._iterPayload(zip(payload.data, payload.gdata)):
             data, gdata = zip(*_data)
-            cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, data, payload.gdata, atts))
+            cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, data, gdata, atts))
         for field, dtype in payload.gatts:
             cur.execute(SQL_CREATE_IDX_GEOM.format(**{"tblname": tblname, "field": field}))
         self.con.commit()

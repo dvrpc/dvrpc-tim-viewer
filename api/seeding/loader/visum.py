@@ -203,6 +203,7 @@ class VisumDataMiner(threading.Thread):
             self.GetGeometries(v)
 
         pythoncom.CoUninitialize()
+        logger.debug("VisumDataMiner-%s.run(): Finished", self.tod)
 
     def CreateVisum(self):
         v = win32com.client.Dispatch("Visum.Visum-64.{vn}".format(**{"vn":self.vernum}))
