@@ -39,6 +39,7 @@ TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex smallint, val double precision);"
 SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (oindex ASC NULLS LAST);"
 SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dindex ASC NULLS LAST);"
+SQL_CREATE_IDX_GEOM = "CREATE INDEX {tblname}_{field}_gidx ON {tblname} USING GIST ({field});"
 
 class DatabaseManager(threading.Thread):
     def __init__(self, db_credentials, queue, max_queue_depth, num_threads, overwrite_existing_tables):
@@ -168,8 +169,11 @@ class Database(threading.Thread):
         atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, atts))
-        for data in self._iterPayload(payload.data):
+        for _data in self._iterPayload(zip(payload.data, payload.gdata)):
+            data, gdata = zip(*_data)
             cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, data, payload.gdata, atts))
+        for field, dtype in payload.gatts:
+            cur.execute(SQL_CREATE_IDX_GEOM.format(**{"tblname": tblname, "field": field}))
         self.con.commit()
     def _bufferMatrix(self, mtx_listing):
         f = StringIO.StringIO()

@@ -317,7 +317,7 @@ class VisumDataMiner(threading.Thread):
         return list(gdtype)[0]
     @staticmethod
     def GetVisumAttribute(Visum, netobj, att):
-        return map(lambda (i,v):v, getattr(Visum.Net, netobj).GetMultiAttValues(att))
+        return map(lambda (i,v):v, getattr(Visum.Net, netobj).GetMultiAttValues(att, False))
     @staticmethod
     def GetVisumMatrix(Visum, mtxno):
         return numpy.array(Visum.Net.Matrices.ItemByKey(mtxno).GetValues())
