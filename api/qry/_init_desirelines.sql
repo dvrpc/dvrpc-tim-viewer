@@ -2,6 +2,7 @@ DROP TABLE IF EXISTS _debug_delaunay;
 DROP TABLE IF EXISTS _debug_voronoi;
 DROP TABLE IF EXISTS _debug_network;
 DROP TABLE IF EXISTS _debug_network_vertices_pgr;
+DROP TABLE IF EXISTS _debug_network_zones;
 
 CREATE TABLE _debug_delaunay AS
 SELECT
@@ -87,6 +88,8 @@ CREATE INDEX IF NOT EXISTS _debug_network_gidx ON _debug_network USING GIST (geo
 
 SELECT pgr_createTopology('_debug_network', 0.000001, 'geom', 'id');
 
+CREATE TABLE _debug_network_zones AS SELECT n.id, z.no FROM _debug_network_vertices_pgr n JOIN geom_zones z ON z.wktloc = n.the_geom ORDER BY n.id;
+
 -- Update network table with zone identifiers (if applicable)
 UPDATE _debug_network
 SET ozone = z.no
@@ -98,9 +101,9 @@ SET dzone = z.no
 FROM _debug_network_vertices_pgr n JOIN geom_zones z ON z.wktloc = n.the_geom
 WHERE target = n.id;
 
--- STATIC
+-- STATIC (Function zone)
 -- 
-SELECT *, 
+SELECT *,
     (tflag * length) + (o_out * length) + (d_in * length) AS cost,
     (tflag * length) + (o_in * length) + (d_out * length) AS rcost
 FROM (
@@ -117,15 +120,31 @@ SELECT *,
         WHEN ozone = 135 THEN 999999
         ELSE 0
     END o_in,
+
     CASE 
-        WHEN ozone = 135 THEN 0
-        WHEN ozone IS NOT NULL THEN 1
-        ELSE 999999
-    END d_out,
+        WHEN ozone IS NULL AND dzone IS NOT NULL THEN
+            CASE WHEN dzone = 135 THEN 1
+            ELSE 999999
+        ELSE 0
+    END d_in,
     CASE 
-        WHEN dzone = 135 THEN 0
-        WHEN dzone IS NOT NULL THEN 1
-        ELSE 999999
-    END d_in
+        WHEN dzone IS NULL AND ozone IS NOT NULL THEN 1
+        ELSE 0
+    END d_out
+
     FROM _debug_network
-) _q ORDER BY o_in DESC
+) _q
+
+WITH zone_index AS (SELECT indexp1 - 1 AS index, no FROM (SELECT row_number() OVER (ORDER BY no) AS indexp1, no FROM net_zones) _q)
+SELECT fn.*, z.no, zi.index, mtx_2000_am.val
+FROM pgr_dijkstra(
+    'SELECT id, source, target, cost AS cost, rcost as reverse_cost FROM _debug_net',
+    16266,
+    (SELECT array_agg(DISTINCT(target)) FROM _debug_net WHERE dzone <> 16266),
+    directed := true
+) fn
+LEFT JOIN _debug_net n ON fn.edge = n.id
+LEFT JOIN _debug_network_zones z ON z.id = fn.end_vid
+LEFT JOIN zone_index zi ON z.no = zi.no
+LEFT JOIN mtx_2000_am ON oindex = 134 AND dindex = zi.index
+ORDER BY seq
