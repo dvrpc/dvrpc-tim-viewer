@@ -15,20 +15,22 @@ DECLARE
     _tblname_mtx_md TEXT;
     _tblname_mtx_pm TEXT;
     _tblname_mtx_nt TEXT;
+    origzoneindex INTEGER;
 BEGIN
     _tblname_mtx_am := format('%I', 'mtx_' || mtxno || '_am');
     _tblname_mtx_md := format('%I', 'mtx_' || mtxno || '_md');
     _tblname_mtx_pm := format('%I', 'mtx_' || mtxno || '_pm');
     _tblname_mtx_nt := format('%I', 'mtx_' || mtxno || '_nt');
+    origzoneindex := tim_getzoneindex(origzoneno);
 
     RETURN QUERY
     EXECUTE FORMAT('
     WITH
     _destzone AS (
-        SELECT
-            tim_getzoneindex(no) zoneindex,
-            no zoneno
-        FROM net_zones
+        SELECT indexp1 - 1 AS zoneindex, no zoneno
+        FROM (
+            SELECT row_number() OVER (ORDER BY no) AS indexp1, no FROM net_zones
+        ) _q
         WHERE no IN (SELECT UNNEST($1))
     ),
     _mtx AS (
@@ -36,7 +38,7 @@ BEGIN
         FROM (
             SELECT *
             FROM %I
-            WHERE oindex = tim_getzoneindex($2)
+            WHERE oindex = $2
             AND dindex IN (SELECT zoneindex FROM _destzone)
         ) mtx
         LEFT JOIN _destzone dz ON dz.zoneindex = dindex
@@ -61,6 +63,7 @@ BEGIN
     LEFT JOIN _debug_delaunay d
     ON d.id = _q.edge
     WHERE d.geom IS NOT NULL;
-    ', _tblname_mtx_am) USING destzonenos, origzoneno, origzoneno;
+    ', _tblname_mtx_am) USING destzonenos, origzoneindex, origzoneno;
+
 END;
 $$ LANGUAGE plpgsql;
