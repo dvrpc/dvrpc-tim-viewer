@@ -29,7 +29,14 @@ $RECYCLE.BIN/
 *.vb
 *.cache
 
+# https://github.com/klokantech/tileserver-php
+tileserver.php
+
 config.js
 *credentials*
 *.pyc
 *.log
+# Mapbox GL Vector tiles
+*.pbf
+
+*.json
