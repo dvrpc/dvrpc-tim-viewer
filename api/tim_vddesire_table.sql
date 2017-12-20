@@ -33,11 +33,15 @@ BEGIN
         ) _q
     ),
     _destzone AS (
-        SELECT indexp1 - 1 AS zoneindex, no zoneno
+        SELECT indexp1 - 1 AS zoneindex, zoneno, nz.id zoneid
         FROM (
-            SELECT row_number() OVER (ORDER BY no) AS indexp1, no FROM net_zones
+            SELECT
+                row_number() OVER (ORDER BY no) AS indexp1,
+                net_zones.no zoneno
+            FROM net_zones
         ) _q
-        WHERE no IN (SELECT UNNEST(destzonenos))
+        LEFT JOIN _debug_network_zones nz ON nz.no = _q.zoneno
+        WHERE zoneno IN (SELECT UNNEST(destzonenos))
     )
     SELECT sp.*, net.geom FROM (
         SELECT fn.edge, SUM(val) totalval
@@ -78,7 +82,7 @@ BEGIN
                 ) __q
             ) _q', origzoneno, origzoneno, origzoneno, origzoneno),
             origzoneid,
-            (SELECT array_agg(id) FROM _debug_network_zones WHERE no <> origzoneno),
+            (SELECT array_agg(DISTINCT(zoneid)) FROM _destzone),
             directed := true
         ) fn
         LEFT JOIN _debug_network_zones z ON z.id = fn.end_vid
