@@ -29,6 +29,9 @@ $RECYCLE.BIN/
 *.vb
 *.cache
 
+# Open MS Office files
+~$*
+
 # https://github.com/klokantech/tileserver-php
 tileserver.php
 
