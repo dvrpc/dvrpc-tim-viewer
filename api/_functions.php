@@ -19,4 +19,20 @@
         }
         return $atts;
     }
+
+    function ParseType($get) {
+        /* Types
+         *  b - Bureaucracy (Identifiers)
+         *  d - Data
+         *  g - Geometries
+         *      gpt - Point
+         *      gln - Line
+         *      gpg - Polygon
+         */
+        if (array_key_exists("t", $get)) {
+            return $get["t"];
+        } else {
+            die('Missing type parameter');
+        }
+    }
 ?>

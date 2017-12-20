@@ -1,7 +1,8 @@
 <?php
     include('_functions.php');
 
-    var_dump(ParseAttributes($_GET));
+    $type = ParseType($_GET);
+    $atts = ParseAttributes($_GET);
 
     $_qry = "SELECT COUNT(*) FROM mtx_2000_am WHERE oindex = $1;";
     $con = ConnectToDB();
