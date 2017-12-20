@@ -17,11 +17,15 @@
         return $pgarray . $array[$n - 1] . "]";
     }
 
-    function _parseAttribute($att, $array) {
+    function _parseAttribute($att, $array, $ignoreerror = FALSE) {
         if (array_key_exists($att, $array)) {
             return urldecode($array[$att]);
         } else {
-            die('Missing parameter');
+            if ($ignoreerror) {
+                return True;
+            } else {
+                die('Missing parameter');
+            }
         }
     }
     function _parseAttributes($att, $array) {

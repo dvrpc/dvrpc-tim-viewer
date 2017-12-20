@@ -4,15 +4,19 @@
     $type = ParseType($_GET);
 
     $origzoneno = _parseAttribute("oz", $_GET);
-    $destzonenos = _parseAttributes("dz", $_GET);
+    if (_parseAttribute("dz", $_GET, TRUE)) {
+        $destzonenos = "(SELECT array_agg(DISTINCT(no)) FROM net_zones)";
+    } else {
+        $destzonenos = pg_toIntArray(_parseAttributes("dz", $_GET));
+    }
     $matrixno = _parseAttribute("m", $_GET);
 
     switch ($type) {
         case "ddl":
-            $qry = "SELECT tim_gfx_ddl($1, $2,  ". pg_toIntArray($destzonenos) .")";
+            $qry = "SELECT tim_gfx_ddl($1, $2,  ". $destzonenos .")";
             break;
         case "vddl":
-            $qry = "SELECT tim_gfx_vddl($1, $2, ". pg_toIntArray($destzonenos) .")";
+            $qry = "SELECT tim_gfx_vddl($1, $2, ". $destzonenos .")";
             break;
         default:
             die("Invalid type");
