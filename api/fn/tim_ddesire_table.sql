@@ -67,3 +67,22 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION tim_ddesire_table(matrixno INTEGER, origzonenos INTEGER[], destzonenos INTEGER[])
+RETURNS TABLE (
+    edge BIGINT,
+    totalval DOUBLE PRECISION,
+    geom GEOMETRY(LINESTRING, 4326)
+) AS $$
+DECLARE
+    geojson JSON;
+BEGIN
+    RETURN QUERY
+    SELECT (_q.rec).edge, SUM((_q.rec).totalval) totalval, (_q.rec).geom
+    FROM (
+        SELECT tim_ddesire_table(matrixno, origzoneno, destzonenos) rec
+        FROM (SELECT UNNEST(origzonenos) origzoneno) _q
+    ) _q
+    GROUP BY (_q.rec).edge, (_q.rec).geom;
+END;
+$$ LANGUAGE plpgsql;
