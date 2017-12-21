@@ -21,7 +21,7 @@ BEGIN
     _tblname_mtx_pm := format('%I', 'mtx_' || mtxno || '_pm');
     _tblname_mtx_nt := format('%I', 'mtx_' || mtxno || '_nt');
     origzoneindex := tim_getzoneindex(origzoneno);
-    SELECT id INTO origzoneid FROM _debug_network_zones WHERE no = origzoneno;
+    SELECT id INTO origzoneid FROM gfx_zone_network_zones WHERE no = origzoneno;
 
     RETURN QUERY
     WITH
@@ -40,7 +40,7 @@ BEGIN
                 net_zones.no zoneno
             FROM net_zones
         ) _q
-        LEFT JOIN _debug_network_zones nz ON nz.no = _q.zoneno
+        LEFT JOIN gfx_zone_network_zones nz ON nz.no = _q.zoneno
         WHERE zoneno IN (SELECT UNNEST(destzonenos))
     )
     SELECT sp.*, net.geom FROM (
@@ -78,20 +78,20 @@ BEGIN
                             ELSE 999999
                         END
                         END rev
-                    FROM _debug_network
+                    FROM gfx_zone_network
                 ) __q
             ) _q', origzoneno, origzoneno, origzoneno, origzoneno),
             origzoneid,
             (SELECT array_agg(DISTINCT(zoneid)) FROM _destzone),
             directed := true
         ) fn
-        LEFT JOIN _debug_network_zones z ON z.id = fn.end_vid
+        LEFT JOIN gfx_zone_network_zones z ON z.id = fn.end_vid
         LEFT JOIN zone_index zi ON z.no = zi.no
         -- LEFT JOIN _destzone dz ON dz.zoneno = z.no
         LEFT JOIN mtx_2000_am mtx ON mtx.oindex = origzoneindex AND mtx.dindex = zi.index
         -- LEFT JOIN mtx_2000_am mtx ON mtx.oindex = 134 AND mtx.dindex = dz.zoneindex
         GROUP BY fn.edge
     ) sp
-    LEFT JOIN _debug_network net ON net.id = sp.edge;
+    LEFT JOIN gfx_zone_network net ON net.id = sp.edge;
 END;
 $$ LANGUAGE plpgsql;
