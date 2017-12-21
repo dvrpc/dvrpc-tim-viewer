@@ -100,3 +100,14 @@ UPDATE _debug_network
 SET dzone = z.no
 FROM _debug_network_vertices_pgr n JOIN geom_zones z ON z.wktloc = n.the_geom
 WHERE target = n.id;
+
+-- Create meta view
+CREATE VIEW meta AS
+SELECT table_name, column_name, ordinal_position, data_type, udt_name
+FROM information_schema.columns isc
+LEFT JOIN pg_tables pgt
+ON isc.table_name = pgt.tablename
+WHERE pgt.schemaname = 'public'
+AND pgt.tablename IS NOT NULL
+AND pgt.tablename <> 'spatial_ref_sys'
+ORDER BY table_name, ordinal_position
