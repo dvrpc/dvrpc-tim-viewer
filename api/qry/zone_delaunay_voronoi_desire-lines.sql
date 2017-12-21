@@ -36,16 +36,16 @@ FROM pgr_dijkstra(
                     ELSE 999999
                 END
                 END rev
-            FROM _debug_network
+            FROM gfx_zone_network
         ) _q
     ) _q',
     16266,
-    (SELECT array_agg(id) FROM _debug_network_zones WHERE no <> 135),
+    (SELECT array_agg(id) FROM gfx_zone_network_zones WHERE no <> 135),
     directed := true
 ) fn
-LEFT JOIN _debug_network_zones z ON z.id = fn.end_vid
+LEFT JOIN gfx_zone_network_zones z ON z.id = fn.end_vid
 LEFT JOIN zone_index zi ON z.no = zi.no
 LEFT JOIN mtx_2000_am mtx ON mtx.oindex = 134 AND mtx.dindex = zi.index
 GROUP BY fn.edge
 ) sp
-LEFT JOIN _debug_network net ON net.id = sp.edge
+LEFT JOIN gfx_zone_network net ON net.id = sp.edge

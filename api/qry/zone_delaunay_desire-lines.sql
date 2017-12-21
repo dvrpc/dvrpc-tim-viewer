@@ -21,7 +21,7 @@ SELECT *
 FROM (
     SELECT edge, SUM(val) totalval
     FROM pgr_dijkstra(
-        'SELECT id, ozone source, dzone target, length AS cost, length as reverse_cost FROM _debug_delaunay',
+        'SELECT id, ozone source, dzone target, length AS cost, length as reverse_cost FROM gfx_zone_delaunay',
         135,
         (SELECT array_agg(no) FROM net_zones WHERE no <> 135),
         directed := false
@@ -29,6 +29,6 @@ FROM (
     LEFT JOIN _mtx1 ON _mtx1.dno = fn.end_vid
     GROUP BY edge
 ) _q
-LEFT JOIN _debug_delaunay d
+LEFT JOIN gfx_zone_delaunay d
 ON d.id = edge
 WHERE totalval IS NOT NULL

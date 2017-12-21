@@ -52,7 +52,7 @@ BEGIN
     FROM (
         SELECT fn.edge, SUM(val) totalval
         FROM pgr_dijkstra(
-            ''SELECT id, ozone source, dzone target, length AS cost, length as reverse_cost FROM _debug_delaunay'',
+            ''SELECT id, ozone source, dzone target, length AS cost, length as reverse_cost FROM gfx_zone_delaunay'',
             $3,
             (SELECT array_agg(zoneno) FROM _destzone),
             directed := false
@@ -60,7 +60,7 @@ BEGIN
         LEFT JOIN _mtx ON _mtx.dno = fn.end_vid
         GROUP BY fn.edge
     ) _q
-    LEFT JOIN _debug_delaunay d
+    LEFT JOIN gfx_zone_delaunay d
     ON d.id = _q.edge
     WHERE d.geom IS NOT NULL;
     ', _tblname_mtx_am) USING destzonenos, origzoneindex, origzoneno;
