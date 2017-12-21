@@ -92,11 +92,12 @@ BEGIN
         -- LEFT JOIN mtx_2000_am mtx ON mtx.oindex = 134 AND mtx.dindex = dz.zoneindex
         GROUP BY fn.edge
     ) sp
-    LEFT JOIN gfx_zone_network net ON net.id = sp.edge;
+    LEFT JOIN gfx_zone_network net ON net.id = sp.edge
+    WHERE net.geom IS NOT NULL;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION tim_ddesire_table(matrixno INTEGER, origzonenos INTEGER[], destzonenos INTEGER[])
+CREATE OR REPLACE FUNCTION tim_vddesire_table(matrixno INTEGER, origzonenos INTEGER[], destzonenos INTEGER[])
 RETURNS TABLE (
     edge BIGINT,
     totalval DOUBLE PRECISION,
