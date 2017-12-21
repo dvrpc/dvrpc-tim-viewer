@@ -52,7 +52,7 @@ BEGIN
     FROM (
         SELECT fn.edge, SUM(val) totalval
         FROM pgr_dijkstra(
-            ''SELECT id, ozone source, dzone target, length AS cost, length as reverse_cost FROM _debug_delaunay'',
+            ''SELECT id, ozone source, dzone target, length AS cost, length as reverse_cost FROM gfx_zone_delaunay'',
             $3,
             (SELECT array_agg(zoneno) FROM _destzone),
             directed := false
@@ -60,10 +60,29 @@ BEGIN
         LEFT JOIN _mtx ON _mtx.dno = fn.end_vid
         GROUP BY fn.edge
     ) _q
-    LEFT JOIN _debug_delaunay d
+    LEFT JOIN gfx_zone_delaunay d
     ON d.id = _q.edge
     WHERE d.geom IS NOT NULL;
     ', _tblname_mtx_am) USING destzonenos, origzoneindex, origzoneno;
 
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION tim_ddesire_table(matrixno INTEGER, origzonenos INTEGER[], destzonenos INTEGER[])
+RETURNS TABLE (
+    edge BIGINT,
+    totalval DOUBLE PRECISION,
+    geom GEOMETRY(LINESTRING, 4326)
+) AS $$
+DECLARE
+    geojson JSON;
+BEGIN
+    RETURN QUERY
+    SELECT (_q.rec).edge, SUM((_q.rec).totalval) totalval, (_q.rec).geom
+    FROM (
+        SELECT tim_ddesire_table(matrixno, origzoneno, destzonenos) rec
+        FROM (SELECT UNNEST(origzonenos) origzoneno) _q
+    ) _q
+    GROUP BY (_q.rec).edge, (_q.rec).geom;
 END;
 $$ LANGUAGE plpgsql;
