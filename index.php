@@ -92,5 +92,6 @@
     <script src='https://api.mapbox.com/mapbox-gl-js/v0.40.1/mapbox-gl.js'></script>
 	<script src='lib/config.js' type="text/javascript"></script>
 	<script src='lib/highway.js' type="text/javascript"></script>
+    <script src='lib/_debug.js' type="text/javascript"></script>
 </body>
 </html>
