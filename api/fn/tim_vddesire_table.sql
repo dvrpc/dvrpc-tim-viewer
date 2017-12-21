@@ -92,6 +92,26 @@ BEGIN
         -- LEFT JOIN mtx_2000_am mtx ON mtx.oindex = 134 AND mtx.dindex = dz.zoneindex
         GROUP BY fn.edge
     ) sp
-    LEFT JOIN gfx_zone_network net ON net.id = sp.edge;
+    LEFT JOIN gfx_zone_network net ON net.id = sp.edge
+    WHERE net.geom IS NOT NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION tim_vddesire_table(matrixno INTEGER, origzonenos INTEGER[], destzonenos INTEGER[])
+RETURNS TABLE (
+    edge BIGINT,
+    totalval DOUBLE PRECISION,
+    geom GEOMETRY(LINESTRING, 4326)
+) AS $$
+DECLARE
+    geojson JSON;
+BEGIN
+    RETURN QUERY
+    SELECT (_q.rec).edge, SUM((_q.rec).totalval) totalval, (_q.rec).geom
+    FROM (
+        SELECT tim_vddesire_table(matrixno, origzoneno, destzonenos) rec
+        FROM (SELECT UNNEST(origzonenos) origzoneno) _q
+    ) _q
+    GROUP BY (_q.rec).edge, (_q.rec).geom;
 END;
 $$ LANGUAGE plpgsql;
