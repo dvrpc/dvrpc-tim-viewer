@@ -1,5 +1,5 @@
 <?php
-    include('credentials.php');
+    include('_credentials.php');
 
     function ConnectToDB() {
         global $PGSQL_CONNECTION_STRING;
@@ -65,5 +65,28 @@
         } else {
             die('Missing type parameter');
         }
+    }
+
+    function GetGeoJSON($netobj, $param) {
+        $qry = "SELECT tim_gfx_netobj($1,$2)";
+        switch (ParseType($param)) {
+            case "gpt":
+                $geomtype = "wktloc";
+                break;
+            case "gln":
+                $geomtype = "wktpoly";
+                break;
+            case "gpg":
+                $geomtype = "wktsurface";
+                break;
+            default:
+                die("Invalid type");
+        }
+
+        $con = ConnectToDB();
+        $req = pg_query_params($qry, array($netobj, $geomtype)) or
+            die('Query failed: ' . pg_last_error());
+        $payload = pg_fetch_row($req);
+        return $payload[0];
     }
 ?>
