@@ -1,5 +1,5 @@
 <?php
-    include('credentials.php');
+    include('_credentials.php');
 
     function ConnectToDB() {
         global $PGSQL_CONNECTION_STRING;
