@@ -21,12 +21,6 @@
     $origzonenos = FUCKINGFUCK("oz", $_GET);
     $destzonenos = FUCKINGFUCK("dz", $_GET);
 
-    // $origzoneno = _parseAttribute("oz", $_GET);
-    // if (_parseAttribute("dz", $_GET, TRUE)) {
-        // $destzonenos = "(SELECT array_agg(DISTINCT(no)) FROM net_zones)";
-    // } else {
-        // $destzonenos = pg_toIntArray(_parseAttributes("dz", $_GET));
-    // }
     $matrixno = _parseAttribute("m", $_GET);
 
     switch ($type) {
