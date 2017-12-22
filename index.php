@@ -1,3 +1,22 @@
+<?php
+    $allowed_ips = array(
+        "10.1.1.166",   // T
+        "10.1.1.96",    // R
+        "10.1.1.191",   // L
+        "10.1.1.86"     // B
+    );
+    $found = false;
+    foreach ($allowed_ips as $ip) {
+        if ($_SERVER['REMOTE_ADDR'] == $ip) {
+            $found = true;
+            break;
+        }
+    }
+    if (!$found) {
+        http_response_code(404);
+        die("");
+    }
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -74,5 +93,6 @@
     <script src='https://api.mapbox.com/mapbox-gl-js/v0.40.1/mapbox-gl.js'></script>
 	<script src='lib/config.js' type="text/javascript"></script>
 	<script src='lib/highway.js' type="text/javascript"></script>
+    <script src='lib/_debug.js' type="text/javascript"></script>
 </body>
 </html>
