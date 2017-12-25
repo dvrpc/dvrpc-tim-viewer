@@ -4,6 +4,10 @@ html, body, .container-fluid, #box, #bar, #map {
     height: 100%;
     min-height: 100%;
 }
+nav {
+    width: 100%;
+    padding-left: 1em;
+}
 .navbar {
     position: absolute;
     height: 4em;
@@ -12,11 +16,10 @@ html, body, .container-fluid, #box, #bar, #map {
 #box {
     box-sizing: border-box;
     padding-top: 4em;
-    background-color: #f00;
     clear: both;
 }
 #bar {
-    background-color: #0f0;
+    background-color: transparent;
     float: left;
 }
 #map {
