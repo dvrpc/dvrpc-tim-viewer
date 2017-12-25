@@ -24,71 +24,61 @@
     <meta charset='utf-8'/>
     <title>TIM Viewer</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-    <style>
-        body { margin:0; padding:0; }
 
-        #map { position:absolute; top:56px; bottom:0; width:100%; }
-
-        #legend {
-            bottom: 40px;
-            right: 20px;
-            z-index: 10000;
-            position: absolute;
-            display: block;
-            padding: 10px;
-            border: 1px solid #ddd;
-            box-sizing: border-box;
-            background-color: #fff;
-        }
-    </style>
-    
     <link href='https://api.mapbox.com/mapbox-gl-js/v0.40.1/mapbox-gl.css' rel='stylesheet' />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
 
-    <style>
-        
-    </style>
+    <link rel="stylesheet" href="css/css.css" />
 </head>
 
 <body>
 
-    <nav class="navbar navbar-toggleable-md navbar-inverse bg-inverse fixed-top">
-        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <a class="navbar-brand" href="#">Peeping TIM</a>
-        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item active">
-                    <a class="nav-link" href="#">Highway <span class="sr-only">(current)</span></a>
-                </li>
-                <li class="navbar-nav">
-                    <a class="nav-link" href="transit.htm">Transit </a>
-                </li>
-            </ul>
+        <nav class="navbar navbar-toggleable-md navbar-inverse bg-inverse fixed-top">
+            <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand" href="#">Peeping TIM</a>
+            <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Highway <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="navbar-nav">
+                        <a class="nav-link" href="transit.htm">Transit </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div id='box'>
+        <div id='bar' class='col-md-3'>
+            <h1>lol</h1>
+            <div id='attrtbl'></div>
         </div>
-    </nav>
+        <div id='map' class='col-md-9'></div>
+        
 
-    <div id='map'></div>
-
-    <div style="position:absolute; right:20px; top:75px">
-        <div id="style-selector" class="btn-group btn-group-vertical" data-toggle="buttons">
-            <label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary active">
-        <input type="radio" name="hwy-render-state" value="hwy-no-style"> No Style
-        </label>
-            <label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary">
-            <input type="radio" name="hwy-render-state" value="hwy-fc-style"> Functional Class
-        </label>
-            <label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary">
-            <input type="radio" name="hwy-render-state" value="hwy-tl-style"> Travel Lane Count
-        </label>
+        <div style="position:absolute; right:20px; top:75px">
+            <div id="style-selector" class="btn-group btn-group-vertical" data-toggle="buttons">
+                <label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary active">
+            <input type="radio" name="hwy-render-state" value="hwy-no-style"> No Style
+            </label>
+                <label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary">
+                <input type="radio" name="hwy-render-state" value="hwy-fc-style"> Functional Class
+            </label>
+                <label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary">
+                <input type="radio" name="hwy-render-state" value="hwy-tl-style"> Travel Lane Count
+            </label>
+            </div>
         </div>
-    </div>
 
-    <div id="legend"></div>
-    <div id="layerList"></div>
-    <pre id="propertyList"></pre>
+        <div id="legend"></div>
+        <div id="layerList"></div>
+        <pre id="propertyList"></pre>
+        
+        </div>
+
 
 
     <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
