@@ -107,19 +107,13 @@
                     <ul id="baselayers">
                         <li><input type="radio" name="hwy-render-state" value="hwy-no-style" checked>No Style</li>
                         <li><input type="radio" name="hwy-render-state" value="hwy-fc-style">Functional Class</li>
-                        <li><input type="radio" name="hwy-render-state" value="hwy-tl-style"> Travel Lane Count</li>
+                        <li><input type="radio" name="hwy-render-state" value="hwy-tl-style">Travel Lane Count</li>
                     </ul>
                     </form>
                     <h4>Data Layers</h4>
                     <form>
                     <ul id="datalayerslist">
-                        <li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span><input type="checkbox">Item 1</li>
-                        <li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span><input type="checkbox">Item 2</li>
-                        <li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span><input type="checkbox">Item 3</li>
-                        <li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span><input type="checkbox">Item 4</li>
-                        <li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span><input type="checkbox">Item 5</li>
-                        <li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span><input type="checkbox">Item 6</li>
-                        <li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span><input type="checkbox">Item 7</li>
+                        <!-- <li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span><input type="checkbox">Item 1</li> -->
                     </ul>
                     </form>
                 </div>
