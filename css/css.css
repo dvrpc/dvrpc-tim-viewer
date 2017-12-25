@@ -1,0 +1,39 @@
+html, body, .container-fluid, #box, #bar, #map {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    min-height: 100%;
+}
+nav {
+    width: 100%;
+    padding-left: 1em;
+}
+.navbar {
+    position: absolute;
+    height: 4em;
+}
+
+#box {
+    box-sizing: border-box;
+    padding-top: 4em;
+    clear: both;
+}
+#bar {
+    background-color: transparent;
+    float: left;
+}
+#map {
+    float: left;
+}
+
+#legend {
+    bottom: 40px;
+    right: 20px;
+    z-index: 10000;
+    position: absolute;
+    display: block;
+    padding: 10px;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+    background-color: #fff;
+}
