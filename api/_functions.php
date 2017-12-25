@@ -67,6 +67,7 @@
         }
     }
 
+    // Needs a better name
     function GetGeoJSON($netobj, $param) {
         $qry = "SELECT tim_gfx_netobj($1,$2)";
         switch (ParseType($param)) {
@@ -89,4 +90,6 @@
         $payload = pg_fetch_row($req);
         return $payload[0];
     }
+
+    
 ?>
