@@ -1,24 +1,16 @@
-CREATE OR REPLACE FUNCTION _debug_agg_json(netobj TEXT)
+CREATE OR REPLACE FUNCTION tim_buildquery(netobj TEXT, fields TEXT[])
 RETURNS TABLE(uid JSON) AS $$
 DECLARE
-    fields TEXT;
+    _field_placeholders TEXT[];
     tablename TEXT;
     f TEXT;
 BEGIN
     tablename := FORMAT('%s', netobj);
-
-    EXECUTE(FORMAT('
-        SELECT array_to_string(array_agg(column_name::text), '','')
-        FROM meta
-        WHERE table_name = %I
-        AND udt_name <> ''geometry''
-    ', tablename)) INTO fields;
-
     FOR f IN (SELECT UNNEST(fields)) LOOP
-    fields := array_append(fields, FORMAT('%I', f));
+	_field_placeholders := array_append(_field_placeholders, FORMAT('%I', f));
     END LOOP;
-
-    RAISE NOTICE '%', FORMAT('SELECT %s FROM %I', fields, tablename);
+    
+    RAISE NOTICE '%', FORMAT('SELECT %s FROM %I', (SELECT array_to_string(_field_placeholders, ',')), tablename);
     RETURN QUERY
     SELECT array_to_json(array_agg(fa)) FROM temp;
 END;
