@@ -1,25 +1,26 @@
-CREATE OR REPLACE FUNCTION _debug_agg_json(netobj TEXT)
-RETURNS TABLE(uid JSON) AS $$
+CREATE OR REPLACE FUNCTION _debug_buildquery(netobj TEXT, fields TEXT[])
+RETURNS JSON AS $$
 DECLARE
-    fields TEXT;
-    tablename TEXT;
-    f TEXT;
+    idfields TEXT[];
+    foundfields TEXT[];
+    id_tblname TEXT;
+    dat_tblname TEXT;
+    retval JSON;
 BEGIN
-    tablename := FORMAT('%s', netobj);
+    id_tblname := FORMAT('net_%s', netobj);
+    dat_tblname := FORMAT('dat_%s', netobj);
 
-    EXECUTE(FORMAT('
-        SELECT array_to_string(array_agg(column_name::text), '','')
-        FROM meta
-        WHERE table_name = %I
-        AND udt_name <> ''geometry''
-    ', tablename)) INTO fields;
+    SELECT array_agg(meta.column_name::text) INTO idfields
+    FROM meta
+    WHERE meta.table_name = id_tblname;
 
-    FOR f IN (SELECT UNNEST(fields)) LOOP
-    fields := array_append(fields, FORMAT('%I', f));
-    END LOOP;
+    SELECT array_agg(meta.column_name::text) INTO foundfields
+    FROM meta
+    WHERE meta.table_name = dat_tblname
+    AND meta.column_name IN (SELECT UNNEST(idfields) UNION SELECT UNNEST(fields));
 
-    RAISE NOTICE '%', FORMAT('SELECT %s FROM %I', fields, tablename);
-    RETURN QUERY
-    SELECT array_to_json(array_agg(fa)) FROM temp;
+    EXECUTE FORMAT('SELECT array_to_json(array_agg(row_to_json(t))) FROM (SELECT %s FROM %I) t', (SELECT array_to_string(foundfields, ',')), dat_tblname) INTO retval;
+    RETURN retval;
+
 END;
 $$ LANGUAGE plpgsql;
