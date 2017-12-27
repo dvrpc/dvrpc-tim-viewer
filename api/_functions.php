@@ -14,7 +14,15 @@
         for ($i = 0; $i < $n - 1; $i++) {
             $pgarray .= (int) $array[$i] . ',';
         }
-        return $pgarray . $array[$n - 1] . "]";
+        return $pgarray . (int) $array[$n - 1] . "]";
+    }
+    function pg_toTextArray($con, $array) {
+        $pgarray = "ARRAY['";
+        $n = count($array);
+        for ($i = 0; $i < $n - 1; $i++) {
+            $pgarray .= pg_escape_string($con, $array[$i]) . "','";
+        }
+        return $pgarray . pg_escape_string($con, $array[$n - 1]) . "']";
     }
 
     function _parseAttribute($att, $array, $ignoreerror = FALSE) {

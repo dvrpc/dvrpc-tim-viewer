@@ -37,3 +37,8 @@ nav {
     box-sizing: border-box;
     background-color: #fff;
 }
+
+input.colorpicker {
+    height: 1.5em;
+    width: 1.5em;
+}
