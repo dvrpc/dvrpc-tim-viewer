@@ -75,8 +75,12 @@
         }
     }
 
+    function GetData($netobj, $param) {
+        return GetData($netobj, $param);
+    }
+
     // Needs a better name
-    function GetGeoJSON($netobj, $param) {
+    function GetData($netobj, $param) {
         $qry = "SELECT tim_gfx_netobj($1,$2)";
         switch (ParseType($param)) {
             case "gpt":
