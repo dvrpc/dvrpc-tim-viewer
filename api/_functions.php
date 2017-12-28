@@ -76,24 +76,37 @@
     }
 
     function GetData($netobj, $param) {
-        return GetData($netobj, $param);
+        switch (ParseType($param) {
+            case 'g':
+                return GetGeoJSON($netobj, $param);
+                break;
+            case 'a':
+                return GetAttributesJSON($netobj, $param);
+                break;
+            case 't':
+                return GetTemporalAttributesJSON($netobj, $param);
+                break;
+            default:
+                die("Invalid Type");
+                break;
+        }
     }
 
-    // Needs a better name
-    function GetData($netobj, $param) {
+    function GetGeoJSON($netobj, $param) {
         $qry = "SELECT tim_gfx_netobj($1,$2)";
         switch (ParseType($param)) {
-            case "gpt":
+            case "p":
                 $geomtype = "wktloc";
                 break;
-            case "gln":
+            case "l":
                 $geomtype = "wktpoly";
                 break;
-            case "gpg":
+            case "g":
                 $geomtype = "wktsurface";
                 break;
             default:
-                die("Invalid type");
+                die("Invalid Geometry");
+                break;
         }
 
         $con = ConnectToDB();
@@ -103,5 +116,26 @@
         return $payload[0];
     }
 
-    
+    function GetAttributesJSON($netobj, $param) {
+        $fields = _parseAttributes("f", $_GET);
+
+        $con = ConnectToDB();
+        $qry = "SELECT tim_dat_attributes($1::TEXT, " . pg_toTextArray($con, $fields) . "::TEXT[])";
+        $req = pg_query_params($qry, array($netobj)) or
+            die('Query failed: ' . pg_last_error());
+        $payload = pg_fetch_row($req);
+        return $payload[0];
+    }
+
+    function GetTemporalAttributesJSON($netobj, $param) {
+        $fields = _parseAttributes("f", $_GET);
+
+        $con = ConnectToDB();
+        $qry = "SELECT tim_dat_temporalattributes($1::TEXT, " . pg_toTextArray($con, $fields) . "::TEXT[])";
+        $req = pg_query_params($qry, array($netobj)) or
+            die('Query failed: ' . pg_last_error());
+        $payload = pg_fetch_row($req);
+        return $payload[0];
+    }
+
 ?>
