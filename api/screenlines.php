@@ -1,4 +1,7 @@
 <?php
     include('_functions.php');
-    echo GetGeoJSON("screenlines", $_GET);
+    header('Content-Encoding: gzip');
+    $payload = gzencode(GetGeoJSON("screenlines", $_GET));
+    header('Content-Length: ' . strlen($payload));
+    echo $payload;
 ?>
