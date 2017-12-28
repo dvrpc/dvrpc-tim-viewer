@@ -60,23 +60,22 @@
     }
 
     function ParseType($get) {
-        /* Types
-         *  b - Bureaucracy (Identifiers)
-         *  d - Data
-         *  g - Geometries
-         *      gpt - Point
-         *      gln - Line
-         *      gpg - Polygon
-         */
         if (array_key_exists("t", $get)) {
             return $get["t"];
         } else {
             die('Missing type parameter');
         }
     }
+    function ParseGeomType($get) {
+        if (array_key_exists("g", $get)) {
+            return $get["g"];
+        } else {
+            die('Missing type parameter');
+        }
+    }
 
     function GetData($netobj, $param) {
-        switch (ParseType($param) {
+        switch (ParseType($param)) {
             case 'g':
                 return GetGeoJSON($netobj, $param);
                 break;
@@ -94,7 +93,7 @@
 
     function GetGeoJSON($netobj, $param) {
         $qry = "SELECT tim_gfx_netobj($1,$2)";
-        switch (ParseType($param)) {
+        switch (ParseGeomType($param)) {
             case "p":
                 $geomtype = "wktloc";
                 break;
