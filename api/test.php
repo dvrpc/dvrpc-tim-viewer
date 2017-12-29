@@ -1,18 +1,16 @@
 <?php
-    include 'credentials.php';
+    // Default is 128M
+    ini_set('memory_limit','256M');
+    include('_functions.php');
+    $type = ParseType($_GET);
+    $fields = _parseAttributes("f", $_GET);
+    $netobj = "links";
 
-    $_qry = "SELECT COUNT(*) FROM mtx_210_am WHERE oindex = $1;";
-    if (ISSET($_GET['z'])) {
-        $zoneno = $_GET['z'];
-    } else {
-        die('{}');
-    }
-
-    $con = pg_connect($PGSQL_CONNECTION_STRING) or
-        die('Unable to connect: ' . pg_last_error());
-    $req = pg_query_params($_qry, array($zoneno)) or
+    $con = ConnectToDB();
+    $qry = "SELECT tim_dat_temporalattributes($1::TEXT, " . pg_toTextArray($con, $fields) . "::TEXT[])";
+    $req = pg_query_params($qry, array($netobj)) or
         die('Query failed: ' . pg_last_error());
-    $payload = pg_fetch_array($req);
-
-    echo json_encode($payload);
+    $payload = pg_fetch_row($req);
+    header("Content-Encoding: gzip");
+    echo gzencode($payload[0]);
 ?>
