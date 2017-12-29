@@ -29,7 +29,7 @@ TBL_GEOMETRY = "geom"
 
 TBL_NAMETMPLT_NETOBJ = "net_{netobj}"
 TBL_NAMETMPLT_MTX = "mtx_{mtxno}_{tod}"
-TBL_NAMETMPLT_DATA = "dat_{netobj}_{tod}"
+TBL_NAMETMPLT_DATA = "dat_{netobj}"
 TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 
 "CREATE TABLE {tblname} ({fields})"
@@ -117,20 +117,17 @@ class Database(threading.Thread):
     def process(self, payload):
         # Oh switch statement, where art thou?
         if   payload.type == TBL_NETOBJ:
-            self.LoadAttributes(payload, True)
-        elif payload.type == TBL_DATA:
             self.LoadAttributes(payload)
+        elif payload.type == TBL_DATA:
+            self.LoadTODAttributes(payload)
         elif payload.type == TBL_MATRIX:
             self.LoadMatrix(payload)
         elif payload.type == TBL_GEOMETRY:
             self.LoadGeometries(payload)
         else:
             logger.error("Database.process(): Invalid table type (%s)", payload.type)
-    def LoadAttributes(self, payload, noTOD = False):
-        if noTOD:
-            tblname = TBL_NAMETMPLT_NETOBJ.format(**{'netobj':payload.netobj})
-        else:
-            tblname = TBL_NAMETMPLT_DATA.format(**{'netobj':payload.netobj,'tod':payload.tod})
+    def LoadAttributes(self, payload):
+        tblname = TBL_NAMETMPLT_NETOBJ.format(**{'netobj':payload.netobj})
         if self.skipTable(tblname):
             logger.debug("Database-%d.LoadAttributes(): Exists, skipped %s", self.ident, tblname)
             return
@@ -139,6 +136,26 @@ class Database(threading.Thread):
         cur.execute(Utility.formatCreate(tblname, payload.atts))
         for data in self._iterPayload(payload.data):
             cur.execute(Utility.formatMultiInsert(self.con, tblname, data, payload.atts))
+        self.con.commit()
+    def LoadTODAttributes(self, payload):
+        tblname = TBL_NAMETMPLT_DATA.format(**{'netobj':payload.netobj})
+        if self.skipTable(tblname):
+            logger.debug("Database-%d.LoadAttributes(): Exists, skipped %s", self.ident, tblname)
+            return
+        logger.debug("Database-%d.LoadAttributes(): Importing %s", self.ident, tblname)
+        cur = self.con.cursor()
+        qry = Utility.formatCreate(tblname, payload.atts + [[u"tod", u"TEXT"]])
+        # logging.debug("Database-%d:LoadAttributes(): Create statement: %s", self.ident, qry)
+        cur.execute(qry)
+        for data in self._iterPayload(payload.data):
+            cur.execute(
+                Utility.formatMultiInsert(
+                    self.con,
+                    tblname,
+                    map(lambda a:a + (payload.tod,), data),
+                    payload.atts + [[u"tod", u"TEXT"]]
+                )
+            )
         self.con.commit()
     def LoadMatrix(self, payload):
         tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
