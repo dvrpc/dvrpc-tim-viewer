@@ -13,9 +13,45 @@ from common import *
 
 import time
 
-# TOD DEPENDENT
+# TOD INDEPENDENT
 NETOBJ_ATTRIBUTES = {
-    "Links": [("V0PrT","DOUBLE PRECISION")]
+    "Links": [("V0PrT", "v0prt", "DOUBLE PRECISION")]
+}
+
+# TOD DEPENDENT
+NETOBJ_TOD_ATTRIBUTES = {
+    "Connectors": [
+        ("VolVehPrT(AP)"                                "vol_auto",                 "DOUBLE PRECISION"),
+        ("VolPersPuT(AP)"                               "vol_transit",              "DOUBLE PRECISION")
+    ],
+    "Links": [
+        ("VOLVEHPRT(AP)",                               "vol_auto",                 "DOUBLE PRECISION"),
+        ("VOLPERS_DSEG(TA,AP)",                         "vol_transit_auto",         "DOUBLE PRECISION"),
+        ("VOLPERS_DSEG(TW,AP)",                         "vol_transit_walk",         "DOUBLE PRECISION")
+    ],
+    "Lines": [
+        ("PTRIPSUNLINKED_DSEG(TA,AP)",                  "vol_transit_auto",         "DOUBLE PRECISION"),
+        ("PTRIPSUNLINKED_DSEG(TW,AP)",                  "vol_transit_walk",         "DOUBLE PRECISION"),
+        ("PTripsUnlinked(AP)",                          "person_trips",             "DOUBLE PRECISION"),
+        ("PassMiTrav(AP)",                              "pass_miles",               "DOUBLE PRECISION"),
+        ("Sum:LineRoutes\Sum:StopPoints\PassBoard(AP)", "line_boardings",           "DOUBLE PRECISION")
+    ],
+    "StopAreas": [
+        ("Sum:StopPoints\PassBoard(AP)",                "sa_boardings",             "DOUBLE PRECISION")
+    ],
+    "StopPoints": [
+        ("PassBoard(AP)",                               "sp_boards",                "DOUBLE PRECISION"),
+        ("PassAlight(AP)",                              "sp_alights",               "DOUBLE PRECISION")
+    ],
+    "Zones": [
+        ("OTraffic(Car)"                                "otraffic_car",             "DOUBLE PRECISION"),
+        ("OTraffic(TA)"                                 "otraffic_transit_auto",    "DOUBLE PRECISION"),
+        ("OTraffic(TW)"                                 "otraffic_transit_walk",    "DOUBLE PRECISION"),
+        ("DTraffic(Car)"                                "dtraffic_car",             "DOUBLE PRECISION"),
+        ("DTraffic(TA)"                                 "dtraffic_transit_auto",    "DOUBLE PRECISION"),
+        ("DTraffic(TW)"                                 "dtraffic_transit_walk",    "DOUBLE PRECISION"),
+        ("ITraffic(Car)"                                "itraffic_car",             "DOUBLE PRECISION")
+    ]
 }
 
 # TOD DEPENDENT
