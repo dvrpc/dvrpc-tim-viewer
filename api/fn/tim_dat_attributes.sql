@@ -24,7 +24,7 @@ BEGIN
         SELECT array_to_json(array_agg(row_to_json(t))) FROM (
             SELECT
             row_to_json((SELECT s FROM (SELECT %s) s)) AS key,
-            row_to_json((SELECT s FROM (SELECT %s) s)) AS data
+            json_agg((SELECT s FROM (SELECT %s) s)) AS data
             FROM %I _t
             GROUP BY %s
         ) t

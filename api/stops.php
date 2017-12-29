@@ -1,4 +1,7 @@
 <?php
     include('_functions.php');
-    echo GetGeoJSON("stops", $_GET);
+    header('Content-Encoding: x-gzip');
+    $payload = gzencode(GetData("stops", $_GET));
+    header('Content-Length: ' . strlen($payload));
+    echo $payload;
 ?>
