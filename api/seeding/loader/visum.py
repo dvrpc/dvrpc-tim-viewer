@@ -21,8 +21,8 @@ NETOBJ_ATTRIBUTES = {
 # TOD DEPENDENT
 NETOBJ_TOD_ATTRIBUTES = {
     "Connectors": [
-        ("VolVehPrT(AP)"                                "vol_auto",                 "DOUBLE PRECISION"),
-        ("VolPersPuT(AP)"                               "vol_transit",              "DOUBLE PRECISION")
+        ("VolVehPrT(AP)",                               "vol_auto",                 "DOUBLE PRECISION"),
+        ("VolPersPuT(AP)",                              "vol_transit",              "DOUBLE PRECISION")
     ],
     "Links": [
         ("VOLVEHPRT(AP)",                               "vol_auto",                 "DOUBLE PRECISION"),
@@ -44,13 +44,13 @@ NETOBJ_TOD_ATTRIBUTES = {
         ("PassAlight(AP)",                              "sp_alights",               "DOUBLE PRECISION")
     ],
     "Zones": [
-        ("OTraffic(Car)"                                "otraffic_car",             "DOUBLE PRECISION"),
-        ("OTraffic(TA)"                                 "otraffic_transit_auto",    "DOUBLE PRECISION"),
-        ("OTraffic(TW)"                                 "otraffic_transit_walk",    "DOUBLE PRECISION"),
-        ("DTraffic(Car)"                                "dtraffic_car",             "DOUBLE PRECISION"),
-        ("DTraffic(TA)"                                 "dtraffic_transit_auto",    "DOUBLE PRECISION"),
-        ("DTraffic(TW)"                                 "dtraffic_transit_walk",    "DOUBLE PRECISION"),
-        ("ITraffic(Car)"                                "itraffic_car",             "DOUBLE PRECISION")
+        ("OTraffic(Car)",                               "otraffic_car",             "DOUBLE PRECISION"),
+        ("OTraffic(TA)",                                "otraffic_transit_auto",    "DOUBLE PRECISION"),
+        ("OTraffic(TW)",                                "otraffic_transit_walk",    "DOUBLE PRECISION"),
+        ("DTraffic(Car)",                               "dtraffic_car",             "DOUBLE PRECISION"),
+        ("DTraffic(TA)",                                "dtraffic_transit_auto",    "DOUBLE PRECISION"),
+        ("DTraffic(TW)",                                "dtraffic_transit_walk",    "DOUBLE PRECISION"),
+        ("ITraffic(Car)",                               "itraffic_car",             "DOUBLE PRECISION")
     ]
 }
 
@@ -248,33 +248,40 @@ class VisumDataMiner(threading.Thread):
 
     def _getAttributes(self, Visum, netobj, ids):
         return zip(*map(lambda (_id, dtype):self.GetVisumAttribute(Visum, netobj, _id), ids))
+
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
             logger.info("VisumDataMiner-%s.GetNetObjects(): Exporting NetObj %s", self.tod, netobj)
-            data = self._getAttributes(Visum, netobj, ids)
+            ids = map(lambda (f,d):(f,f.lower(),d), ids)
+            if netobj in NETOBJ_ATTRIBUTES:
+                ids += NETOBJ_ATTRIBUTES[netobj]
+                logger.info("VisumDataMiner-%s.GetNetObjects(): Additional attributes found for Netobj %s", self.tod, netobj)
+            data = self._getAttributes(Visum, netobj, map(lambda (v,p,d):(v,d), ids))
             if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
                     "netobj": netobj,
-                    "atts": ids,
+                    "atts": map(lambda (v,p,d):(p,d), ids),
                     "data": data
                 }))
+
     def GetAttributes(self, Visum):
-        for netobj, ids in self.iterNetObjGroupAttributes():
+        for netobj, ids in self.iterNetObjGroupTODAttributes():
             logger.info("VisumDataMiner-%s.GetAttributes(): Exporting NetObj %s", self.tod, netobj)
             if not netobj in NETOBJ_IDs:
                 logger.error("VisumDataMiner-%s.GetAttributes(): Error, {0} not included in NETOBJ_IDs".format(netobj), self.tod)
                 continue
-            ids = NETOBJ_IDs[netobj] + ids
-            data = self._getAttributes(Visum, netobj, ids)
+            ids = map(lambda (f,d):(f,f.lower(),d), NETOBJ_IDs[netobj]) + ids
+            data = self._getAttributes(Visum, netobj, map(lambda (v,p,d):(v,d), ids))
             if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_DATA,
                     "tod": self.tod,
                     "netobj": netobj,
-                    "atts": ids,
+                    "atts": map(lambda (v,p,d):(p,d), ids),
                     "data": data
                 }))
+
     def GetMatrices(self, Visum):
         for mtxno in self.iterMatrices():
             logger.info("VisumDataMiner-%s.GetMatrices(): Exporting Matrix %s", self.tod, mtxno)
@@ -373,6 +380,9 @@ class VisumDataMiner(threading.Thread):
     @classmethod
     def iterNetObjGroupAttributes(self):
         return self.iterNetObjectGroup(NETOBJ_ATTRIBUTES)
+    @classmethod
+    def iterNetObjGroupTODAttributes(self):
+        return self.iterNetObjectGroup(NETOBJ_TOD_ATTRIBUTES)
     @staticmethod
     def iterMatrices():
         for mtxno in MTXs:
