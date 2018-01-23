@@ -1,6 +1,6 @@
-(I wrote this on a plane after being up for at least 24 hours)
+# API
 
-# Available Data/(partial) Database Schema
+## Available Data/(partial) Database Schema
 
 **/api/schema.php**
 
@@ -18,7 +18,7 @@ Return value:
         f: (TEXT) Field Name
         key: (BOOLEAN) ID field flag
 
-# Attributes
+## Attributes
 
 *
 
@@ -30,7 +30,7 @@ Parameters:
 
 Return Value:
 
-# Tables with geometry
+## Tables with geometry
 
 --------------------|
 connectors.php
@@ -62,7 +62,7 @@ Parameters:
 Return value:
     Standard Feature Collection GeoJSON
 
-# Analysis
+## Analysis
 
 ** /api/desirelines.php **
 
