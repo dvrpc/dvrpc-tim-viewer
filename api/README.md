@@ -32,7 +32,7 @@ Return Value:
 
 ## Tables with geometry
 
- 
+ |
 --------------------|
 connectors.php
 countlocations.php
