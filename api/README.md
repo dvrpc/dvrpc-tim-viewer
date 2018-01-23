@@ -64,20 +64,6 @@ vehicleunits.php
 vehijouneysections.php
 zones.php
 
-
-connectors.php
-countlocations.php
-lineroutes.php
-links.php
-mainzones.php
-nodes.php
-screenlines.php
-stopareas.php
-stoppoints.php
-stops.php
-territories.php
-zones.php
-
 HTTP Method: `GET`
 
 Parameters:
@@ -88,7 +74,7 @@ Return Value:
 
 ## Tables with geometry
 
-(Github doesn't support headerless table) |
+**/api/*** |
 --------------------|
 connectors.php
 countlocations.php
