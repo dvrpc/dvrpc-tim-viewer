@@ -1,10 +1,10 @@
 (I wrote this on a plane after being up for at least 24 hours)
 
-Available Data/(partial) Database Schema
+# Available Data/(partial) Database Schema
 
-/api/schema.php
+**/api/schema.php**
 
-HTTP Method: GET
+HTTP Method: `GET`
 
 Parameters:
     No parameters
@@ -18,7 +18,7 @@ Return value:
         f: (TEXT) Field Name
         key: (BOOLEAN) ID field flag
 
-Attributes
+# Attributes
 
 *
 
@@ -30,9 +30,10 @@ Parameters:
 
 Return Value:
 
-Tables with geometry|
+# Tables with geometry
+
 --------------------|
-connectors.php|
+connectors.php
 countlocations.php
 mainzones.php
 nodes.php
@@ -61,9 +62,9 @@ Parameters:
 Return value:
     Standard Feature Collection GeoJSON
 
-Analysis
+# Analysis
 
-/api/desirelines.php
+** /api/desirelines.php **
 
 HTTP Method: POST
 
