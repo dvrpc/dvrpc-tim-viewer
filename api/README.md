@@ -12,11 +12,11 @@ Parameters:
 Return value:
 * JSON containing a list of table definitions.
 * Each item/table definition is an associative array with two keys:
-  * t: `TEXT` Table Name
-  * fs: `LIST` Field definition list
+  * `t`: `TEXT` Table Name
+  * `fs`: `LIST` Field definition list
 * Each item/field definition is an associative array with two keys:
-  * f: `TEXT` Field Name
-  * key: `BOOLEAN` ID field flag
+  * `f`: `TEXT` Field Name
+  * `key`: `BOOLEAN` ID field flag
 
 ## Tables with Attributes
 
@@ -67,8 +67,8 @@ zones.php
 HTTP Method: `GET`
 
 Parameters:
-* t:
-  * a - Attributes
+* t: `TEXT`
+  * `a` - Attributes
 
 Return Value:
 
@@ -90,16 +90,16 @@ zones.php
 HTTP Method: `GET`
 
 Parameters:
-* t:
-  * g - Geometry/GeoJSON
-* g:
-  * p - Point
-  * l - Line
-  * g - Polygon
-* bbx0:
-* bbx1:
-* bby0:
-* bby1:
+* t: `TEXT`
+  * `g` - Geometry/GeoJSON
+* g: `TEXT`
+  * `p` - Point
+  * `l` - Line
+  * `g` - Polygon
+* bbx0: `FLOAT`
+* bbx1: `FLOAT`
+* bby0: `FLOAT`
+* bby1: `FLOAT`
   * (Optional) Bounding Box Coordinates `WGS 84::EPSG 4326`
 
 Return value:
@@ -123,14 +123,14 @@ Parameters:
 HTTP Method: `POST`
 
 Parameters:
-* t:
-  * s - Simple point to point lines
-  * ddl - Delaunay Triangle Network desire lines
-  * vddl - Voronoi Polygon + Delaunay Triangle Network desire lines
-* bbx0:
-* bbx1:
-* bby0:
-* bby1:
+* t: `TEXT`
+  * `s` - Simple point to point lines
+  * `ddl` - Delaunay Triangle Network desire lines
+  * `vddl` - Voronoi Polygon + Delaunay Triangle Network desire lines
+* bbx0: `FLOAT`
+* bbx1: `FLOAT`
+* bby0: `FLOAT`
+* bby1: `FLOAT`
   * (Optional) Bounding Box Coordinates `WGS 84::EPSG 4326`
 
 Return Value:
