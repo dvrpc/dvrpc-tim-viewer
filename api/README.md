@@ -105,6 +105,17 @@ Parameters:
 Return value:
   * Standard Feature Collection GeoJSON
 
+## Skim Matrices
+
+**/api/matrices.php**
+
+HTTP Method: `GET`/`POST`
+
+Parameters:
+* m: `INTEGER` Matrix number
+* t: `TEXT` Time of Day {`AM`,`MD`,`PM`,`NT`}
+
+
 ## Analysis
 
 **/api/desirelines.php**
