@@ -65,7 +65,7 @@ Return value:
 
 ## Analysis
 
-** /api/desirelines.php **
+**/api/desirelines.php**
 
 HTTP Method: `POST`
 
