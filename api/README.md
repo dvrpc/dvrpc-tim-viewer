@@ -30,9 +30,9 @@ Parameters:
 
 Return Value:
 
-Tables with geometry
---------------------
-connectors.php
+Tables with geometry|
+--------------------|
+connectors.php|
 countlocations.php
 mainzones.php
 nodes.php
