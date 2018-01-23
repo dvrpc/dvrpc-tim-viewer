@@ -7,18 +7,18 @@
 HTTP Method: `GET`
 
 Parameters:
-    No parameters
+* No parameters
 
 Return value:
-  * JSON containing a list of table definitions.
-  * Each item/table definition is an associative array with two keys:
-    * t: `TEXT` Table Name
-    * fs: `LIST` Field definition list
-  * Each item/field definition is an associative array with two keys:
-    * f: `TEXT` Field Name
-    * key: `BOOLEAN` ID field flag
+* JSON containing a list of table definitions.
+* Each item/table definition is an associative array with two keys:
+  * t: `TEXT` Table Name
+  * fs: `LIST` Field definition list
+* Each item/field definition is an associative array with two keys:
+  * f: `TEXT` Field Name
+  * key: `BOOLEAN` ID field flag
 
-## Attributes
+## Tables with Attributes
 
 **/api/***|
 ----------|
@@ -67,15 +67,15 @@ zones.php
 HTTP Method: `GET`
 
 Parameters:
-    t:
-        a - Attributes
+* t:
+  * a - Attributes
 
 Return Value:
 
 ## Tables with geometry
 
 **/api/*** |
---------------------|
+-----------|
 connectors.php
 countlocations.php
 mainzones.php
