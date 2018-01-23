@@ -32,7 +32,7 @@ Return Value:
 
 ## Tables with geometry
 
- |
+(Github doesn't support headerless table) |
 --------------------|
 connectors.php
 countlocations.php
