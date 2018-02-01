@@ -3,12 +3,10 @@ RETURNS JSON AS $$
 DECLARE
     idfields TEXT[];
     foundfields TEXT[];
-    id_tblname TEXT;
-    dat_tblname TEXT;
+    trgt_tblname TEXT;
     retval JSON;
 BEGIN
-    id_tblname := FORMAT('net_%s', netobj);
-    dat_tblname := FORMAT('dat_%s', netobj);
+    trgt_tblname := FORMAT('net_%s', netobj);
 
     SELECT array_agg(meta_netobj.field::text) INTO idfields
     FROM meta_netobj
@@ -16,7 +14,7 @@ BEGIN
 
     SELECT array_agg(meta.column_name::text) INTO foundfields
     FROM meta
-    WHERE meta.table_name = dat_tblname
+    WHERE meta.table_name = trgt_tblname
     AND meta.column_name IN (SELECT UNNEST(fields));
 
     EXECUTE(FORMAT(
@@ -31,12 +29,11 @@ BEGIN
         ',
         (SELECT array_to_string(idfields, ',')),
         (SELECT array_to_string(foundfields, ',')),
-        dat_tblname,
+        trgt_tblname,
         (SELECT array_to_string(idfields, ','))
     )) INTO retval;
 
     RETURN retval;
-
 
 END;
 $$ LANGUAGE plpgsql;
