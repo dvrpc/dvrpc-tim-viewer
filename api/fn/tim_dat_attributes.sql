@@ -10,9 +10,9 @@ BEGIN
     id_tblname := FORMAT('net_%s', netobj);
     dat_tblname := FORMAT('dat_%s', netobj);
 
-    SELECT array_agg(meta.column_name::text) INTO idfields
-    FROM meta
-    WHERE meta.table_name = id_tblname;
+    SELECT array_agg(meta_netobj.field::text) INTO idfields
+    FROM meta_netobj
+    WHERE meta_netobj.netobj = tim_dat_attributes.netobj;
 
     SELECT array_agg(meta.column_name::text) INTO foundfields
     FROM meta
