@@ -17,6 +17,7 @@ Return value:
 * Each item/field definition is an associative array with two keys:
   * `f`: `TEXT` Field Name
   * `key`: `BOOLEAN` ID field flag
+  * `tod`: `BOOLEAN` Temporal field flag
 
 ## Tables with Attributes
 
@@ -68,7 +69,8 @@ HTTP Method: `GET`
 
 Parameters:
 * t: `TEXT`
-  * `a` - Attributes
+  * `a` - Static Attributes
+  * `t` - Temporal Attributes
 
 Return Value:
 
