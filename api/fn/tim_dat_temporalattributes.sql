@@ -1,22 +1,22 @@
+-- Need to fix hard error for results with no valid fields
+
 CREATE OR REPLACE FUNCTION tim_dat_temporalattributes(netobj TEXT, fields TEXT[])
 RETURNS JSON AS $$
 DECLARE
     idfields TEXT[];
     foundfields TEXT[];
-    id_tblname TEXT;
-    dat_tblname TEXT;
+    trgt_tblname TEXT;
     retval JSON;
 BEGIN
-    id_tblname := FORMAT('net_%s', netobj);
-    dat_tblname := FORMAT('dat_%s', netobj);
+    trgt_tblname := FORMAT('dat_%s', netobj);
 
-    SELECT array_agg(meta.column_name::text) INTO idfields
-    FROM meta
-    WHERE meta.table_name = id_tblname;
+    SELECT array_agg(meta_netobj.field::text) INTO idfields
+    FROM meta_netobj
+    WHERE meta_netobj.netobj = tim_dat_temporalattributes.netobj;
 
     SELECT array_agg(meta.column_name::text) INTO foundfields
     FROM meta
-    WHERE meta.table_name = dat_tblname
+    WHERE meta.table_name = trgt_tblname
     AND meta.column_name IN (SELECT UNNEST(fields));
 
     EXECUTE(FORMAT(
@@ -31,12 +31,11 @@ BEGIN
         ',
         (SELECT array_to_string(idfields, ',')),
         (SELECT array_to_string(foundfields, ',')),
-        dat_tblname,
+        trgt_tblname,
         (SELECT array_to_string(idfields, ','))
     )) INTO retval;
 
     RETURN retval;
-
 
 END;
 $$ LANGUAGE plpgsql;
