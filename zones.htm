@@ -19,12 +19,10 @@
 		    bottom: 0;
 		    left: 0;
 		    z-index: 1000;
-		    padding: 20px;
+		    padding: 20px 10px;
 		    overflow-x: hidden;
 		    overflow-y: auto;
 		    border-right: 1px solid #eee;
-	        padding-left: 0;
-		    padding-right: 0;
 		}
 
         #legend {
@@ -136,7 +134,36 @@
     </nav>
     <div class="container-fluid">
 		<div class="row" >
-			<div id="" class="col-sm-4 col-lg-3 sidebar"></div>
+			<div id="" class="col-sm-4 col-lg-3 sidebar">
+				<div class="card">
+				  <!-- <div class="card-header">
+				    Map desire lines
+				  </div> -->
+				  <div class="card-block">
+					    <div id="desire-wrapper">
+							<div class="btn-group" data-toggle="buttons">
+							 	<label class="btn btn-outline-info btn-sm active">
+							    	<input type="radio" name="trip-type" id="car-trip" value="2000" autocomplete="off" checked>Car 
+							  	</label>
+							  	<label class="btn btn-outline-info btn-sm">
+							    	<input type="radio" name="trip-type" id="transit-trip" value="2100" autocomplete="off">Transit
+							  	</label>
+							</div>
+							<div class="btn-group" data-toggle="buttons">
+							 	<label class="btn btn-outline-info btn-sm active">
+							    	<input type="radio" name="trip-dir" id="outbound-trip" value="outbound" autocomplete="off" checked>Outbound 
+							  	</label>
+							  	<label class="btn btn-outline-info btn-sm">
+							    	<input type="radio" name="trip-dir" id="inbound-trip" value="inbound" autocomplete="off">Inbound
+							  	</label>
+							</div>
+							<a href="#" id="desire-line-map" class="btn btn-primary btn-lg btn-block">map request</a>
+						</div>
+				  </div>
+			  </div>
+
+				
+			</div>
 			<div id="map" class="col-sm-8 offset-sm-4 col-lg-9 offset-lg-3">
                 <div class="sk-cube-grid">
 				  <div class="sk-cube sk-cube1"></div>
