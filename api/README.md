@@ -17,6 +17,7 @@ Return value:
 * Each item/field definition is an associative array with two keys:
   * `f`: `TEXT` Field Name
   * `key`: `BOOLEAN` ID field flag
+  * `tod`: `BOOLEAN` Temporal field flag
 
 ## Tables with Attributes
 
@@ -68,7 +69,8 @@ HTTP Method: `GET`
 
 Parameters:
 * t: `TEXT`
-  * `a` - Attributes
+  * `a` - Static Attributes
+  * `t` - Temporal Attributes
 
 Return Value:
 
@@ -127,11 +129,13 @@ Parameters:
   * `s` - Simple point to point lines
   * `ddl` - Delaunay Triangle Network desire lines
   * `vddl` - Voronoi Polygon + Delaunay Triangle Network desire lines
-* bbx0: `FLOAT`
-* bbx1: `FLOAT`
-* bby0: `FLOAT`
-* bby1: `FLOAT`
-  * (Optional) Bounding Box Coordinates `WGS 84::EPSG 4326`
+* m: `INTEGER`
+  * `2000` - Car trip table
+  * `2100` - Transit trip table
+* tod(n): `TEXT`
+  * `AM`, `MD`, `PM`, `NT`
+* oz(n): `INTEGER`
+* dz(n): `INTEGER`
 
 Return Value:
   * Standard Feature Collection GeoJSON

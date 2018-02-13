@@ -1,51 +1,34 @@
 CREATE OR REPLACE FUNCTION tim_vddesire_table (
     mtxno INTEGER,
     origzoneno INTEGER,
-    destzonenos INTEGER[]
+    destzonenos INTEGER[],
+    tods TEXT[]
 )
 RETURNS TABLE (
     edge BIGINT,
-    totalval DOUBLE PRECISION,
+    totalval REAL,
     geom GEOMETRY(LINESTRING, 4326)
 ) AS $$
 DECLARE
-    _tblname_mtx_am TEXT;
-    _tblname_mtx_md TEXT;
-    _tblname_mtx_pm TEXT;
-    _tblname_mtx_nt TEXT;
-    origzoneindex INTEGER;
+    _mtx_tbl TEXT;
     origzoneid INTEGER;
+    destzoneids INTEGER[];
 BEGIN
-    _tblname_mtx_am := format('%I', 'mtx_' || mtxno || '_am');
-    _tblname_mtx_md := format('%I', 'mtx_' || mtxno || '_md');
-    _tblname_mtx_pm := format('%I', 'mtx_' || mtxno || '_pm');
-    _tblname_mtx_nt := format('%I', 'mtx_' || mtxno || '_nt');
-    origzoneindex := tim_getzoneindex(origzoneno);
-    SELECT id INTO origzoneid FROM gfx_zone_network_zones WHERE no = origzoneno;
+    _mtx_tbl := FORMAT('%I', 'mtx_' || mtxno);
+
+    SELECT id INTO origzoneid
+    FROM gfx_zone_network_zones
+    WHERE no = origzoneno;
+
+    SELECT array_agg(id) INTO destzoneids
+    FROM gfx_zone_network_zones
+    WHERE no = ANY(destzonenos);
 
     RETURN QUERY
-    WITH
-    zone_index AS (
-        SELECT indexp1 - 1 AS index, no
-        FROM (
-            SELECT row_number() OVER (ORDER BY no) AS indexp1, no
-            FROM net_zones
-        ) _q
-    ),
-    _destzone AS (
-        SELECT indexp1 - 1 AS zoneindex, zoneno, nz.id zoneid
-        FROM (
-            SELECT
-                row_number() OVER (ORDER BY no) AS indexp1,
-                net_zones.no zoneno
-            FROM net_zones
-        ) _q
-        LEFT JOIN gfx_zone_network_zones nz ON nz.no = _q.zoneno
-        WHERE zoneno IN (SELECT UNNEST(destzonenos))
-    )
+    EXECUTE FORMAT('
     SELECT sp.*, net.geom FROM (
         SELECT fn.edge, SUM(val) totalval
-        FROM pgr_dijkstra(FORMAT('
+        FROM pgr_dijkstra(''
             SELECT id, source, target, cost AS cost, rcost as reverse_cost
             FROM (
                 SELECT id, source, target,
@@ -77,30 +60,34 @@ BEGIN
                             WHEN dzone = %s THEN 1
                             ELSE 999999
                         END
-                        END rev
+                    END rev
                     FROM gfx_zone_network
                 ) __q
-            ) _q', origzoneno, origzoneno, origzoneno, origzoneno),
-            origzoneid,
-            (SELECT array_agg(DISTINCT(zoneid)) FROM _destzone),
+            ) _q'',
+            $1,
+            $2,
             directed := true
         ) fn
         LEFT JOIN gfx_zone_network_zones z ON z.id = fn.end_vid
-        LEFT JOIN zone_index zi ON z.no = zi.no
-        -- LEFT JOIN _destzone dz ON dz.zoneno = z.no
-        LEFT JOIN mtx_2000_am mtx ON mtx.oindex = origzoneindex AND mtx.dindex = zi.index
-        -- LEFT JOIN mtx_2000_am mtx ON mtx.oindex = 134 AND mtx.dindex = dz.zoneindex
+        LEFT JOIN %I mtx ON mtx.ozoneno = $3 AND mtx.dzoneno = ANY($4) AND mtx.tod = ANY($5)
         GROUP BY fn.edge
     ) sp
     LEFT JOIN gfx_zone_network net ON net.id = sp.edge
     WHERE net.geom IS NOT NULL;
+    ', origzoneno, origzoneno, origzoneno, origzoneno, _mtx_tbl)
+    USING origzoneid, destzoneids, origzoneno, destzonenos, tods;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION tim_vddesire_table(matrixno INTEGER, origzonenos INTEGER[], destzonenos INTEGER[])
+CREATE OR REPLACE FUNCTION tim_vddesire_table(
+    matrixno INTEGER,
+    origzonenos INTEGER[],
+    destzonenos INTEGER[],
+    tods TEXT[]
+)
 RETURNS TABLE (
     edge BIGINT,
-    totalval DOUBLE PRECISION,
+    totalval REAL,
     geom GEOMETRY(LINESTRING, 4326)
 ) AS $$
 DECLARE
@@ -109,7 +96,7 @@ BEGIN
     RETURN QUERY
     SELECT (_q.rec).edge, SUM((_q.rec).totalval) totalval, (_q.rec).geom
     FROM (
-        SELECT tim_vddesire_table(matrixno, origzoneno, destzonenos) rec
+        SELECT tim_vddesire_table(matrixno, origzoneno, destzonenos, tods) rec
         FROM (SELECT UNNEST(origzonenos) origzoneno) _q
     ) _q
     GROUP BY (_q.rec).edge, (_q.rec).geom;

@@ -1,0 +1,33 @@
+table prefix    description     dynamic
+tim             meta tables     
+net             network model   
+mtx             matrix data     temporal
+geom            geometry data   
+dmd             demand data     temporal
+
+tim:
+    netobj_keys
+
+net:
+    *
+
+mtx:
+    [trip tables]
+    [skims]
+
+geom:
+    countlocations
+    lineroutes
+    links
+    mainzones
+    nodes
+    screenlines
+    stopareas
+    stoppoints
+    stops
+    territories
+    zones
+
+dmd:
+    *
+    
