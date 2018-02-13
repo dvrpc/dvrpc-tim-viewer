@@ -69,13 +69,13 @@ BEGIN
             directed := true
         ) fn
         LEFT JOIN gfx_zone_network_zones z ON z.id = fn.end_vid
-        LEFT JOIN %I mtx ON mtx.ozoneno = $3 AND mtx.dzoneno = ANY($4)
+        LEFT JOIN %I mtx ON mtx.ozoneno = $3 AND mtx.dzoneno = ANY($4) AND mtx.tod = ANY($5)
         GROUP BY fn.edge
     ) sp
     LEFT JOIN gfx_zone_network net ON net.id = sp.edge
     WHERE net.geom IS NOT NULL;
     ', origzoneno, origzoneno, origzoneno, origzoneno, _mtx_tbl)
-    USING origzoneid, destzoneids, origzoneno, destzonenos;
+    USING origzoneid, destzoneids, origzoneno, destzonenos, tods;
 END;
 $$ LANGUAGE plpgsql;
 
