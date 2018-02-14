@@ -107,7 +107,7 @@ Parameters:
 Return value:
   * Standard Feature Collection GeoJSON
 
-## Skim Matrices
+## Matrices
 
 **/api/matrices.php**
 
@@ -115,7 +115,7 @@ HTTP Method: `GET`/`POST`
 
 Parameters:
 * m: `INTEGER` Matrix number
-* t: `TEXT` Time of Day {`AM`,`MD`,`PM`,`NT`}
+* z(n): `INTEGER` Zone Numbers
 
 
 ## Analysis
@@ -134,8 +134,8 @@ Parameters:
   * `2100` - Transit trip table
 * tod(n): `TEXT`
   * `AM`, `MD`, `PM`, `NT`
-* oz(n): `INTEGER`
-* dz(n): `INTEGER`
+* oz(n): `INTEGER` Origin Zones
+* dz(n): `INTEGER` Desination Zones
 
 Return Value:
   * Standard Feature Collection GeoJSON
