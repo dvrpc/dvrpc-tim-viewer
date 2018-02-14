@@ -6,7 +6,7 @@ DECLARE
 BEGIN
     EXECUTE('
         SELECT array_to_string(array_agg(field), '','')
-        FROM meta_netobj
+        FROM tim_netobj_keys
         WHERE netobj = $1
     ') USING netobj INTO fields;
 
