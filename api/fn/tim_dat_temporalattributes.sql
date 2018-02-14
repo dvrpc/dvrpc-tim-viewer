@@ -10,9 +10,9 @@ DECLARE
 BEGIN
     trgt_tblname := FORMAT('dat_%s', netobj);
 
-    SELECT array_agg(meta_netobj.field::text) INTO idfields
-    FROM meta_netobj
-    WHERE meta_netobj.netobj = tim_dat_temporalattributes.netobj;
+    SELECT array_agg(tim_netobj_keys.field::text) INTO idfields
+    FROM tim_netobj_keys
+    WHERE tim_netobj_keys.netobj = tim_dat_temporalattributes.netobj;
 
     SELECT array_agg(meta.column_name::text) INTO foundfields
     FROM meta
