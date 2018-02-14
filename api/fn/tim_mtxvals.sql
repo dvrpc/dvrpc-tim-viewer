@@ -13,11 +13,11 @@ BEGIN
     _mtx_tbl := FORMAT('%I', 'mtx_' || mtxno);
     
     RETURN QUERY
-    EXECUTE(FORMAT('
+    EXECUTE FORMAT('
     SELECT * FROM %I
     WHERE ozoneno = ANY($1::INTEGER[])
     OR dzoneno = ANY($1::INTEGER[]);
-    ', _mtx_tbl)) USING zonenos;
+    ', _mtx_tbl) USING zonenos;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -36,12 +36,13 @@ BEGIN
     _mtx_tbl := FORMAT('%I', 'mtx_' || mtxno);
     
     RETURN QUERY
+    EXECUTE FORMAT('
     SELECT * FROM crosstab(''
         SELECT
             ARRAY[ozoneno, dzoneno]::INTEGER[] odpair,
             tod,
             val
-        FROM mtx_2000
+        FROM %I
         WHERE ozoneno = ANY($1::INTEGER[])
         OR dzoneno = ANY($1::INTEGER[])
         ORDER BY 1,2
@@ -49,6 +50,7 @@ BEGIN
         odpair INTEGER[],
         AM REAL, MD REAL,
         PM REAL, NT REAL
-    );
+    ) USING zonenos;
+    ', _mtx_tbl);
 END;
 $$ LANGUAGE plpgsql;
