@@ -9,8 +9,8 @@ BEGIN
     SELECT
         odpair od,
         row_to_json((SELECT r FROM (SELECT AM, MD, PM, NT) r)) vals
-    FROM tim_mtxvals_ct(2000, ARRAY[1]::INTEGER[])
+    FROM tim_mtxvals_ct(mtxno, zonenos::INTEGER[])
     ) _q;
-    RETURN retval
+    RETURN retval;
 END;
 $$ LANGUAGE plpgsql;
