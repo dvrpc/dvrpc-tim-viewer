@@ -104,13 +104,13 @@
                 $geomtype = "wktsurface";
                 break;
             default:
-                die("Invalid Geometry");
+                die('{msg:"Invalid Geometry"}');
                 break;
         }
 
         $con = ConnectToDB();
         $req = pg_query_params($qry, array($netobj, $geomtype)) or
-            die('Query failed: ' . pg_last_error());
+            die('{msg:"Failed"}');
         $payload = pg_fetch_row($req);
         return $payload[0];
     }
