@@ -24,14 +24,18 @@ meta_netobjs AS (
     GROUP BY table_name
 )
 SELECT
-    tno.netobj,
-    tno.keys,
-    net_mno.fields net,
-    dat_mno.fields dat,
-    geom_mno.fields geom
-FROM ttype_netobjs tno
-LEFT JOIN meta_netobjs net_mno ON net_mno.table_name = tno.net_table
-LEFT JOIN meta_netobjs dat_mno ON dat_mno.table_name = tno.dat_table
-LEFT JOIN meta_netobjs geom_mno ON geom_mno.table_name = tno.geom_table
-WHERE tno.net_table IN (SELECT table_name FROM meta_netobjs)
-ORDER BY netobj
+    row_to_json(_q)
+FROM (
+    SELECT
+        tno.netobj,
+        tno.keys,
+        net_mno.fields net,
+        dat_mno.fields dat,
+        geom_mno.fields geom
+    FROM ttype_netobjs tno
+    LEFT JOIN meta_netobjs net_mno ON net_mno.table_name = tno.net_table
+    LEFT JOIN meta_netobjs dat_mno ON dat_mno.table_name = tno.dat_table
+    LEFT JOIN meta_netobjs geom_mno ON geom_mno.table_name = tno.geom_table
+    WHERE tno.net_table IN (SELECT table_name FROM meta_netobjs)
+    ORDER BY netobj
+) _q
