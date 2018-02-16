@@ -146,67 +146,87 @@
         return $retval;
     }
 
-    ////
-
-    if (strcasecmp($_SERVER['REQUEST_METHOD'], 'GET') == 0) {
-        kill('GET');
-    } else if (strcasecmp($_SERVER['REQUEST_METHOD'], 'POST') == 0) {
-        $post_payload = trim(file_get_contents("php://input"));
+    function _parseJSON($encodedJSON) {
+        $json = NULL;
         try {
-            $post = json_decode($post_payload, true);
+            $json = json_decode($encodedJSON, true);
         } catch (Exception $e) {
-            kill("Invalid POST JSON");
+            kill("Invalid JSON");
         }
-    } else {
-        kill(":(");
+        return $json;
     }
-
-    ////
-
-    $netobj = CheckNetObj($post);
-    $netobjkeys = CheckNetObjKeys($post);
-    $netfields = GetNetObjNetFields($post);
-    $datfields = GetNetObjDatFields($post);
-
-    if (is_null($netfields) && is_null($datfields)) {
-        kill("Empty request - No fields to return");
-    }
-
-    $netpayload = array();
-    if (!is_null($netfields)) {
-        $payload = RiskyBuildExecuteQuery("net_" . $netobj, $netobjkeys);
-        foreach($netfields as $field) {
-            if (array_key_exists($field, $payload)) {
-                $netpayload[$field] = $payload[$field];
-            }
-        }
-    }
-
-    $datpayload = array();
-    if (!is_null($datfields)) {
-        $payload = RiskyBuildExecuteQuery("dat_" . $netobj, $netobjkeys, $datfields["tod"]);
-        foreach($payload as $record) {
-            $tod = $record["tod"];
-            foreach($datfields["fields"] as $field) {
-                if (array_key_exists($field, $record)) {
-                    if (!array_key_exists($tod, $datpayload)) {
-                        $datpayload[$tod] = array();
-                    }
-                    $datpayload[$tod][$field] = $record[$field];
+    function _getNetAttributes($netobj, $netobjkeys, $netfields) {
+        $netpayload = array();
+        if (!is_null($netfields)) {
+            $payload = RiskyBuildExecuteQuery("net_" . $netobj, $netobjkeys);
+            foreach($netfields as $field) {
+                if (array_key_exists($field, $payload)) {
+                    $netpayload[$field] = $payload[$field];
                 }
             }
         }
+        return $netpayload;
+    }
+    function _getDatAttributes($netobj, $netobjkeys, $datfields) {
+        $datpayload = array();
+        if (!is_null($datfields)) {
+            $payload = RiskyBuildExecuteQuery("dat_" . $netobj, $netobjkeys, $datfields["tod"]);
+            foreach($payload as $record) {
+                $tod = $record["tod"];
+                foreach($datfields["fields"] as $field) {
+                    if (array_key_exists($field, $record)) {
+                        if (!array_key_exists($tod, $datpayload)) {
+                            $datpayload[$tod] = array();
+                        }
+                        $datpayload[$tod][$field] = $record[$field];
+                    }
+                }
+            }
+        }
+        return $datpayload;
+    }
+    function _ProcessGET($netobj, $getData) {
+        return array();
+    }
+    function _ProcessPOST($netobj, $postData) {
+        $reqJSON = _parseJSON($postData);
+        $netobj = CheckNetObj($reqJSON);
+        $netobjkeys = CheckNetObjKeys($reqJSON);
+        $netfields = GetNetObjNetFields($reqJSON);
+        $datfields = GetNetObjDatFields($reqJSON);
+
+        if (is_null($netfields) && is_null($datfields)) {
+            kill("Empty request - No fields to return");
+        }
+        $netpayload = _getNetAttributes($netobj, $netobjkeys, $netfields);
+        $datpayload = _getDatAttributes($netobj, $netobjkeys, $datfields);
+
+        return json_encode(array(
+            'netobj' => $netobj,
+            'keys' => $netobjkeys,
+            'netfields' => $netfields,
+            'datfields' => $datfields,
+            'netpayload' => $netpayload,
+            'datpayload' => $datpayload
+        ));
     }
 
-    ////
-
-    die(json_encode(array(
-        'netobj' => $netobj,
-        'netobjkeys' => $netobjkeys,
-        'netfields' => $netfields,
-        'datfields' => $datfields,
-        'netpayload' => $netpayload,
-        'datpayload' => $datpayload
-    )));
-
+    function Operator($netobj, $requestMethod, $getData, $postData) {
+        $jsonResponse = array();
+        if (strcasecmp($requestMethod, "GET") == 0) {
+            $jsonResponse = _ProcessGET($netobj, $getData);
+        } else if (strcasecmp($requestMethod, "POST") == 0) {
+            $jsonResponse = _ProcessPOST($netobj, $postData);
+        } else {
+            kill("Unsupport HTTP Method");
+        }
+        echo $jsonResponse;
+    }
+    
+    Operator(
+        "zone",
+        $_SERVER['REQUEST_METHOD'],
+        $_GET,
+        trim(file_get_contents("php://input"))
+    );
 ?>
