@@ -1,7 +1,15 @@
 <?php
     include('_functions.php');
-    header('Content-Encoding: x-gzip');
-    $payload = gzencode(GetData("zone", $_GET));
-    header('Content-Length: ' . strlen($payload));
-    echo $payload;
+    header('Content-Type: application/json');
+    // header('Content-Encoding: x-gzip');
+    $response = Operator(
+        "zone",
+        $_SERVER['REQUEST_METHOD'],
+        $_GET,
+        trim(file_get_contents("php://input"))
+    );
+    // $payload = gzencode($response);
+    // header('Content-Length: ' . strlen($payload));
+    // echo $payload;
+    echo $response;
 ?>

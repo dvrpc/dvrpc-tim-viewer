@@ -201,14 +201,14 @@
         $netpayload = _getNetAttributes($netobj, $netobjkeys, $netfields);
         $datpayload = _getDatAttributes($netobj, $netobjkeys, $datfields);
 
-        return json_encode(array(
+        return array(
             'netobj' => $netobj,
             'keys' => $netobjkeys,
             'netfields' => $netfields,
             'datfields' => $datfields,
             'netpayload' => $netpayload,
             'datpayload' => $datpayload
-        ));
+        );
     }
 
     function Operator($netobj, $requestMethod, $getData, $postData) {
@@ -218,9 +218,9 @@
         } else if (strcasecmp($requestMethod, "POST") == 0) {
             $jsonResponse = _ProcessPOST($netobj, $postData);
         } else {
-            kill("Unsupport HTTP Method");
+            kill("Unsupported HTTP Method");
         }
-        echo $jsonResponse;
+        return $jsonResponse;
     }
     
     Operator(
