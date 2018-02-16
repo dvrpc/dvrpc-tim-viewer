@@ -43,10 +43,55 @@
                 $value = $post["keys"][$key];
                 $keys[$key] = $value;
             } else {
-                die("Missing required netobj key '" . $key . "'");
+                kill("Missing required netobj key '" . $key . "'");
             }
         }
         return $keys;
+    }
+
+    function GetNetObjNetFields($post) {
+        $fields = NULL;
+        if (array_key_exists("netfields", $post)) {
+            if (is_array($post["netfields"])) {
+                $fields = $post["netfields"];
+            } else {
+                $fields = array($post["netfields"]);
+            }
+        } else {
+            // NOOP - OK
+            return NULL;
+        }
+        return $fields;
+    }
+
+    function GetNetObjDatFields($post) {
+        $tod = NULL;
+        $fields = NULL;
+        if (array_key_exists("datfields", $post)) {
+            if (array_key_exists("tod", $post["datfields"])) {
+                if (is_array($post["datfields"]["tod"])) {
+                    $tod = $post["datfields"]["tod"];
+                } else {
+                    $tod = array($post["datfields"]["tod"]);
+                }
+            } else {
+                // Imply all TODs
+                $tod = array("AM", "MD", "PM", "NT");
+            }
+            if (array_key_exists("fields", $post["datfields"])) {
+                if (is_array($post["datfields"]["fields"])) {
+                    $fields = $post["datfields"]["fields"];
+                } else {
+                    $fields = array($post["datfields"]["fields"]);
+                }
+            } else {
+                kill("Missing required datfields key 'fields'");
+            }
+        } else {
+            // NOOP - OK
+            return NULL;
+        }
+        return array("tod" => $tod, "fields" => $fields);
     }
 
     ////
@@ -77,11 +122,26 @@
 
     $netobjkeys = CheckNetObjKeys($post);
 
+    $netfields = GetNetObjNetFields($post);
+    $datfields = GetNetObjDatFields($post);
+
+    if (is_null($netfields) && is_null($datfields)) {
+        kill("Empty request - No fields to return");
+    }
+
+    if (!is_null($netfields)) {
+        
+    }
+    if (!is_null($datfields)) {
+        
+    }
     ////
 
     die(json_encode(array(
         'netobj' => $netobj,
-        'netobjkeys' => $netobjkeys
+        'netobjkeys' => $netobjkeys,
+        'netfields' => $netfields,
+        'datfields' => $datfields
     )));
 
 ?>
