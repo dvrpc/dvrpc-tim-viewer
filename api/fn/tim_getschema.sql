@@ -3,27 +3,47 @@ RETURNS JSON AS $$
 DECLARE
     retval JSON;
 BEGIN
-
+    WITH
+    ttype_netobjs AS (
+        SELECT
+            netobj,
+            'net_' || netobj net_table,
+            'dat_' || netobj dat_table,
+            'geom_' || netobj geom_table,
+            array_agg(field) keys
+        FROM tim_netobj_keys
+        GROUP BY netobj
+    ),
+    meta_netobjs AS (
+        SELECT
+            table_name,
+            array_agg(column_name::TEXT) fields
+        FROM meta
+        LEFT JOIN ttype_netobjs tno
+        ON (
+            tno.net_table = table_name
+        OR  tno.dat_table = table_name
+        OR  tno.geom_table = table_name
+        )
+        WHERE NOT (meta.column_name::TEXT = ANY(tno.keys))
+        GROUP BY table_name
+    )
     SELECT
-        json_agg(row_to_json(_q1)) INTO retval
+        json_agg(row_to_json(_q)) INTO retval
     FROM (
-        SELECT 
-            t,
-            array_agg(row_to_json((SELECT sq FROM (SELECT f, key) sq))) fs
-        FROM (
-            SELECT
-                m.table_name::text t,
-                m.column_name::text f,
-                (CASE WHEN m_no.field IS NULL THEN FALSE ELSE TRUE END)::boolean AS key
-            FROM meta m
-            LEFT JOIN tim_netobj_keys m_no
-            ON m.table_name::text IN ('dat_' || m_no.netobj, 'net_' || m_no.netobj)
-            AND m.column_name::text = m_no.field
-            ORDER BY m.table_name::text, m.ordinal_position
-        ) _q0
-        GROUP BY t
-    ) _q1;
-
+        SELECT
+            tno.netobj,
+            tno.keys,
+            net_mno.fields net,
+            dat_mno.fields dat,
+            geom_mno.fields geom
+        FROM ttype_netobjs tno
+        LEFT JOIN meta_netobjs net_mno ON net_mno.table_name = tno.net_table
+        LEFT JOIN meta_netobjs dat_mno ON dat_mno.table_name = tno.dat_table
+        LEFT JOIN meta_netobjs geom_mno ON geom_mno.table_name = tno.geom_table
+        WHERE tno.net_table IN (SELECT table_name FROM meta_netobjs)
+        ORDER BY netobj
+    ) _q;
     RETURN retval;
 END;
 $$ LANGUAGE plpgsql;
