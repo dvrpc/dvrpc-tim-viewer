@@ -329,6 +329,7 @@
     }
     function _ProcessPOST($netobj, $postData) {
         $reqJSON = _parseJSON($postData);
+        $reqJSON['netobj'] = $netobj;
         $netobj = CheckNetObj($reqJSON);
         $netobjkeys = CheckNetObjKeys($reqJSON);
         $netfields = GetNetObjNetFields($reqJSON);
