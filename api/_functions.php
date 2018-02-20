@@ -133,7 +133,12 @@
     }
 
     function kill($msg) {
-        die(json_encode(array('error' => $msg)));
+        header('Content-Type: application/json');
+        header('Content-Encoding: x-gzip');
+        $dyingwords = gzencode(json_encode(array('error' => $msg)));
+        header('Content-Length: ' . strlen($dyingwords));
+        echo $dyingwords;
+        die();
     }
 
     function CheckNetObj($post) {
