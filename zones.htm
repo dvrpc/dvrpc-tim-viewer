@@ -104,6 +104,23 @@
 		            transform: scale3D(0, 0, 1);
 		  } 
 		}
+
+		.node {
+		  	box-sizing: border-box;
+		  	position: absolute;
+		  	overflow: hidden;
+		}
+		.node-label {
+			font-size: 0.7em;
+		  	padding: 4px;
+		  	line-height: 1em;
+		  	white-space: pre;
+		}
+		.node-value {
+		  	color: rgba(0,0,0,0.8);
+		  	font-size: 9px;
+		  	margin-top: 1px;
+		}
     </style>
     
 	
@@ -137,7 +154,7 @@
     </nav>
     <div class="container-fluid">
 		<div class="row" >
-			<div id="" class="col-sm-5 col-lg-4 sidebar">
+			<div id="zone-sidebar" class="col-sm-5 col-lg-4 sidebar">
 				<div class="card">
 				  <!-- <div class="card-header">
 				    Map desire lines
@@ -195,7 +212,8 @@
                 	</div>
                 </div> 
                 <p id="data-dump"></p>
-				
+				<div id="employment-graph" style="position: relative;">
+				</div>
 			</div>
 			<div id="map" class="col-sm-7 offset-sm-5 col-lg-8 offset-lg-4">
                 <div class="sk-cube-grid">
@@ -229,7 +247,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
     <script src='https://api.mapbox.com/mapbox-gl-js/v0.40.1/mapbox-gl.js'></script>
-
+    <script src="//d3js.org/d3.v4.min.js"></script>
 	<script src='lib/config.js' type="text/javascript"></script>
 	<script src='lib/zones.js' type="text/javascript"></script>
 </body>
