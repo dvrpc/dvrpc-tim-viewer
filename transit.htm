@@ -40,7 +40,7 @@
           background-color: #312867;
           float: left;
           -webkit-animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out;
-                  animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out; 
+                  animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out;
         }
         .sk-cube-grid .sk-cube1 {
           -webkit-animation-delay: 0.2s;
@@ -76,7 +76,7 @@
                     transform: scale3D(1, 1, 1);
           } 35% {
             -webkit-transform: scale3D(0, 0, 1);
-                    transform: scale3D(0, 0, 1); 
+                    transform: scale3D(0, 0, 1);
           }
         }
 
@@ -87,11 +87,11 @@
           } 35% {
             -webkit-transform: scale3D(0, 0, 1);
                     transform: scale3D(0, 0, 1);
-          } 
+          }
         }
 
     </style>
-    
+
   <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
@@ -128,9 +128,12 @@
         <div class="row" >
             <div id="zone-sidebar" class="col-sm-5 col-lg-4 sidebar">
                 <!-- side bar content yo -->
-                <!-- <select id="transit-type" class="form-control">
-                    <option>Default select</option>
-                </select> -->
+                <select id="system-dropdown" class="form-control">
+                    <option>Select a system</option>
+                </select>
+                <select id="line-dropdown" class="form-control" style="margin-top:10px" disabled>
+                    <option>Select a line</option>
+                </select>
                 <br/><br/>
                 <h3 id="dat-shortname" class="text-primary">Transit Line</h3>
                 <p id="dat-mainlinename" class="lead">System name</p>
@@ -192,7 +195,7 @@
   <div id="layerList"></div>
     <pre id="propertyList"></pre>
 
- 
+
     <script  src="http://code.jquery.com/jquery-3.3.1.min.js"
   integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
   crossorigin="anonymous"></script>
