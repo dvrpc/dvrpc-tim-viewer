@@ -35,7 +35,7 @@ $RECYCLE.BIN/
 # https://github.com/klokantech/tileserver-php
 tileserver.php
 
-config.js
+
 *credentials*
 *.pyc
 *.log
