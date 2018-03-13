@@ -9,7 +9,7 @@
 
       #map { position:fixed; top:70px; bottom:0; right:0; width:100%;padding:0; }
 
-     	#reference { position:absolute; top:56px; bottom:0; width:100%; }
+      #reference { position:absolute; top:56px; bottom:0; width:100%; }
       .sidebar {
           position: fixed;
           top: 70px;
@@ -40,7 +40,7 @@
           background-color: #312867;
           float: left;
           -webkit-animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out;
-                  animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out; 
+                  animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out;
         }
         .sk-cube-grid .sk-cube1 {
           -webkit-animation-delay: 0.2s;
@@ -76,7 +76,7 @@
                     transform: scale3D(1, 1, 1);
           } 35% {
             -webkit-transform: scale3D(0, 0, 1);
-                    transform: scale3D(0, 0, 1); 
+                    transform: scale3D(0, 0, 1);
           }
         }
 
@@ -87,14 +87,14 @@
           } 35% {
             -webkit-transform: scale3D(0, 0, 1);
                     transform: scale3D(0, 0, 1);
-          } 
+          }
         }
 
     </style>
-    
-	<link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+
+  <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
 
 </head>
 
@@ -128,9 +128,51 @@
         <div class="row" >
             <div id="zone-sidebar" class="col-sm-5 col-lg-4 sidebar">
                 <!-- side bar content yo -->
-                <select id="transit-type" class="form-control">
-                    <option>Default select</option>
+                <select id="system-dropdown" class="form-control">
+                    <option>Select a system</option>
                 </select>
+                <select id="line-dropdown" class="form-control" style="margin-top:10px" disabled>
+                    <option>Select a line</option>
+                </select>
+                <br/><br/>
+                <h3 id="dat-shortname" class="text-primary">Transit Line</h3>
+                <p id="dat-mainlinename" class="lead">System name</p>
+                <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Time of Day</th>
+                    <th>Line Boardings</th>
+                    <th>Person Trips</th>
+                    <th>Passenger Miles</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>AM</td>
+                    <td id="AM-line_boardings"></td>
+                    <td id="AM-person_trips"></td>
+                    <td id="AM-pass_miles"></td>
+                  </tr>
+                  <tr>
+                    <td>MD</td>
+                    <td id="MD-line_boardings"></td>
+                    <td id="MD-person_trips"></td>
+                    <td id="MD-pass_miles"></td>
+                  </tr>
+                  <tr>
+                    <td>PM</td>
+                    <td id="PM-line_boardings"></td>
+                    <td id="PM-person_trips"></td>
+                    <td id="PM-pass_miles"></td>
+                  </tr>
+                  <tr>
+                    <td>NT</td>
+                    <td id="NT-line_boardings"></td>
+                    <td id="NT-person_trips"></td>
+                    <td id="NT-pass_miles"></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             <div id="map" class="col-sm-7 offset-sm-5 col-lg-8 offset-lg-4">
@@ -150,17 +192,17 @@
         </div>
         <div id='reference' style='display:none;'></div>
     </div>
-	<div id="layerList"></div>
+  <div id="layerList"></div>
     <pre id="propertyList"></pre>
 
- 
+
     <script  src="http://code.jquery.com/jquery-3.3.1.min.js"
   integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
   crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
     <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
-	<script src='lib/config.js' type="text/javascript"></script>
-	<script src='lib/transit.js' type="text/javascript"></script>
+  <script src='lib/config.js' type="text/javascript"></script>
+  <script src='lib/transit.js' type="text/javascript"></script>
 </body>
 </html>
