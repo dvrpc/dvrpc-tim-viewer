@@ -1,7 +1,7 @@
 <?php
     include('_functions.php');
     header('Content-Encoding: x-gzip');
-    $payload = gzencode(GetData("territories", $_GET));
+    $payload = gzencode(GetData("territory", $_GET));
     header('Content-Length: ' . strlen($payload));
     echo $payload;
 ?>
