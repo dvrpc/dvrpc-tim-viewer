@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'/>
+    <title>TIM Viewer</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    
+	<link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <style>
+        body { margin:0; padding:0; }
+
+        #map { position:fixed; top:70px; bottom:0; right:0; width:100%;padding:0; }
+        
+        .sidebar {
+		    position: fixed;
+		    top: 70px;
+		    bottom: 0;
+		    left: 0;
+		    z-index: 1000;
+		    padding: 20px 10px;
+		    overflow-x: hidden;
+		    overflow-y: auto;
+		    border-right: 1px solid #eee;
+		}
+
+		.tab-pane {
+			padding-top: 20px;
+		}
+
+        #legend {
+			bottom: 40px;
+		    right: 20px;
+		    z-index: 10000;
+		    position: absolute;
+		    display: block;
+		    padding: 10px;
+		    border: 1px solid #ddd;
+		    box-sizing: border-box;
+		    background-color: #fff;
+		}
+		.netouchepas {
+			pointer-events: none;
+		}
+		.sk-cube-grid {
+	      width: 80px;
+		    height: 80px;
+		    position: absolute;
+		    top: 50%;
+		    left: 50%;
+		    z-index: 800;
+		    transform: translate(-50%,-50%);
+		}
+
+		.sk-cube-grid .sk-cube {
+		  width: 33%;
+		  height: 33%;
+		  background-color: #312867;
+		  float: left;
+		  -webkit-animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out;
+		          animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out; 
+		}
+		.sk-cube-grid .sk-cube1 {
+		  -webkit-animation-delay: 0.2s;
+		          animation-delay: 0.2s; }
+		.sk-cube-grid .sk-cube2 {
+		  -webkit-animation-delay: 0.3s;
+		          animation-delay: 0.3s; }
+		.sk-cube-grid .sk-cube3 {
+		  -webkit-animation-delay: 0.4s;
+		          animation-delay: 0.4s; }
+		.sk-cube-grid .sk-cube4 {
+		  -webkit-animation-delay: 0.1s;
+		          animation-delay: 0.1s; }
+		.sk-cube-grid .sk-cube5 {
+		  -webkit-animation-delay: 0.2s;
+		          animation-delay: 0.2s; }
+		.sk-cube-grid .sk-cube6 {
+		  -webkit-animation-delay: 0.3s;
+		          animation-delay: 0.3s; }
+		.sk-cube-grid .sk-cube7 {
+		  -webkit-animation-delay: 0s;
+		          animation-delay: 0s; }
+		.sk-cube-grid .sk-cube8 {
+		  -webkit-animation-delay: 0.1s;
+		          animation-delay: 0.1s; }
+		.sk-cube-grid .sk-cube9 {
+		  -webkit-animation-delay: 0.2s;
+		          animation-delay: 0.2s; }
+
+		@-webkit-keyframes sk-cubeGridScaleDelay {
+		  0%, 70%, 100% {
+		    -webkit-transform: scale3D(1, 1, 1);
+		            transform: scale3D(1, 1, 1);
+		  } 35% {
+		    -webkit-transform: scale3D(0, 0, 1);
+		            transform: scale3D(0, 0, 1); 
+		  }
+		}
+
+		@keyframes sk-cubeGridScaleDelay {
+		  0%, 70%, 100% {
+		    -webkit-transform: scale3D(1, 1, 1);
+		            transform: scale3D(1, 1, 1);
+		  } 35% {
+		    -webkit-transform: scale3D(0, 0, 1);
+		            transform: scale3D(0, 0, 1);
+		  } 
+		}
+
+		.node {
+		  	box-sizing: border-box;
+		  	position: absolute;
+		  	overflow: hidden;
+		}
+		.node-label {
+			font-size: 0.7em;
+		  	padding: 4px;
+		  	line-height: 1em;
+		  	white-space: pre;
+		}
+		.node-value {
+		  	color: rgba(0,0,0,0.8);
+		  	font-size: 9px;
+		  	margin-top: 1px;
+		}
+    </style>
+    
+	
+
+	<style>
+		
+	</style>
+</head>
+
+<body>
+	<nav class="navbar navbar-toggleable-md navbar-inverse bg-inverse fixed-top">
+      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <img src="/lib/images/peeping_tim_logo.png" style="margin-bottom:-21px;"/>
+      <a class="navbar-brand" href="#">Peeping TIM</a>
+
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="base.htm">Highway</a>
+          </li>
+          <li class="navbar-nav">
+          		<a class="nav-link" href="transit.htm">Transit </a>
+          </li>
+          <li class="navbar-nav active">
+          		<a class="nav-link" href="zones.htm">Zones <span class="sr-only">(current)</span></a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container-fluid">
+		<div class="row" >
+			<div id="zone-sidebar" class="col-sm-5 col-lg-4 sidebar">
+			  	<h1 id="dat-zone-name" class="display-3 text-primary">Zone #</h1>
+			  	
+			  	<ul class="nav nav-tabs" role="tablist">
+					<li class="nav-item">
+				    	<a class="nav-link active" data-toggle="tab" href="#zone-summary" role="tab">Summary Data</a>
+				  	</li>
+				  	<li class="nav-item">
+				    	<a class="nav-link" data-toggle="tab" href="#zone-trip" role="tab" >Trip Data</a>
+				  	</li>
+				</ul>
+				
+				<!-- Tab panes -->
+				<div class="tab-content">
+				  	<div class="tab-pane active" id="zone-summary" role="tabpanel">
+				  		<div class="row text-center">
+		                	<div class="col-md-4">
+		                        <h3 id="dat-zone-population" class="text-muted">0</h3>
+		                        <p class="small">Population</p>
+		                	</div>
+		                	<div class="col-md-4">
+		                        <h3 id="dat-zone-households" class="text-muted">0</h3>
+		                        <p class="small">Households</p>
+		                	</div>
+		                	<div class="col-md-4">
+		                        <h3 id="dat-zone-popdens" class="text-muted">0</h3>
+		                        <p class="small">Density (ppl/sq mi)</p>
+		                	</div>
+		                </div> 
+		                <hr>
+		                <h5 class="text-muted">Total Employment: <span id="dat-zone-employment">0</span></h5>
+						<div id="employment-graph" style="position: relative;">
+						</div>
+				  	</div>
+
+				  	<div class="tab-pane" id="zone-trip" role="tabpanel">
+						<div class="card">
+						  <!-- <div class="card-header">
+						    Map desire lines
+						  </div> -->
+							<div class="card-block">
+							    <div id="desire-wrapper">
+									<div class="btn-group" data-toggle="buttons">
+									 	<label class="btn btn-outline-info btn-sm active">
+									    	<input type="radio" name="trip-type" id="car-trip" value="2000" autocomplete="off" checked>Car 
+									  	</label>
+									  	<label class="btn btn-outline-info btn-sm">
+									    	<input type="radio" name="trip-type" id="transit-trip" value="2100" autocomplete="off">Transit
+									  	</label>
+									</div>
+									<div class="btn-group" data-toggle="buttons">
+									 	<label class="btn btn-outline-info btn-sm active">
+									    	<input type="radio" name="trip-dir" id="outbound-trip" value="outbound" autocomplete="off" checked>Outbound 
+									  	</label>
+									  	<label class="btn btn-outline-info btn-sm">
+									    	<input type="radio" name="trip-dir" id="inbound-trip" value="inbound" autocomplete="off">Inbound
+									  	</label>
+									</div>
+									<div class="btn-group" data-toggle="buttons">
+									 	
+									  	<label class="btn btn-outline-info btn-sm active">
+									    	<input type="radio" name="trip-tod" id="am-trip" value="AM" autocomplete="off" checked>AM Peak 
+									  	</label>
+									  	<label class="btn btn-outline-info btn-sm">
+									    	<input type="radio" name="trip-tod" id="md-trip" value="MD" autocomplete="off" checked>Midday 
+									  	</label>
+									  	<label class="btn btn-outline-info btn-sm">
+									    	<input type="radio" name="trip-tod" id="pm-trip" value="PM" autocomplete="off">PM Peak
+									  	</label>
+									  	<label class="btn btn-outline-info btn-sm">
+									    	<input type="radio" name="trip-tod" id="night-trip" value="NT" autocomplete="off" checked>Nighttime 
+									  	</label>
+									</div>
+									<a href="#" id="desire-line-map" class="btn btn-primary btn-lg btn-block">map request</a>
+								</div>
+							</div>
+			  			</div>
+				  	</div>
+				</div>
+			</div>
+			<div id="map" class="col-sm-7 offset-sm-5 col-lg-8 offset-lg-4">
+                <div class="sk-cube-grid">
+				  <div class="sk-cube sk-cube1"></div>
+				  <div class="sk-cube sk-cube2"></div>
+				  <div class="sk-cube sk-cube3"></div>
+				  <div class="sk-cube sk-cube4"></div>
+				  <div class="sk-cube sk-cube5"></div>
+				  <div class="sk-cube sk-cube6"></div>
+				  <div class="sk-cube sk-cube7"></div>
+				  <div class="sk-cube sk-cube8"></div>
+				  <div class="sk-cube sk-cube9"></div>
+				</div>
+			</div>
+			<div style="clear:both"></div>
+		</div>
+	</div>
+	<!-- <div style="position:absolute; right:20px; top:75px">
+	  <div id="style-selector" class="btn-group btn-group-vertical" data-toggle="buttons">
+	    <label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary active">
+	      <input type="radio" name="hwy-render-state" value="hwy-no-style"> No Style
+	    </label>
+	  </div>
+	</div> -->
+	<div id="legend"></div>
+	<div id="layerList"></div>
+    <pre id="propertyList"></pre>
+
+
+    <script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+    <script src="//d3js.org/d3.v4.min.js"></script>
+	<script src='lib/config.js' type="text/javascript"></script>
+	<script src='lib/zones.js' type="text/javascript"></script>
+	<script>
+	// $('.nav-link').click(function (e) {
+	//   	e.preventDefault()
+
+	//   	$(this.href).tab('show')
+	// });
+	</script>
+</body>
+</html>

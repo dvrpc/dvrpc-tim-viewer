@@ -1098,21 +1098,7 @@
             },
             "source-layer": "transit_lines"
         },
-        {
-            "interactive": true,
-            "layout": {
-                "visibility": "visible"
-            },
-            "type": "circle",
-            "source": "tim_transit",
-            "id": "transit-stops",
-            
-            "paint": {
-                "circle-radius": 4,
-                "circle-color": "#fb8072"
-            },
-            "source-layer": "transit_stops"
-        },
+        
         
         {
             "interactive": true,
