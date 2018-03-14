@@ -75,8 +75,19 @@
 		      	<input type="checkbox" name="hwy-data-layer" value="count-circles"> Traffic Counts
 		    </label>
 	  </div>
-
+	  <div class="btn-group btn-group-toggle" data-toggle="buttons">
+		  <label class="btn btn-secondary btn-sm active">
+		    <input type="radio" name="count-tod" id="am" value="am" autocomplete="off" checked> AM
+		  </label>
+		  <label class="btn btn-secondary btn-sm">
+		    <input type="radio" name="count-tod" id="md" value="md" autocomplete="off"> MD
+		  </label>
+		  <label class="btn btn-secondary btn-sm">
+		    <input type="radio" name="count-tod" id="pm" value="pm" autocomplete="off"> PM
+		  </label>
+		</div>
 	</div>
+
 	<div id="legend"></div>
 	<div id="layerList"></div>
     <pre id="propertyList"></pre>
