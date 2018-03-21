@@ -100,11 +100,11 @@
     "pitch": 0,
     "sources": {
         "pff": {
-            "url": "http://dvrpc-freight.michaelruane.com/pff_tiles.json",
+            "url": "https://dvrpc-freight.michaelruane.com/pff_tiles.json",
             "type": "vector"
         },
         "tim_network": {
-            "url": "http://a.michaelruane.com/tim_highways.json",
+            "url": "https://a.michaelruane.com/data/dvrpc-tim-highways.json",
             "type": "vector"
         },
         "mapbox://mapbox.mapbox-streets-v6": {
