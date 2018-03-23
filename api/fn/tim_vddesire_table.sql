@@ -11,23 +11,24 @@ RETURNS TABLE (
 ) AS $$
 DECLARE
     _mtx_tbl TEXT;
-    origzoneindex INTEGER;
     origzoneid INTEGER;
+    destzoneids INTEGER[];
 BEGIN
-    _mtx_tbl := format('%I', 'mtx_' || mtxno);
-    _tblname_mtx_md := format('%I', 'mtx_' || mtxno || '_md');
-    _tblname_mtx_pm := format('%I', 'mtx_' || mtxno || '_pm');
-    _tblname_mtx_nt := format('%I', 'mtx_' || mtxno || '_nt');
-    origzoneindex := tim_getzoneindex(origzoneno);
-    SELECT id INTO origzoneid FROM gfx_zone_network_zones WHERE no = origzoneno;
+    _mtx_tbl := FORMAT('%I', 'mtx_' || mtxno);
+
+    SELECT id INTO origzoneid
+    FROM gfx_zone_network_zones
+    WHERE no = origzoneno;
+
+    SELECT array_agg(id) INTO destzoneids
+    FROM gfx_zone_network_zones
+    WHERE no = ANY(destzonenos);
 
     RETURN QUERY
-    WITH
-    zone_index AS (
-    )
+    EXECUTE FORMAT('
     SELECT sp.*, net.geom FROM (
         SELECT fn.edge, SUM(val) totalval
-        FROM pgr_dijkstra(FORMAT('
+        FROM pgr_dijkstra(''
             SELECT id, source, target, cost AS cost, rcost as reverse_cost
             FROM (
                 SELECT id, source, target,
@@ -59,24 +60,22 @@ BEGIN
                             WHEN dzone = %s THEN 1
                             ELSE 999999
                         END
-                        END rev
+                    END rev
                     FROM gfx_zone_network
                 ) __q
-            ) _q', origzoneno, origzoneno, origzoneno, origzoneno),
-            origzoneid,
-            -- (SELECT array_agg(DISTINCT(zoneid)) FROM _destzone),
-            destzonenos,
+            ) _q'',
+            $1,
+            $2,
             directed := true
         ) fn
         LEFT JOIN gfx_zone_network_zones z ON z.id = fn.end_vid
-        -- LEFT JOIN zone_index zi ON z.no = zi.no
-        -- LEFT JOIN _destzone dz ON dz.zoneno = z.no
-        LEFT JOIN %I mtx ON mtx.ozoneno = origzoneno AND mtx.dzoneno = zi.index
-        -- LEFT JOIN mtx_2000_am mtx ON mtx.oindex = 134 AND mtx.dindex = dz.zoneindex
+        LEFT JOIN %I mtx ON mtx.ozoneno = $3 AND mtx.dzoneno = ANY($4) AND mtx.tod = ANY($5)
         GROUP BY fn.edge
     ) sp
     LEFT JOIN gfx_zone_network net ON net.id = sp.edge
     WHERE net.geom IS NOT NULL;
+    ', origzoneno, origzoneno, origzoneno, origzoneno, _mtx_tbl)
+    USING origzoneid, destzoneids, origzoneno, destzonenos, tods;
 END;
 $$ LANGUAGE plpgsql;
 

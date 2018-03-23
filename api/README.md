@@ -107,7 +107,7 @@ Parameters:
 Return value:
   * Standard Feature Collection GeoJSON
 
-## Skim Matrices
+## Matrices
 
 **/api/matrices.php**
 
@@ -115,7 +115,7 @@ HTTP Method: `GET`/`POST`
 
 Parameters:
 * m: `INTEGER` Matrix number
-* t: `TEXT` Time of Day {`AM`,`MD`,`PM`,`NT`}
+* z(n): `INTEGER` Zone Numbers
 
 
 ## Analysis
@@ -129,11 +129,13 @@ Parameters:
   * `s` - Simple point to point lines
   * `ddl` - Delaunay Triangle Network desire lines
   * `vddl` - Voronoi Polygon + Delaunay Triangle Network desire lines
-* bbx0: `FLOAT`
-* bbx1: `FLOAT`
-* bby0: `FLOAT`
-* bby1: `FLOAT`
-  * (Optional) Bounding Box Coordinates `WGS 84::EPSG 4326`
+* m: `INTEGER`
+  * `2000` - Car trip table
+  * `2100` - Transit trip table
+* tod(n): `TEXT`
+  * `AM`, `MD`, `PM`, `NT`
+* oz(n): `INTEGER` Origin Zones
+* dz(n): `INTEGER` Desination Zones
 
 Return Value:
   * Standard Feature Collection GeoJSON
