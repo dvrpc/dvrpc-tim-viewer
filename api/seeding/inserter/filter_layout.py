@@ -34,3 +34,33 @@ for fields in layout:
 with open(r"C:\Users\model-ws\Desktop\visum_attr_assignment_output_ap.net", "wb") as io:
     w = csv.writer(io, delimiter = ";")
     w.writerows(new_layout)
+
+####
+
+ptrn = re.compile(r"^\-?[0-9]+(\.[0-9]*)?(?=[a-zA-Z])")
+
+tables = []
+with open(r"C:\Users\model-ws\Desktop\trunc_assignment_output_am.net", "rb") as io:
+    r = csv.reader(io, delimiter = ";")
+    table = []
+    for row in r:
+        if len(row) == 0:
+            tables.append(table)
+            table = []
+            continue
+        if not row[0].startswith('*'):
+            table.append(row)
+
+# units = set()
+# for fields in data:
+#     units.update([re.sub(ptrn, "", f) for f in fields if re.search(ptrn, f)])
+
+for i, table in enumerate(tables):
+    transposed_table = zip(*table)
+    for j, column in enumerate(transposed_table):
+        nfields = len(column[1:])
+        if nfields > 0:
+            if nfields == sum(1 for c in column[1:] if re.search(ptrn, c)):
+                unit = re.compile(r"%s$" % re.sub(ptrn, "", column[1]))
+                transposed_table[j] = [column[0]] + [re.sub(unit, "", c) for c in column[1:]]
+    tables[i] = zip(*transposed_table)
