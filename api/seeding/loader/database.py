@@ -28,7 +28,7 @@ TBL_MATRIX = "mtx"
 TBL_GEOMETRY = "geom"
 
 TBL_NAMETMPLT_NETOBJ = "net_{netobj}"
-TBL_NAMETMPLT_MTX = "mtx_{mtxno}_{tod}"
+TBL_NAMETMPLT_MTX = "mtx_{mtxno}"
 TBL_NAMETMPLT_DATA = "dat_{netobj}"
 TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 
@@ -36,7 +36,7 @@ TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 "ALTER TABLE {tblname} ADD COLUMN ({fname} {dtype})"
 "INSERT INTO {tblname} VALUES ({nargs})"
 
-SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex smallint, val double precision);"
+SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex smallint, scen text, tod text, val double precision);"
 SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (oindex ASC NULLS LAST);"
 SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dindex ASC NULLS LAST);"
 SQL_CREATE_IDX_GEOM = "CREATE INDEX {tblname}_{field}_gidx ON {tblname} USING GIST ({field});"
@@ -135,7 +135,14 @@ class Database(threading.Thread):
         cur = self.con.cursor()
         cur.execute(Utility.formatCreate(tblname, payload.atts))
         for data in self._iterPayload(payload.data):
-            cur.execute(Utility.formatMultiInsert(self.con, tblname, data, payload.atts))
+            cur.execute(
+                Utility.formatMultiInsert(
+                    self.con,
+                    tblname,
+                    map(lambda a:a + (payload.scen,), data),
+                    payload.atts + [[u"scen", u"TEXT"]]
+                )
+            )
         self.con.commit()
     def LoadTODAttributes(self, payload):
         tblname = TBL_NAMETMPLT_DATA.format(**{'netobj':payload.netobj})
@@ -152,13 +159,13 @@ class Database(threading.Thread):
                 Utility.formatMultiInsert(
                     self.con,
                     tblname,
-                    map(lambda a:a + (payload.tod,), data),
-                    payload.atts + [[u"tod", u"TEXT"]]
+                    map(lambda a:a + (payload.scen, payload.tod,), data),
+                    payload.atts + [[u"scen", u"TEXT"], [u"tod", u"TEXT"]]
                 )
             )
         self.con.commit()
     def LoadMatrix(self, payload):
-        tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno, 'tod': payload.tod})
+        tblname = TBL_NAMETMPLT_MTX.format(**{'mtxno': payload.mtxno})
         if self.skipTable(tblname):
             logger.debug("Database-%d.LoadMatrix(): Exists, skipped %s", self.ident, tblname)
             return
