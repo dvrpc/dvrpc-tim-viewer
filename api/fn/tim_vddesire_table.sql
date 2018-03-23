@@ -29,41 +29,26 @@ BEGIN
     SELECT sp.*, net.geom FROM (
         SELECT fn.edge, SUM(val) totalval
         FROM pgr_dijkstra(''
-            SELECT id, source, target, cost AS cost, rcost as reverse_cost
-            FROM (
-                SELECT id, source, target,
-                    fwd * length AS cost,
-                    rev * length AS rcost
-                FROM (
-                    SELECT
-                        id, source, target,
-                        ST_Length(geom) length,
-                        (ozone IS NULL AND dzone IS NULL)::integer tflag,
-                    CASE
-                        WHEN ozone IS NULL AND dzone IS NULL THEN 1
-                        WHEN ozone IS NULL THEN CASE
-                            WHEN dzone = %s THEN 999999
-                            ELSE 1
-                        END
-                        ELSE CASE
-                            WHEN ozone = %s THEN 1
-                            ELSE 999999
-                        END
-                    END fwd,
-                    CASE
-                        WHEN dzone IS NULL AND ozone IS NULL THEN 1
-                        WHEN dzone IS NULL THEN CASE
-                            WHEN ozone = %s THEN 999999
-                            ELSE 1
-                        END
-                        ELSE CASE
-                            WHEN dzone = %s THEN 1
-                            ELSE 999999
-                        END
-                    END rev
-                    FROM gfx_zone_network
-                ) __q
-            ) _q'',
+            SELECT id, source, target, length AS cost, length reverse_cost FROM gfx_zone_network
+            WHERE
+                ozone <> %s
+            UNION ALL
+            SELECT id, source, target, length AS cost, length reverse_cost FROM gfx_zone_network
+            WHERE
+                dzone <> %s
+            UNION ALL
+            SELECT id, source, target, length AS cost, length reverse_cost FROM gfx_zone_network
+            WHERE
+                nonconnector = 1
+            UNION ALL
+            SELECT id, source, target, length AS cost, 9e9 reverse_cost FROM gfx_zone_network
+            WHERE
+                ozone = %s
+            UNION ALL
+            SELECT id, source, target, 9e9 AS cost, length reverse_cost FROM gfx_zone_network
+            WHERE
+                dzone = %s
+            '',
             $1,
             $2,
             directed := true
