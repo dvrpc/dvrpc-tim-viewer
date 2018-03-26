@@ -174,9 +174,10 @@ NETOBJ_IDs = {
 # I knew I wanted a thread manager
 class VisumManager(threading.Thread):
     TODs = ["AM","MD","PM","NT"]
-    def __init__(self, path_template, vernum, queue, (srid, prjwkt), max_queue_depth, single_load_visum):
+    def __init__(self, path_template, scen, vernum, queue, (srid, prjwkt), max_queue_depth, single_load_visum):
         super(VisumManager, self).__init__()
         self.path_template = path_template
+        self.scen = scen
         self.vernum = vernum
         self.queue = queue
         self._threads = []
@@ -193,6 +194,7 @@ class VisumManager(threading.Thread):
         for TOD in self.TODs:
             v = VisumDataMiner(
                 self.path_template.format(**{"tod":TOD}),
+                self.scen,
                 self.vernum,
                 getnetobj,
                 self.queue,
@@ -207,9 +209,10 @@ class VisumManager(threading.Thread):
             t.join()
 
 class VisumDataMiner(threading.Thread):
-    def __init__(self, path, vernum, getnetobj, queue, (srid, prjwkt), semaphore):
+    def __init__(self, path, scen, vernum, getnetobj, queue, (srid, prjwkt), semaphore):
         super(VisumDataMiner, self).__init__()
         self.path = path
+        self.scen = scen
         self.vernum = vernum
         self.getnetobj = getnetobj
         self.queue = queue
@@ -260,6 +263,7 @@ class VisumDataMiner(threading.Thread):
             if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
+                    "scen": self.scen,
                     "netobj": netobj,
                     "atts": map(lambda (v,p,d):(p,d), ids),
                     "data": data
@@ -276,6 +280,7 @@ class VisumDataMiner(threading.Thread):
             if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_DATA,
+                    "scen": self.scen,
                     "tod": self.tod,
                     "netobj": netobj,
                     "atts": map(lambda (v,p,d):(p,d), ids),
@@ -288,6 +293,7 @@ class VisumDataMiner(threading.Thread):
             mtx_listing = self._getMatrix(Visum, mtxno)
             self.queue.put(Sponge(**{
                 "type": database.TBL_MATRIX,
+                "scen": self.scen,
                 "tod": self.tod,
                 "mtxno": mtxno,
                 "data": mtx_listing
@@ -335,6 +341,7 @@ class VisumDataMiner(threading.Thread):
                 ))
             self.queue.put(Sponge(**{
                 "type": database.TBL_GEOMETRY,
+                "scen": self.scen,
                 "netobj": netobj,
                 "atts": ids,
                 "data": data,

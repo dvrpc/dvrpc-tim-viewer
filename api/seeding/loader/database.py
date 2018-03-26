@@ -133,14 +133,15 @@ class Database(threading.Thread):
             return
         logger.debug("Database-%d.LoadAttributes(): Importing %s", self.ident, tblname)
         cur = self.con.cursor()
-        cur.execute(Utility.formatCreate(tblname, payload.atts))
+        atts = payload.atts + [[u"scen", u"TEXT"]]
+        cur.execute(Utility.formatCreate(tblname, atts))
         for data in self._iterPayload(payload.data):
             cur.execute(
                 Utility.formatMultiInsert(
                     self.con,
                     tblname,
                     map(lambda a:a + (payload.scen,), data),
-                    payload.atts + [[u"scen", u"TEXT"]]
+                    atts
                 )
             )
         self.con.commit()
@@ -151,7 +152,8 @@ class Database(threading.Thread):
             return
         logger.debug("Database-%d.LoadAttributes(): Importing %s", self.ident, tblname)
         cur = self.con.cursor()
-        qry = Utility.formatCreate(tblname, payload.atts + [[u"tod", u"TEXT"]])
+        atts = payload.atts + [[u"scen", u"TEXT"], [u"tod", u"TEXT"]]
+        qry = Utility.formatCreate(tblname, atts)
         # logging.debug("Database-%d:LoadAttributes(): Create statement: %s", self.ident, qry)
         cur.execute(qry)
         for data in self._iterPayload(payload.data):
@@ -160,7 +162,7 @@ class Database(threading.Thread):
                     self.con,
                     tblname,
                     map(lambda a:a + (payload.scen, payload.tod,), data),
-                    payload.atts + [[u"scen", u"TEXT"], [u"tod", u"TEXT"]]
+                    atts
                 )
             )
         self.con.commit()

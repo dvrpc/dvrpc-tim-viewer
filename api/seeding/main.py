@@ -14,7 +14,8 @@ import loader.database
 import loader.visum
 from credentials import PSQL_CNX
 
-MODEL_PATH_TEMPLATE = r"D:\William\Documents\_DVRPC_Mini14\DV_38_125_pruned_toynetwork_{tod}.ver"
+MODEL_PATH_TEMPLATE = r"C:\Users\model-ws\Desktop\TIM_23Full_run\TIM23_2015_Base_170612_FINAL_TMC_{tod}.ver"
+MODEL_SCEN = "2015"
 
 PSQL_SRID = 4326
 
@@ -34,7 +35,7 @@ def main():
     DM.nukeDatabase()
 
     spatial_ref = (PSQL_SRID, DM.getProjectionWKT(PSQL_SRID))
-    VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, 15, Q, spatial_ref, MAX_QUEUE_DEPTH, SINGLE_LOAD_VISUM)
+    VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, MODEL_SCEN, 15, Q, spatial_ref, MAX_QUEUE_DEPTH, SINGLE_LOAD_VISUM)
 
     # Start Database IO Agent Manager
     DM.start()
