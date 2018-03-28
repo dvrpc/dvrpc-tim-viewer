@@ -32,9 +32,9 @@ TBL_NAMETMPLT_MTX = "mtx_{mtxno}"
 TBL_NAMETMPLT_DATA = "dat_{netobj}"
 TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 
-"CREATE TABLE {tblname} ({fields})"
-"ALTER TABLE {tblname} ADD COLUMN ({fname} {dtype})"
-"INSERT INTO {tblname} VALUES ({nargs})"
+# "CREATE TABLE {tblname} ({fields})"
+# "ALTER TABLE {tblname} ADD COLUMN ({fname} {dtype})"
+# "INSERT INTO {tblname} VALUES ({nargs})"
 
 SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex smallint, scen text, tod text, val double precision);"
 SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (oindex ASC NULLS LAST);"
@@ -134,7 +134,14 @@ class Database(threading.Thread):
         logger.debug("Database-%d.LoadAttributes(): Importing %s", self.ident, tblname)
         cur = self.con.cursor()
         atts = payload.atts + [[u"scen", u"TEXT"]]
-        cur.execute(Utility.formatCreate(tblname, atts))
+        try:
+            cur.execute(Utility.formatCreate(tblname, atts))
+        except:
+            logger.debug("Database-%d.LoadAttributes(): Table already does exist %s", self.ident, tblname)
+        else:
+            self.con.commit()
+        finally:
+            cur = self.con.cursor()
         for data in self._iterPayload(payload.data):
             cur.execute(
                 Utility.formatMultiInsert(
@@ -155,7 +162,14 @@ class Database(threading.Thread):
         atts = payload.atts + [[u"scen", u"TEXT"], [u"tod", u"TEXT"]]
         qry = Utility.formatCreate(tblname, atts)
         # logging.debug("Database-%d:LoadAttributes(): Create statement: %s", self.ident, qry)
-        cur.execute(qry)
+        try:
+            cur.execute(qry)
+        except:
+            logging.debug("Database-%d.LoadTODAttributes(): Table already does exist %s", self.ident, tblname)
+        else:
+            self.con.commit()
+        finally:
+            cur = self.con.cursor()
         for data in self._iterPayload(payload.data):
             cur.execute(
                 Utility.formatMultiInsert(
@@ -172,18 +186,25 @@ class Database(threading.Thread):
             logger.debug("Database-%d.LoadMatrix(): Exists, skipped %s", self.ident, tblname)
             return
         logger.debug("Database-%d.LoadMatrix(): Importing %s", self.ident, tblname)
-        f = self._bufferMatrix(payload.data)
+        f = self._bufferMatrix(payload.data, addtl_fields = [payload.scen, payload.tod])
         cur = self.con.cursor()
-        cur.execute(SQL_CREATE_TBL_MTX.format(tblname))
+        try:
+            cur.execute(SQL_CREATE_TBL_MTX.format(tblname))
+        except:
+            logger.debug("Database-%d.LoadMatrix(): Table already does exist %s", self.ident, tblname)
+        else:
+            self.con.commit()
+        finally:
+            cur = self.con.cursor()
         cur.copy_from(
             f,
             tblname,
-            columns = self.MTX_DEFAULT_COLUMNS,
+            columns = self.MTX_DEFAULT_COLUMNS + ["scen", "tod"],
             sep = ','
         )
         f.close()
-        cur.execute(SQL_CREATE_IDX_MTX_O.format(tblname))
-        cur.execute(SQL_CREATE_IDX_MTX_D.format(tblname))
+        # cur.execute(SQL_CREATE_IDX_MTX_O.format(tblname))
+        # cur.execute(SQL_CREATE_IDX_MTX_D.format(tblname))
         self.con.commit()
     def LoadGeometries(self, payload):
         assert len(payload.data) == len(payload.gdata), "Error: Count mismatch"
@@ -194,17 +215,26 @@ class Database(threading.Thread):
         logger.debug("Database-%d.LoadGeometries(): Importing %s", self.ident, tblname)
         atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
         cur = self.con.cursor()
-        cur.execute(Utility.formatCreate(tblname, atts))
+        try:
+            cur.execute(Utility.formatCreate(tblname, atts))
+        except:
+            logger.debug("Database-%d.LoadGeometries(): Table already does exist %s", self.ident, tblname)
+        else:
+            self.con.commit()
+        finally:
+            cur = self.con.cursor()
         for _data in self._iterPayload(zip(payload.data, payload.gdata)):
             data, gdata = zip(*_data)
             cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, data, gdata, atts))
         for field, dtype in payload.gatts:
             cur.execute(SQL_CREATE_IDX_GEOM.format(**{"tblname": tblname, "field": field}))
         self.con.commit()
-    def _bufferMatrix(self, mtx_listing):
+    def _bufferMatrix(self, mtx_listing, addtl_fields = []):
         f = StringIO.StringIO()
         w = csv.writer(f)
-        w.writerows(mtx_listing)
+        for row in mtx_listing:
+            w.writerow(row.tolist() + addtl_fields)
+        # w.writerows(mtx_listing)
         f.seek(0)
         return f
     def _iterPayload(self, data):
