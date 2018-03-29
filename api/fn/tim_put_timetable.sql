@@ -49,7 +49,7 @@ BEGIN
         SELECT
             lineroutename,
             json_agg(row_to_json((SELECT r FROM (SELECT
-                stoptime,
+                stoptime::TIME,
                 directioncode,
                 stoppointno
             ) r))) stoptimes
