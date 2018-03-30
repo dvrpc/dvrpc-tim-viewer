@@ -104,11 +104,11 @@
             "type": "vector"
         },
         "tim_transit": {
-            "url": "http://a.michaelruane.com/transit_tiles.json",
+            "url": "https://a.michaelruane.com/data/dvrpc-tim-transit.json",
             "type": "vector"
         },
         "tim_network": {
-            "url": "http://a.michaelruane.com/tim_highways.json",
+            "url": "https://a.michaelruane.com/data/dvrpc-tim-highways.json",
             "type": "vector"
         },
         "mapbox://mapbox.mapbox-streets-v6": {
