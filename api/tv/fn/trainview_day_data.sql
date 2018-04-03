@@ -1,45 +1,45 @@
 CREATE OR REPLACE FUNCTION trainview_day_data (isodate TEXT)
-RETURNS 
-
+RETURNS TABLE (
+    timestmp TIME,
+    line TEXT,
+    service TEXT,
+    trainno TEXT,
+    consist TEXT[],
+    consistlength SMALLINT,
+    origin TEXT,
+    destination TEXT,
+    nextstop TEXT,
+    late SMALLINT,
+    lat REAL,
+    lon REAL
+) AS $$
+BEGIN
+    RETURN QUERY
     WITH _data AS (
-    SELECT * FROM data 
-    WHERE
-        timestmp >= '2017-11-04 00:00'
-    AND timestmp <  '2017-11-05 00:00'
-    ORDER BY timestmp
-    ),
-    joined AS (
+        SELECT * FROM data d
+        WHERE
+            d.timestmp >= (isodate::timestamp)
+        AND d.timestmp <  (isodate::timestamp + '36 hours'::interval)
+        ORDER BY d.timestmp
+    )
     SELECT
-        -- *,
-        timestmp::time,
+        _data.timestmp::time,
         lines.line line,
         services.service service,
         trainnos.trainno trainno,
-        consist,
-        consistlength,
+        _data.consist,
+        _data.consistlength,
         origins.stop origin,
         destinations.stop destination,
         nextstops.stop nextstop,
-        late,
-        lat, lon,
-        ST_SetSRID(ST_MakePoint(lon, lat), 4326) geom
+        _data.late,
+        _data.lat, _data.lon
     FROM _data
     LEFT JOIN lines ON lines.id = _data.line
     LEFT JOIN services ON services.id = _data.service
     LEFT JOIN trainnos ON trainnos.id = _data.trainno
     LEFT JOIN stops origins ON origins.id = _data.origin
     LEFT JOIN stops destinations ON destinations.id = _data.destination
-    LEFT JOIN stops nextstops ON nextstops.id = _data.nextstop
-    -- WHERE lines.line = 'Lansdale/Doylestown'
-    )
-    SELECT trainno, array_agg(DISTINCT(line))
-    -- ST_MakeLine(array_agg(geom)) geom
-    -- array_agg(ARRAY[lon, lat]::REAL[])
-    FROM joined
-    -- SEPTA Purgatory
-    WHERE NOT geom && ST_MakeEnvelope(-75.187003, 39.957494, -75.186891, 39.957575, 4326)
-    GROUP BY trainno
-    ORDER BY trainno
-
+    LEFT JOIN stops nextstops ON nextstops.id = _data.nextstop;
 END;
 $$ LANGUAGE plpgsql;
