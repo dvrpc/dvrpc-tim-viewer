@@ -9,7 +9,7 @@ GTFS_ZIP = r"Z:\downloads\google_rail.zip"
 
 GTFS_SCHEMA = {
     "agency": [
-        ("agency_id",               "TEXT PRIMARY KEY"),
+        ("agency_id",               "TEXT NOT NULL"),
         ("agency_name",             "TEXT NOT NULL"),
         ("agency_url",              "TEXT NOT NULL"),
         ("agency_timezone",         "TEXT NOT NULL"),
@@ -19,7 +19,7 @@ GTFS_SCHEMA = {
         ("agency_email",            "TEXT"),
     ],
     "stops": [
-        ("stop_id",                 "TEXT PRIMARY KEY"),
+        ("stop_id",                 "TEXT NOT NULL"),
         ("stop_code",               "TEXT"),
         ("stop_name",               "TEXT NOT NULL"),
         ("stop_desc",               "TEXT"),
@@ -33,7 +33,7 @@ GTFS_SCHEMA = {
         ("wheelchair_boarding",     "SMALLINT"),
     ],
     "routes": [
-        ("route_id",                "TEXT PRIMARY KEY"),
+        ("route_id",                "TEXT NOT NULL"),
         ("agency_id",               "TEXT"),
         ("route_short_name",        "TEXT NOT NULL"),
         ("route_long_name",         "TEXT NOT NULL"),
@@ -47,7 +47,7 @@ GTFS_SCHEMA = {
     "trips": [
         ("route_id",                "TEXT NOT NULL"),
         ("service_id",              "TEXT NOT NULL"),
-        ("trip_id",                 "TEXT PRIMARY KEY"),
+        ("trip_id",                 "TEXT NOT NULL"),
         ("trip_headsign",           "TEXT"),
         ("trip_short_name",         "TEXT"),
         ("direction_id",            "SMALLINT"),
@@ -69,7 +69,7 @@ GTFS_SCHEMA = {
         ("timepoint",               "SMALLINT"),
     ],
     "calendar": [
-        ("service_id",              "TEXT PRIMARY KEY"),
+        ("service_id",              "TEXT NOT NULL"),
         ("monday",                  "SMALLINT NOT NULL"),
         ("tuesday",                 "SMALLINT NOT NULL"),
         ("wednesday",               "SMALLINT NOT NULL"),
@@ -97,23 +97,13 @@ GTFS_SCHEMA = {
 SQL_CREATE = "CREATE TABLE IF NOT EXISTS gtfs_%s (gtfs_id SMALLINT NOT NULL, %s)"
 SQL_INSERT = "INSERT INTO gtfs_%s (gtfs_id,%s) VALUES (%%s,%s)"
 
-GTFS_ID = 2
+GTFS_ID = None
 
 def filter_gtfs_table(header, data):
-    return zip(*filter(lambda col:col[0] in header, zip(*data)))
+    return zip(*filter(lambda col:col[0].strip() in header, zip(*data)))
 def prepend_gtfs_id(data):
     for row in data:
         yield [GTFS_ID] + list(row)
-
-gtfs_data = {}
-
-with zipfile.ZipFile(GTFS_ZIP) as zf:
-    for f in zf.namelist():
-        gtfs_table, _ = os.path.splitext(f)
-        if gtfs_table in GTFS_SCHEMA:
-            with zf.open(f) as io:
-                r = csv.reader(io)
-                gtfs_data[gtfs_table] = filter_gtfs_table(zip(*GTFS_SCHEMA[gtfs_table])[0], [row for row in r])
 
 con = psql.connect(
     host = "wol-vm-pubsql",
@@ -124,8 +114,36 @@ con = psql.connect(
 )
 cur = con.cursor()
 
-for gtfs_table, field_defs in GTFS_SCHEMA.iteritems():
-    cur.execute(SQL_CREATE % (gtfs_table, ",".join("%s %s" % (f, d) for f, d in field_defs)))
-for gtfs_table, table in gtfs_data.iteritems():
-    header = table[0]
-    cur.executemany(SQL_INSERT % (gtfs_table, ",".join(header), ",".join("%s" for _ in header)), prepend_gtfs_id(table[1:]))
+cur.execute("CREATE TABLE IF NOT EXISTS gtfs_meta (gtfs_id SMALLINT, hash TEXT)")
+
+hash = hashlib.md5()
+with open(GTFS_ZIP, "rb") as io:
+    hash.update(io.read())
+hash = hash.hexdigest()
+
+cur.execute("SELECT gtfs_id FROM gtfs_meta WHERE hash = %s", (hash,))
+if cur.fetchone() is None:
+    cur.execute("SELECT max(gtfs_id) FROM gtfs_meta")
+    (_max_gtfs_id,) = cur.fetchone()
+    GTFS_ID = _max_gtfs_id + 1
+    cur.execute("INSERT INTO gtfs_meta VALUES (%s, %s)", (GTFS_ID, hash))
+    gtfs_data = {}
+
+    with zipfile.ZipFile(GTFS_ZIP) as zf:
+        for f in zf.namelist():
+            gtfs_table, _ = os.path.splitext(f)
+            if gtfs_table in GTFS_SCHEMA:
+                with zf.open(f) as io:
+                    r = csv.reader(io)
+                    gtfs_data[gtfs_table] = filter_gtfs_table(zip(*GTFS_SCHEMA[gtfs_table])[0], [row for row in r])
+
+    for gtfs_table, field_defs in GTFS_SCHEMA.iteritems():
+        cur.execute(SQL_CREATE % (gtfs_table, ",".join("%s %s" % (f, d) for f, d in field_defs)))
+    for gtfs_table, table in gtfs_data.iteritems():
+        print gtfs_table
+        header = table[0]
+        cur.executemany(SQL_INSERT % (gtfs_table, ",".join(header), ",".join("%s" for _ in header)), prepend_gtfs_id(table[1:]))
+    con.commit()
+
+else:
+    print "Already imported"
