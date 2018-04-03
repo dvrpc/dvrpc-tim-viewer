@@ -7,16 +7,17 @@ WITH cal AS (
         (
             row_to_json(
                 (SELECT d FROM (SELECT monday, tuesday, wednesday, thursday, friday, saturday, sunday) d)
-            ) ->> trim(both ' ' FROM TO_CHAR('2017-11-04 00:00'::timestamp, 'day'))
+            ) ->> trim(both ' ' FROM TO_CHAR('2017-11-03 00:00'::timestamp, 'day'))
         )::smallint valid_service_id
     FROM gtfs_calendar
     WHERE
-        start_date <= '2017-11-04 00:00'::timestamp
-    AND end_date >= '2017-11-04 00:00'::timestamp  + '1 day'::interval
+        start_date <= '2017-11-03 00:00'::timestamp
+    AND end_date >= '2017-11-03 00:00'::timestamp  + '1 day'::interval
 ),
-sel_gtfs_id AS (
-    SELECT * FROM cal WHERE valid_service_id = 1
-    ORDER BY gtfs_id DESC
-    LIMIT 1
+sel_gtfs_service_ids AS (
+    SELECT max(gtfs_id) gtfs_id FROM cal WHERE valid_service_id = 1
 )
-SELECT * FROM sel_gtfs_id
+SELECT cal.* FROM sel_gtfs_service_ids _sel
+LEFT JOIN cal
+ON cal.gtfs_id = _sel.gtfs_id
+WHERE cal.valid_service_id = 1
