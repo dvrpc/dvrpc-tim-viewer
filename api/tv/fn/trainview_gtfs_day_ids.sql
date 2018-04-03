@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION trainview_day_gtfs_service_id (isodate TEXT)
+CREATE OR REPLACE FUNCTION trainview_gtfs_day_ids (isodate TEXT)
 RETURNS TABLE (
     gtfs_id SMALLINT,
     service_id TEXT
