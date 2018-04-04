@@ -107,6 +107,10 @@
             "url": "https://a.michaelruane.com/data/dvrpc-tim-highways.json",
             "type": "vector"
         },
+        "counts": {
+            "url": "https://a.michaelruane.com/data/dvrpc-tim-counts.json",
+            "type": "vector"
+        },
         "mapbox://mapbox.mapbox-streets-v6": {
             "url": "mapbox://mapbox.mapbox-streets-v6",
             "type": "vector"
