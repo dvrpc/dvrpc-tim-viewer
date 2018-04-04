@@ -10,17 +10,65 @@
         #map { position:absolute; top:70px; bottom:0; width:100%; }
 
         #legend {
-			bottom: 40px;
-		    right: 20px;
-		    z-index: 10000;
-		    position: absolute;
-		    display: block;
-		    padding: 10px;
-		    border: 1px solid #ddd;
-		    box-sizing: border-box;
-		    background-color: #fff;
-		}
+					bottom: 40px;
+					right: 20px;
+					z-index: 10000;
+					position: absolute;
+					display: block;
+					padding: 10px;
+					border: 1px solid #ddd;
+					box-sizing: border-box;
+					background-color: #fff;
+					font-size: 13px
+				}
 
+				.legend-col {
+					float: left;
+					margin-right: 20px
+				}
+
+				.legend-col ul {
+					list-style: none;
+					padding-left: 0px;
+					margin-bottom: 0px;
+				}
+
+				.l-line {
+					float: left;
+					width: 20px;
+					height: 11px;
+					border-bottom: 2px solid;
+					margin-right: 10px;
+				}
+
+				.l-dash {
+					border-bottom: 2px dashed;
+				}
+
+				.c-one { 
+					border-color: #ffa600;
+				}
+				.c-two {
+					border-color: #ff7e27;
+				}
+				.c-three {
+					border-color: #f6553f;
+				}
+				.c-four {
+					border-color: #e12e53;
+				}
+				.c-five {
+					border-color: #c20163;
+				}
+				.c-six {
+					border-color: #9a006e;
+				}
+				.c-seven {
+					border-color: #6a0973;
+				}
+				.c-eight {
+					border-color: #2e166f;
+				}
 		.map-btn-group {
 			width: 100%;
 		}
