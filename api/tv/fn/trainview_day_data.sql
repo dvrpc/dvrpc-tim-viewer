@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION trainview_day_data (isodate TEXT)
 RETURNS TABLE (
-    timestmp TIME,
+    timestmp TIMESTAMP,
     line TEXT,
     service TEXT,
     trainno TEXT,
@@ -23,7 +23,7 @@ BEGIN
         ORDER BY d.timestmp
     )
     SELECT
-        _data.timestmp::time,
+        _data.timestmp,
         lines.line line,
         services.service service,
         trainnos.trainno trainno,
