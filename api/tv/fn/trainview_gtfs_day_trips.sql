@@ -1,5 +1,7 @@
 CREATE OR REPLACE FUNCTION trainview_gtfs_day_trips(isotime TEXT)
 RETURNS TABLE (
+    gtfs_id SMALLINT,
+    service_id TEXT,
     route_id TEXT,
     trip_id TEXT,
     trip_headsign TEXT,
@@ -28,6 +30,8 @@ BEGIN
         GROUP BY _stop_times.gtfs_id, _stop_times.trip_id
     )
     SELECT
+        _trips.gtfs_id,
+        _trips.service_id,
         _trips.route_id,
         _trips.trip_id,
         _trips.trip_headsign,
