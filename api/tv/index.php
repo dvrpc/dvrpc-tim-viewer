@@ -25,23 +25,14 @@
             }
         }
     }
-    function _parseAttributes($att, $array) {
-        $att_cnt_key = $att . 'n';
-        $att_cnt = (int) _parseAttribute($att_cnt_key, $array);
-        $atts = array();
-        for ($i = 0; $i < $att_cnt; $i++) {
-            $att_key = $att . $i;
-            array_push($atts, urldecode($array[$att_key]));
-        }
-        return $atts;
-    }
     function shape($time) {
         $con = ConnectToDB();
         $qry = "SELECT * FROM trainview_gtfs_shapes($1)";
         $req = pg_query_params($qry, array($time)) or kill('Query failed: ' . pg_last_error());
         $payload = pg_fetch_row($req);
-        header('Content-Length: ' . strlen($payload[0]));
-        echo gzencode($payload[0]);
+        $retval = gzencode($payload[0]);
+        header('Content-Length: ' . strlen($retval));
+        echo $retval;
     }
     function trainview($time, $hour) {
         $con = ConnectToDB();
@@ -54,8 +45,9 @@
         ";
         $req = pg_query_params($qry, array($time, $hour)) or kill('Query failed: ' . pg_last_error());
         $payload = pg_fetch_row($req);
-        header('Content-Length: ' . strlen($payload[0]));
-        echo gzencode($payload[0]);
+        $retval = gzencode($payload[0]);
+        header('Content-Length: ' . strlen($retval));
+        echo $retval;
     }
 
     $time = _parseAttribute("d", $_GET);
@@ -76,5 +68,4 @@
             kill("Invalid Type");
             break;
     }
-
 ?>
