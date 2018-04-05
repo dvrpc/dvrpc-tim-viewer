@@ -30,6 +30,9 @@
         $qry = "SELECT * FROM trainview_gtfs_shapes($1)";
         $req = pg_query_params($qry, array($time)) or kill('Query failed: ' . pg_last_error());
         $payload = pg_fetch_row($req);
+        if ($payload[0] == NULL) {
+            $payload[0] = "[]";
+        }
         $retval = gzencode($payload[0]);
         header('Content-Length: ' . strlen($retval));
         echo $retval;
@@ -45,6 +48,9 @@
         ";
         $req = pg_query_params($qry, array($time, $hour)) or kill('Query failed: ' . pg_last_error());
         $payload = pg_fetch_row($req);
+        if ($payload[0] == NULL) {
+            $payload[0] = "[]";
+        }
         $retval = gzencode($payload[0]);
         header('Content-Length: ' . strlen($retval));
         echo $retval;
