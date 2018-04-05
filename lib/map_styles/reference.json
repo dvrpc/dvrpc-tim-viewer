@@ -12,7 +12,7 @@
     "sources": {
         
         "tim_transit": {
-            "url": "http://a.michaelruane.com/transit_tiles.json",
+            "url": "https://a.michaelruane.com/data/dvrpc-tim-transit.json",
             "type": "vector"
         }
         
