@@ -108,7 +108,9 @@
 		            transform: scale3D(0, 0, 1);
 		  }
 		}
-
+		#employment-graph{
+			height:260px
+		}
 		.node {
 		  	box-sizing: border-box;
 		  	position: absolute;
@@ -164,7 +166,10 @@
 			  	<ul class="nav nav-tabs" role="tablist">
 					<li class="nav-item">
 				    	<a class="nav-link active" data-toggle="tab" href="#zone-summary" role="tab">Summary Data</a>
-				  	</li>
+						</li>
+						<li class="nav-item">
+								<a class="nav-link" data-toggle="tab" href="#zone-education" role="tab" >Education</a>
+							</li>
 				  	<li class="nav-item">
 				    	<a class="nav-link" data-toggle="tab" href="#zone-trip" role="tab" >Trip Data</a>
 				  	</li>
@@ -183,16 +188,39 @@
 		                        <p class="small">Households</p>
 		                	</div>
 		                	<div class="col-md-4">
-		                        <h3 id="dat-zone-popdens" class="text-muted">0</h3>
-		                        <p class="small">Density (ppl/sq mi)</p>
+		                        <h3 id="dat-zone-empres" class="text-muted">0</h3>
+		                        <p class="small">Employed Resident Workers</p>
 		                	</div>
 		                </div>
 		                <hr>
 		                <h5 class="text-muted">Total Employment: <span id="dat-zone-employment">0</span></h5>
-						<div id="employment-graph" style="position: relative;">
-						</div>
+							<div id="employment-graph" style="position: relative;">
+							</div>
+							<div style="clear:both;"></div>
 				  	</div>
-
+						<div class="tab-pane" id="zone-education" role="tabpanel">
+								<h5>Education Data</h5>
+								<div class="row text-center">
+									<div class="col-md-6">
+												<h3 id="dat-zone-k_12" class="text-muted">0</h3>
+												<p class="small">Enrolled in Nursery School, Kindergarten, or Grades 1-12</p>
+									</div>
+									<div class="col-md-6">
+												<h3 id="dat-zone-univ" class="text-muted">0</h3>
+												<p class="small">Enrolled in College or Graduate School</p>
+									</div>
+								</div>
+								<div class="row text-center">
+										<div class="col-md-6">
+													<h3 id="dat-zone-stu_school" class="text-muted">0</h3>
+													<p class="small">Number of K-12 students</p>
+										</div>
+										<div class="col-md-6">
+													<h3 id="dat-zone-stu_college" class="text-muted">0</h3>
+													<p class="small">Number of college/university students</p>
+										</div>
+								</div>
+						</div>
 				  	<div class="tab-pane" id="zone-trip" role="tabpanel">
 						<div class="card">
 						  <!-- <div class="card-header">
