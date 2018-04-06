@@ -100,7 +100,7 @@
     "pitch": 0,
     "sources": {
         "pff": {
-            "url": "http://dvrpc-freight.michaelruane.com/pff_tiles.json",
+            "url": "https://dvrpc-freight.michaelruane.com/pff_tiles.json",
             "type": "vector"
         },
         "tim_transit": {

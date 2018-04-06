@@ -100,11 +100,11 @@
     "pitch": 0,
     "sources": {
         "pff": {
-            "url": "http://dvrpc-freight.michaelruane.com/pff_tiles.json",
+            "url": "https://dvrpc-freight.michaelruane.com/pff_tiles.json",
             "type": "vector"
         },
         "tim_network": {
-            "url": "http://a.michaelruane.com/tim_highways.json",
+            "url": "https://a.michaelruane.com/data/dvrpc-tim-highways.json",
             "type": "vector"
         },
         "mapbox://mapbox.mapbox-streets-v6": {
@@ -778,48 +778,72 @@
             },
             "type": "line",
             "source": "tim_network",
-            "id": "locals-fc-styled",
+            "id": "locals-urban-fc-styled",
             "filter": [
-                "in",
-                "typeno",
-                " "
+                "all",
+                ["in", "typeno",""],
+                ["in", "fed_fclass",11,12,14,16,17,19,99]                
             ],
             "paint": {
-                "line-color": {"property": "typeno",
+                "line-color": {"property": "fed_fclass",
                     "type": "categorical",
                     "stops": [
-                        ["11", "#fdb462"],
-                        ["12", "#fdb462"],
-                        ["13", "#fdb462"],
-                        ["21", "#b3de69"],
-                        ["22", "#b3de69"],
-                        ["23", "#b3de69"],
-                        ["31", "#bc80bd"],
-                        ["32", "#bc80bd"],
-                        ["33", "#bc80bd"],
-                        ["41", "#bebada"],
-                        ["42", "#bebada"],
-                        ["43", "#bebada"],
-                        ["51", "#8dd3c7"],
-                        ["52", "#8dd3c7"],
-                        ["53", "#8dd3c7"],
-                        ["61", "#ccebc5"],
-                        ["62", "#ccebc5"],
-                        ["63", "#ccebc5"],
-                        ["71", "#fccde5"],
-                        ["72", "#fccde5"],
-                        ["73", "#fccde5"],
-                        ["75", "#fccde5"],
-                        ["76", "#fccde5"],
-                        ["79", "#fccde5"],
-                        ["81", "#fb8072"],
-                        ["82", "#fb8072"],
-                        ["83", "#fb8072"],
-                        ["85", "#fb8072"],
-                        ["86", "#fb8072"],
-                        ["92", "#d9d9d9"]
+                        [11, "#ffa600"],
+                        [12, "#ff7e27"],
+                        [14, "#f6553f"],
+                        [16, "#e12e53"],
+                        [17, "#c20163"],
+                        [19, "#6a0973"],
+                        [99, "#2e166f"]
                     ]
                 },
+                "line-width": {
+                    "base": 0,
+                    "stops": [
+                        
+                        [
+                            14,
+                            1
+                        ],
+                        [
+                            15,
+                            1.5
+                        ],
+                        [
+                            16,
+                            4
+                        ]
+                    ]
+                }
+            },
+            "source-layer": "highways"
+        },
+        {
+            "interactive": true,
+            "layout": {
+                "visibility": "visible"
+            },
+            "type": "line",
+            "source": "tim_network",
+            "id": "locals-rural-fc-styled",
+            "filter": [
+                "all",
+                ["in", "typeno",""],
+                ["in", "fed_fclass",1,2,6,7,8,9]                
+            ],
+            "paint": {
+                "line-color": {"property": "fed_fclass",
+                    "type": "categorical",
+                    "stops": [
+                        [1, "#ffa600"],
+                        [2, "#ff7e27"],
+                        [6, "#e12e53"],
+                        [7, "#c20163"],
+                        [8, "#9a006e"],
+                        [9, "#6a0973"]
+                    ]
+                },
+                "line-dasharray": [4,2],
                 "line-width": {
                     "base": 0,
                     "stops": [
@@ -892,48 +916,72 @@
             },
             "type": "line",
             "source": "tim_network",
-            "id": "highways-fc-styled",
+            "id": "highways-urban-fc-styled",
             "filter": [
-                "in",
-                "typeno",
-                " "
+                "all",
+                ["in", "typeno",""],
+                ["in", "fed_fclass",11,12,14,16,17,19,99]                
             ],
             "paint": {
-                "line-color": {"property": "typeno",
+                "line-color": {"property": "fed_fclass",
                     "type": "categorical",
                     "stops": [
-                        ["11", "#fdb462"],
-                        ["12", "#fdb462"],
-                        ["13", "#fdb462"],
-                        ["21", "#b3de69"],
-                        ["22", "#b3de69"],
-                        ["23", "#b3de69"],
-                        ["31", "#bc80bd"],
-                        ["32", "#bc80bd"],
-                        ["33", "#bc80bd"],
-                        ["41", "#bebada"],
-                        ["42", "#bebada"],
-                        ["43", "#bebada"],
-                        ["51", "#8dd3c7"],
-                        ["52", "#8dd3c7"],
-                        ["53", "#8dd3c7"],
-                        ["61", "#ccebc5"],
-                        ["62", "#ccebc5"],
-                        ["63", "#ccebc5"],
-                        ["71", "#fccde5"],
-                        ["72", "#fccde5"],
-                        ["73", "#fccde5"],
-                        ["75", "#fccde5"],
-                        ["76", "#fccde5"],
-                        ["79", "#fccde5"],
-                        ["81", "#fb8072"],
-                        ["82", "#fb8072"],
-                        ["83", "#fb8072"],
-                        ["85", "#fb8072"],
-                        ["86", "#fb8072"],
-                        ["92", "#d9d9d9"]
+                        [11, "#ffa600"],
+                        [12, "#ff7e27"],
+                        [14, "#f6553f"],
+                        [16, "#e12e53"],
+                        [17, "#c20163"],
+                        [19, "#6a0973"],
+                        [99, "#2e166f"]
                     ]
                 },
+                "line-width": {
+                    "base": 1,
+                    "stops": [
+                        
+                        [
+                            12,
+                            1
+                        ],
+                        [
+                            13,
+                            2
+                        ],
+                        [
+                            16,
+                            6
+                        ]
+                    ]
+                }
+            },
+            "source-layer": "highways"
+        },
+        {
+            "interactive": true,
+            "layout": {
+                "visibility": "visible"
+            },
+            "type": "line",
+            "source": "tim_network",
+            "id": "highways-rural-fc-styled",
+            "filter": [
+                "all",
+                ["in", "typeno",""],
+                ["in", "fed_fclass",1,2,6,7,8,9]                
+            ],
+            "paint": {
+                "line-color": {"property": "fed_fclass",
+                    "type": "categorical",
+                    "stops": [
+                        [1, "#ffa600"],
+                        [2, "#ff7e27"],
+                        [6, "#e12e53"],
+                        [7, "#c20163"],
+                        [8, "#9a006e"],
+                        [9, "#6a0973"]
+                    ]
+                },
+                "line-dasharray": [4,2],
                 "line-width": {
                     "base": 1,
                     "stops": [
