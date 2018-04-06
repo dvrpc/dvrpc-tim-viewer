@@ -56,28 +56,30 @@ NETOBJ_TOD_ATTRIBUTES = {
 
 # TOD DEPENDENT
 MTXs = [
-    210, # IMP
-    220, # IVT
-    250, # OVT
-    260, # TOL
-    270, # DIS
-    290, # TTC
-    291, # UDS
-    400, # IPD
-    420, # IVT
-    421, # IVTT(RR)
-    422, # IVTT(Sub)
-    423, # IVTT(Pat)
-    424, # IVTT(LRT)
-    426, # IVTT(BRT)
-    428, # IVTT(Bus)
-    429, # IVTT(Trl)
-    450, # OVT
-    451, # OWTA
-    460, # FAR
-    480, # NTR
-    481, # XIMP
-    490, # JRT
+    # 210, # IMP
+    # 220, # IVT
+    # 250, # OVT
+    # 260, # TOL
+    # 270, # DIS
+    # 290, # TTC
+    # 291, # UDS
+    # 400, # IPD
+    # 420, # IVT
+    # 421, # IVTT(RR)
+    # 422, # IVTT(Sub)
+    # 423, # IVTT(Pat)
+    # 424, # IVTT(LRT)
+    # 426, # IVTT(BRT)
+    # 428, # IVTT(Bus)
+    # 429, # IVTT(Trl)
+    # 450, # OVT
+    # 451, # OWTA
+    # 460, # FAR
+    # 480, # NTR
+    # 481, # XIMP
+    # 490, # JRT
+    2000,
+    2100
 ]
 
 MTX_UPPERLIMIT = 1e5
@@ -89,29 +91,20 @@ COORD_DEC_PRECISION = 6
 # Note: Commented out sections threw a Visum COM Error that ultimately relates
 # to licensing. Short story long, it was not used, I'm ignoring them.
 NETOBJ_IDs = {
-    # u'BlockItemTypes': [(u'NO', 'INTEGER')],
-    # u'BlockItems': [(u'BLOCKID', 'INTEGER'),
-                    # (u'BLOCKINGDAY', 'INTEGER'),
-                    # (u'STARTDAYINDEX', 'INTEGER'),
-                    # (u'STARTTIME', 'TEXT'),
-                    # (u'VEHJOURNEYNO', 'INTEGER'),
-                    # (u'VEHJOURNEYSECTIONNO', 'INTEGER')],
-    # u'BlockVersions': [(u'ID', 'INTEGER')],
-    # u'Blocks': [(u'ID', 'INTEGER')],
     u'Connectors': [(u'ZONENO', 'INTEGER'),
                     (u'NODENO', 'INTEGER'),
                     (u'DIRECTION', 'TEXT')],
     u'CountLocations': [(u'NO', 'INTEGER')],
-    u'Crosswalks': [(u'NODENO', 'INTEGER'),
-                    (u'MAINNODENO', 'INTEGER'),
-                    (u'ORIENTATION', 'TEXT'),
-                    (u'INDEX', 'INTEGER'),
-                    (u'DIRECTION', 'INTEGER')],
-    u'DemandSegments': [(u'CODE', 'TEXT')],
-    u'Detectors': [(u'NO', 'INTEGER')],
-    u'Directions': [(u'NO', 'INTEGER')],
-    u'GeometryTemplates': [(u'NO', 'INTEGER')],
-    u'LegTemplates': [(u'NO', 'INTEGER')],
+    # u'Crosswalks': [(u'NODENO', 'INTEGER'),
+                    # (u'MAINNODENO', 'INTEGER'),
+                    # (u'ORIENTATION', 'TEXT'),
+                    # (u'INDEX', 'INTEGER'),
+                    # (u'DIRECTION', 'INTEGER')],
+    # u'DemandSegments': [(u'CODE', 'TEXT')],
+    # u'Detectors': [(u'NO', 'INTEGER')],
+    # u'Directions': [(u'NO', 'INTEGER')],
+    # u'GeometryTemplates': [(u'NO', 'INTEGER')],
+    # u'LegTemplates': [(u'NO', 'INTEGER')],
     u'LineRouteItems': [(u'LINENAME', 'TEXT'),
                         (u'LINEROUTENAME', 'TEXT'),
                         (u'DIRECTIONCODE', 'TEXT'),
@@ -124,31 +117,28 @@ NETOBJ_IDs = {
     u'Links': [(u'NO', 'INTEGER'),
                (u'FROMNODENO', 'INTEGER'),
                (u'TONODENO', 'INTEGER')],
-    u'MainLines': [(u'NAME', 'TEXT')],
-    u'MainNodes': [(u'NO', 'INTEGER')],
-    u'MainTurns': [(u'FROMNODENO', 'INTEGER'),
-                   (u'FROMCORDONNODENO', 'INTEGER'),
-                   (u'TOCORDONNODENO', 'INTEGER'),
-                   (u'TONODENO', 'INTEGER')],
-    u'MainZones': [(u'NO', 'INTEGER')],
-    u'Modes': [(u'CODE', 'TEXT')],
+    # u'MainLines': [(u'NAME', 'TEXT')],
+    # u'MainNodes': [(u'NO', 'INTEGER')],
+    # u'MainTurns': [(u'FROMNODENO', 'INTEGER'),
+                   # (u'FROMCORDONNODENO', 'INTEGER'),
+                   # (u'TOCORDONNODENO', 'INTEGER'),
+                   # (u'TONODENO', 'INTEGER')],
+    # u'MainZones': [(u'NO', 'INTEGER')],
+    # u'Modes': [(u'CODE', 'TEXT')],
     u'Nodes': [(u'NO', 'INTEGER')],
-    u'Operators': [(u'NO', 'INTEGER')],
-    u'PathSets': [(u'NO', 'INTEGER')],
-    u'Paths': [(u'SETNO', 'INTEGER'), (u'NO', 'INTEGER')],
-    # u'PropagationLinkInfos': [(u'FROMNODENO', 'INTEGER'),
-                              # (u'TONODENO', 'INTEGER'),
-                              # (u'DESTZONENO', 'INTEGER')],
+    # u'Operators': [(u'NO', 'INTEGER')],
+    # u'PathSets': [(u'NO', 'INTEGER')],
+    # u'Paths': [(u'SETNO', 'INTEGER'), (u'NO', 'INTEGER')],
     u'Screenlines': [(u'NO', 'INTEGER')],
-    u'SignalControls': [(u'NO', 'INTEGER')],
-    u'SignalGroups': [(u'SCNO', 'INTEGER'), (u'NO', 'INTEGER')],
-    u'Stages': [(u'SCNO', 'INTEGER'), (u'NO', 'INTEGER')],
+    # u'SignalControls': [(u'NO', 'INTEGER')],
+    # u'SignalGroups': [(u'SCNO', 'INTEGER'), (u'NO', 'INTEGER')],
+    # u'Stages': [(u'SCNO', 'INTEGER'), (u'NO', 'INTEGER')],
     u'StopAreas': [(u'NO', 'INTEGER')],
     u'StopPoints': [(u'NO', 'INTEGER')],
     u'Stops': [(u'NO', 'INTEGER')],
-    u'TSystems': [(u'CODE', 'TEXT')],
+    # u'TSystems': [(u'CODE', 'TEXT')],
     u'Territories': [(u'NO', 'INTEGER')],
-    u'TicketTypes': [(u'NO', 'INTEGER')],
+    # u'TicketTypes': [(u'NO', 'INTEGER')],
     u'TimeProfileItems': [(u'LINENAME', 'TEXT'),
                           (u'LINEROUTENAME', 'TEXT'),
                           (u'DIRECTIONCODE', 'TEXT'),
@@ -158,25 +148,26 @@ NETOBJ_IDs = {
                       (u'LINEROUTENAME', 'TEXT'),
                       (u'DIRECTIONCODE', 'TEXT'),
                       (u'NAME', 'TEXT')],
-    u'TollSystems': [(u'NO', 'INTEGER')],
-    u'Turns': [(u'FROMNODENO', 'INTEGER'),
-               (u'VIANODENO', 'INTEGER'),
-               (u'TONODENO', 'INTEGER')],
-    u'ValidDaysCont': [(u'NO', 'INTEGER')],
-    u'VehJourneySections': [(u'VEHJOURNEYNO', 'INTEGER'), (u'NO', 'INTEGER')],
+    # u'TollSystems': [(u'NO', 'INTEGER')],
+    # u'Turns': [(u'FROMNODENO', 'INTEGER'),
+               # (u'VIANODENO', 'INTEGER'),
+               # (u'TONODENO', 'INTEGER')],
+    # u'ValidDaysCont': [(u'NO', 'INTEGER')],
+    # u'VehJourneySections': [(u'VEHJOURNEYNO', 'INTEGER'), (u'NO', 'INTEGER')],
     u'VehicleCombinations': [(u'NO', 'INTEGER')],
     u'VehicleJourneyItems': [(u'VEHJOURNEYNO', 'INTEGER'), (u'INDEX', 'INTEGER')],
     u'VehicleJourneys': [(u'NO', 'INTEGER')],
-    u'VehicleUnits': [(u'NO', 'INTEGER')],
+    # u'VehicleUnits': [(u'NO', 'INTEGER')],
     u'Zones': [(u'NO', 'INTEGER')]
 }
 
 # I knew I wanted a thread manager
 class VisumManager(threading.Thread):
     TODs = ["AM","MD","PM","NT"]
-    def __init__(self, path_template, vernum, queue, (srid, prjwkt), max_queue_depth, single_load_visum):
+    def __init__(self, path_template, scen, vernum, queue, (srid, prjwkt), max_queue_depth, single_load_visum):
         super(VisumManager, self).__init__()
         self.path_template = path_template
+        self.scen = scen
         self.vernum = vernum
         self.queue = queue
         self._threads = []
@@ -193,6 +184,7 @@ class VisumManager(threading.Thread):
         for TOD in self.TODs:
             v = VisumDataMiner(
                 self.path_template.format(**{"tod":TOD}),
+                self.scen,
                 self.vernum,
                 getnetobj,
                 self.queue,
@@ -207,9 +199,10 @@ class VisumManager(threading.Thread):
             t.join()
 
 class VisumDataMiner(threading.Thread):
-    def __init__(self, path, vernum, getnetobj, queue, (srid, prjwkt), semaphore):
+    def __init__(self, path, scen, vernum, getnetobj, queue, (srid, prjwkt), semaphore):
         super(VisumDataMiner, self).__init__()
         self.path = path
+        self.scen = scen
         self.vernum = vernum
         self.getnetobj = getnetobj
         self.queue = queue
@@ -260,6 +253,7 @@ class VisumDataMiner(threading.Thread):
             if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
+                    "scen": self.scen,
                     "netobj": netobj,
                     "atts": map(lambda (v,p,d):(p,d), ids),
                     "data": data
@@ -276,6 +270,7 @@ class VisumDataMiner(threading.Thread):
             if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_DATA,
+                    "scen": self.scen,
                     "tod": self.tod,
                     "netobj": netobj,
                     "atts": map(lambda (v,p,d):(p,d), ids),
@@ -288,6 +283,7 @@ class VisumDataMiner(threading.Thread):
             mtx_listing = self._getMatrix(Visum, mtxno)
             self.queue.put(Sponge(**{
                 "type": database.TBL_MATRIX,
+                "scen": self.scen,
                 "tod": self.tod,
                 "mtxno": mtxno,
                 "data": mtx_listing
@@ -335,6 +331,7 @@ class VisumDataMiner(threading.Thread):
                 ))
             self.queue.put(Sponge(**{
                 "type": database.TBL_GEOMETRY,
+                "scen": self.scen,
                 "netobj": netobj,
                 "atts": ids,
                 "data": data,
