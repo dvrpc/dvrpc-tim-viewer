@@ -107,7 +107,7 @@
       <a class="navbar-brand" href="#">Peeping TIM</a>
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto">
+        <ul class="navbar-nav ml-auto">
           <li class="nav-item">
             <a class="nav-link" href="base.htm">Highway </a>
           </li>
@@ -118,10 +118,7 @@
               <a class="nav-link" href="zones.htm">Zones </a>
           </li>
         </ul>
-        <form id="route-search" class="form-inline my-2 my-lg-0">
-          <input id="route" class="form-control mr-sm-2" type="text" placeholder="Line Name" aria-label="Search">
-          <button id="route-submit" class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-        </form>
+        
       </div>
     </nav>
     <div class="container-fluid">
@@ -134,6 +131,17 @@
                 <select id="line-dropdown" class="form-control" style="margin-top:10px" disabled>
                     <option>Select a line</option>
                 </select>
+                <br>
+                <p class="muted small text-center">or search by name</p>
+                <form id="route-search" class="form-inline my-2 my-lg-0 ">
+                  <div class="input-group" style="width:100%">
+                      <input id="route" class="form-control" type="text" placeholder="Line Name" aria-label="Search">
+                      <div class="input-group-append">
+                        <button id="route-submit" class="btn btn-outline-success " type="submit">Search</button>
+                      </div>
+                  </div>
+                    
+                  </form>
                 <br/><br/>
                 <h3 id="dat-shortname" class="text-primary">Transit Line</h3>
                 <p id="dat-mainlinename" class="lead">System name</p>
