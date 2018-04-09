@@ -14,7 +14,7 @@
         #map { position:absolute; top:70px; bottom:0; width:100%; }
 
         #legend {
-					bottom: 40px;
+					bottom: 20px;
 					right: 20px;
 					z-index: 10000;
 					position: absolute;
@@ -208,7 +208,94 @@
 				}
 				#speed-btns {
 					float: right;
-    			margin-top: 10px;
+    				margin-top: 10px;
+				}
+
+				/* highway perf */
+				.hp_legend {
+					float: left;
+					text-align: center;
+					border-top-style: solid;
+					border-top-width: 4px;
+					font-size: 11px
+				}
+
+				#hp_legend_TTI .hp_legend {
+					width: 50px
+				}
+
+				#hp_legend_Speed .hp_legend {
+					width: 50px
+				}
+
+				#hp_legend_TTI .hp_label {
+					width: 100%;
+					text-align: center
+				}
+
+				#hp_legend_Speed .hp_label {
+					width: 100%;
+					text-align: center
+				}
+
+				#hp_tabbing {
+					padding-left: 15px;
+					margin: 0
+				}
+
+				.hp_info {
+					padding-left: 10px;
+					font-size: 20px;
+					line-height: 34px
+				}
+
+				.hp_info:focus {
+					outline: 0
+				}
+
+				.hp_info:active,.hp_info:link,.hp_info:visited {
+					text-decoration: none!important
+				}
+
+				.hp_z {
+					border-color: #9c9c9c
+				}
+
+				.hp_k {
+					border-color: #730000
+				}
+
+				.hp_r {
+					border-color: #e60000
+				}
+
+				.hp_o {
+					border-color: #f07d02
+				}
+
+				.hp_a {
+					border-color: #ffcb0d
+				}
+
+				.hp_y {
+					border-color: #FF0
+				}
+
+				.hp_c {
+					border-color: #AF0
+				}
+
+				.hp_g {
+					border-color: #38a800
+				}
+
+				#pm-btns {
+					position: absolute;
+					right: 10px;
+					top: 10px;
+				}
+				#legend h6{
+					margin-bottom: 18px;
 				}
 					
     </style>
@@ -223,7 +310,7 @@
       <a class="navbar-brand" href="#">Peeping TIM</a>
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto">
+        <ul class="navbar-nav ml-auto">
           	<li class="nav-item active">
             	<a class="nav-link" href="base.htm">Highway <span class="sr-only">(current)</span></a>
           	</li>
@@ -250,6 +337,9 @@
 						<input type="radio" name="hwy-render-state" value="hwy-tl-style"> Travel Lane Count
 					</label>
 					<label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary">
+							<input type="radio" name="hwy-render-state" value="hwy-tp-style"> Truck Performance
+						</label>
+					<label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary">
 						<input type="radio" name="hwy-render-state" value="bike-net"> Bike Facilities
 					</label>
 				</div>
@@ -263,8 +353,8 @@
 		
 	</div>
 
-	<div id="count-panel" class="card text-white bg-dark mb-3 hidden" style="position:absolute; left:20px; bottom:40px; width:295px;">
-		<div class="card-header">Hourly Traffic Volumes</div>
+	<div id="time-panel" class="card text-white bg-dark mb-3 hidden" style="position:absolute; left:20px; bottom:20px; width:295px;">
+		<!-- <div class="card-header">Hourly Traffic Volumes</div> -->
 			<div class="card-body">
 			<a href="#" title="Animate Counts" class="play"></a>
 			<h1 id="dat-time-label" class="display-4" style="font-size:2.5em;line-height: 1.3;white-space:nowrap;float:-right">12:00 AM</h1>
