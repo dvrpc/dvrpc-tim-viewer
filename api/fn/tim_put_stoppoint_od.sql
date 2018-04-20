@@ -26,7 +26,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION tim_put_stoppoint_od(stoppoint INTEGER, scenario TEXT, timeofday TEXT)
 RETURNS TABLE (
-    odzoneno INTEGER,
+    ozoneno INTEGER,
     dzoneno INTEGER,
     pathindex INTEGER
 ) AS $$
