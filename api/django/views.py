@@ -18,10 +18,18 @@ def jsonQry(qry_string, qry_params = None):
         response,
         content_type = 'text/javascript'
     )
+def tableQry(qry_string, qry_params = None):
+    response = _runQry(qry_string, qry_params)
+    return HttpResponse(
+        json.dumps(response),
+        content_type = 'text/javascript'
+    )
 
 def schema(request, *args, **kwds):
     qry = "SELECT tim_getschema();"
     return jsonQry(qry)
+def directory(request, resource, *args, **kwds):
+    return HttpResponse(resource)
 
 def argkwds(request, *args, **kwds):
     # URL: /argkwds/?a&b=1

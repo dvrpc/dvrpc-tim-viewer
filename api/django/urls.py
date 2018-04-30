@@ -21,4 +21,5 @@ urlpatterns = [
     # url(r'^admin/', admin.site.urls),
     url(r'^schema/', views.schema),
     url(r'^argkwds/', views.argkwds),
+    url(r'<slug:resource>/', views.directory),
 ]
