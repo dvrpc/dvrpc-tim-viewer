@@ -68,10 +68,14 @@ def operator(netobj, params, *args, **kwds):
 
 def _checkKeys(netobj, netobj_keys):
     _qry = "SELECT field FROM tim_netobj_keys WHERE netobj = %s::TEXT;"
-    payload = _runQry(_qry, netobj)
+    payload = _runQry(_qry, (netobj,))
     if len(payload) > 0:
-        zip(*payload)[0]
-
+        if len(set(zip(*payload)[0]).difference(netobj_keys)) > 0:
+            return False
+        else:
+            return True
+    else:
+        return False
 
 
 DIRECTORY = set([
