@@ -1,5 +1,5 @@
 """
-WSGI config for django_generic_api project.
+WSGI config for dvrpc_tim_viewer project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django_generic_api.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "dvrpc_tim_viewer.settings")
 
 application = get_wsgi_application()

@@ -1,4 +1,4 @@
-"""django_generic_api URL Configuration
+"""dvrpc_tim_viewer URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/1.11/topics/http/urls/
@@ -22,5 +22,6 @@ urlpatterns = [
     # url(r'^schema/', views.schema),
     # url(r'^argkwds/', views.argkwds),
     # url(r'(?P<resource>[a-zA-Z0-9\-_]*)/', views.directory),
+    url(r'/', view.index),
     url(r'^(?P<resource>[-\w]+)/', views.directory),
 ]
