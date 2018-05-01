@@ -19,7 +19,8 @@ from . import views
 
 urlpatterns = [
     # url(r'^admin/', admin.site.urls),
-    url(r'^schema/', views.schema),
-    url(r'^argkwds/', views.argkwds),
-    url(r'<slug:resource>/', views.directory),
+    # url(r'^schema/', views.schema),
+    # url(r'^argkwds/', views.argkwds),
+    # url(r'(?P<resource>[a-zA-Z0-9\-_]*)/', views.directory),
+    url(r'^(?P<resource>[-\w]+)/', views.directory),
 ]
