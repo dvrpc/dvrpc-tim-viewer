@@ -22,6 +22,6 @@ urlpatterns = [
     # url(r'^schema/', views.schema),
     # url(r'^argkwds/', views.argkwds),
     # url(r'(?P<resource>[a-zA-Z0-9\-_]*)/', views.directory),
-    url(r'/', view.index),
+    url(r'^$', views.index),
     url(r'^(?P<resource>[-\w]+)/', views.directory),
 ]

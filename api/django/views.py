@@ -13,6 +13,8 @@ def _deathRattle(message):
         json.dumps({"message": message}),
         content_type = JSON_MIME_TYPE
     )
+def index(request, *args, **kwds):
+    return _deathRattle(ERR_INVALID_RESOURCE)
 
 def _getPSQLCon():
     return psql.connect(**credentials.PSQL_CREDENTIALS)
@@ -42,11 +44,19 @@ def schema(request, *args, **kwds):
     return jsonQry(qry)
 
 def _parseGETArray(prefix, GETParams):
-    if (prefix + 'n') not in GETParams:
-        return False
-    else:
-        return True
-
+    numElemsKey = "%sn" % prefix
+    numElems = 0
+    elems = []
+    if numElemsKey in GETParams:
+        try:
+            numElems = int(GETParams[numElemsKey])
+        except:
+            pass
+    for i in xrange(numElems):
+        elemKey = "%s%d" % (prefix, i)
+        if elemKey in GETParams:
+            elems.append(GETParams[elemKey])
+    return elems
 
 def directory(request, resource, *args, **kwds):
     if resource in DIRECTORY:
