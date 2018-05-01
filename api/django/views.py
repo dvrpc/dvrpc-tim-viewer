@@ -36,9 +36,17 @@ def tableQry(qry_string, qry_params = None):
         content_type = JSON_MIME_TYPE
     )
 
+
 def schema(request, *args, **kwds):
     qry = "SELECT tim_getschema();"
     return jsonQry(qry)
+
+def _parseGETArray(prefix, GETParams):
+    if (prefix + 'n') not in GETParams:
+        return False
+    else:
+        return True
+
 
 def directory(request, resource, *args, **kwds):
     if resource in DIRECTORY:
@@ -52,9 +60,19 @@ def directory(request, resource, *args, **kwds):
 
 def operator(netobj, params, *args, **kwds):
     return HttpResponse(json.dumps({
-        "resource": netobj,
-        "params": params
-    }))
+            "resource": netobj,
+            "params": params
+        }),
+        content_type = JSON_MIME_TYPE
+    )
+
+def _checkKeys(netobj, netobj_keys):
+    _qry = "SELECT field FROM tim_netobj_keys WHERE netobj = %s::TEXT;"
+    payload = _runQry(_qry, netobj)
+    if len(payload) > 0:
+        zip(*payload)[0]
+
+
 
 DIRECTORY = set([
 
