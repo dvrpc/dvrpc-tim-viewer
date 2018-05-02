@@ -6,7 +6,7 @@ import json
 JSON_MIME_TYPE = "application/json"
 
 ERR_INVALID_HTTP_METHOD = "Unsupported HTTP Method"
-ERR_INVALID_RESOURCE = "Invalid resource"
+ERR_INVALID_RESOURCE = "Invalid resource?"
 
 URLPARAM_POINT = "p"
 URLPARAM_LINE = "l"
@@ -68,6 +68,22 @@ def _parseGETArray(prefix, GETParams):
         if elemKey in GETParams:
             elems.append(GETParams[elemKey])
     return elems
+def checkArrayAttr(attr, GETParams):
+    numElemsKey = "%sn" % attr
+    if attr in GETParams:
+        return [GETParams[attr]]
+    elif numElemsKey in GETParams:
+        return _parseGETArray(attr, GETParams)
+    else:
+        return []
+def checkAttr(attr, GETParams):
+    if attr in GETParams:
+        if GETParams[attr] == "":
+            return True
+        else:
+            return GETParams[attr]
+    else:
+        return None
 
 def directory(request, resource, *args, **kwds):
     if resource in DIRECTORY:
@@ -80,9 +96,12 @@ def directory(request, resource, *args, **kwds):
     return _deathRattle(ERR_INVALID_RESOURCE)
 
 def operator(netobj, params, *args, **kwds):
+    
     return HttpResponse(json.dumps({
             "resource": netobj,
-            "params": params
+            "params": params,
+            "tods": checkArrayAttr("tod", params),
+            "debugflag": checkAttr("debugflag", params)
         }),
         content_type = JSON_MIME_TYPE
     )
