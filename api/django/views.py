@@ -8,6 +8,17 @@ JSON_MIME_TYPE = "application/json"
 ERR_INVALID_HTTP_METHOD = "Unsupported HTTP Method"
 ERR_INVALID_RESOURCE = "Invalid resource"
 
+URLPARAM_POINT = "p"
+URLPARAM_LINE = "l"
+URLPARAM_POLYGON = "g"
+URLPARAM_DATA = "d"
+URLPARAM_GEOJSON = "g"
+URLPARAM_TEMPORALDATA = "t"
+
+GEOMTYPE_POINT = "wktloc"
+GEOMTYPE_LINE = "wktpoly"
+GEOMTYPE_POLYGON = "wktsurface"
+
 def _deathRattle(message):
     return HttpResponse(
         json.dumps({"message": message}),
