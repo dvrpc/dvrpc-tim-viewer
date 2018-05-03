@@ -55,18 +55,28 @@ def schema(request, *args, **kwds):
     return jsonQry(qry)
 
 def _parseGETArray(prefix, GETParams):
+    '''
+    Parse encoded array in GET request
+    Reads input like: attn=3&att0=0&att1=1&att2=2&att3=3
+    Parses to [0,1,2]
+    Returns tuple of (Bounded::boolean, Value::list)
+    '''
     numElemsKey = "%sn" % prefix
-    numElems = 0
     elems = []
-    if numElemsKey in GETParams:
-        try:
-            numElems = int(GETParams[numElemsKey])
-        except:
-            pass
-    for i in xrange(numElems):
-        elemKey = "%s%d" % (prefix, i)
-        if elemKey in GETParams:
-            elems.append(GETParams[elemKey])
+    parse = True
+    exists, numElems = checkAttr(numElemsKey, GETParams)
+    try:
+        numElems = int(numElems)
+    except:
+        parse = False
+    else:
+        if numElems < 0:
+            parse = False
+    if exists and parse:
+        for i in xrange(numElems):
+            elemKey = "%s%d" % (prefix, i)
+            if elemKey in GETParams:
+                elems.append(GETParams[elemKey])
     return elems
 def checkArrayAttr(attr, GETParams):
     numElemsKey = "%sn" % attr
@@ -77,13 +87,17 @@ def checkArrayAttr(attr, GETParams):
     else:
         return []
 def checkAttr(attr, GETParams):
+    '''
+    Check if param exists in GET request
+    Returns tuple of (Exists::boolean, Value::string)
+    '''
     if attr in GETParams:
         if GETParams[attr] == "":
-            return True
+            return True, None
         else:
-            return GETParams[attr]
+            return True, GETParams[attr]
     else:
-        return None
+        return False, None
 
 def directory(request, resource, *args, **kwds):
     if resource in DIRECTORY:
