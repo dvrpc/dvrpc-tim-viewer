@@ -7,14 +7,18 @@ import time
 JSON_MIME_TYPE = "application/json"
 
 ERR_INVALID_HTTP_METHOD = "Unsupported HTTP Method"
-ERR_INVALID_RESOURCE = "Invalid resource?"
+ERR_INVALID_RESOURCE = "Invalid resource"
 
-URLPARAM_POINT = "p"
-URLPARAM_LINE = "l"
-URLPARAM_POLYGON = "g"
-URLPARAM_DATA = "d"
-URLPARAM_GEOJSON = "g"
-URLPARAM_TEMPORALDATA = "t"
+URLPARAM_KEY_DATATYPE = "t"
+URLPARAM_KEY_GEOMTYPE = "g"
+URLPARAM_KEY_ATTR = "f"
+
+URLPARAM_VALUE_POINT = "p"
+URLPARAM_VALUE_LINE = "l"
+URLPARAM_VALUE_POLYGON = "g"
+URLPARAM_VALUE_DATA = "d"
+URLPARAM_VALUE_GEOJSON = "g"
+URLPARAM_VALUE_TEMPORALDATA = "t"
 
 GEOMTYPE_POINT = "wktloc"
 GEOMTYPE_LINE = "wktpoly"
@@ -56,19 +60,15 @@ def schema(request, *args, **kwds):
 
 def _getNetObjKeys(netobj):
     _qry = "SELECT field FROM tim_netobj_keys WHERE netobj = %s::TEXT;"
-    return _runQry(_qry, (netobj,))
+    return zip(*_runQry(_qry, (netobj,)))[0]
 
-def _checkKeys(netobj, netobj_keys):
-    payload = _getNetObjKeys(netobj)
-    if len(payload) > 0:
-        if len(set(zip(*payload)[0]).difference(netobj_keys)) > 0:
-            return False
-        else:
-            return True
+def _extractKeys(keys, assarr):
+    xkvp = map(lambda k:(k, assarr[k]) if k in assarr else (None, None), keys)
+    xkvp = dict(xkvp)
+    if None in xkvp:
+        return False, None
     else:
-        return False
-
-# ---- #
+        return True, xkvp
 
 def _parseGETArray(prefix, GETParams):
     '''
@@ -132,19 +132,24 @@ def directory(request, resource, *args, **kwds):
         param = request.POST
     else:
         return _deathRattle(ERR_INVALID_HTTP_METHOD)
-
     if resource in PROCEDURES:
         return PROCEDURES[resource](param, *args, **kwds)
     elif resource in NETOBJS:
         return operator(resource, param, _start_time)
     else:
         return _deathRattle(ERR_INVALID_RESOURCE)
+
 def operator(netobj, params, *args, **kwds):
     _start_time = args[0]
+    req_keys = _getNetObjKeys(netobj)
+    
     return HttpResponse(json.dumps({
             "resource": netobj,
             "params": params,
             "tods": checkArrayAttr("tod", params),
+            "reqkeys": req_keys,
+            "fields": checkArrayAttr(URLPARAM_KEY_ATTR, params),
+            "foundkeys": _extractKeys(req_keys, params),
             "debugflag": checkAttr("debugflag", params),
             # "_args": args,
             "prctime": (time.time() - _start_time) * 1000
@@ -152,7 +157,7 @@ def operator(netobj, params, *args, **kwds):
         content_type = JSON_MIME_TYPE
     )
 
-
+# ---- #
 
 PROCEDURES = {
     "schema": schema,
