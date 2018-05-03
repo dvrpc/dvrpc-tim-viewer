@@ -50,10 +50,25 @@ def tableQry(qry_string, qry_params = None):
         content_type = JSON_MIME_TYPE
     )
 
-
 def schema(request, *args, **kwds):
     qry = "SELECT tim_getschema();"
     return jsonQry(qry)
+
+def _getNetObjKeys(netobj):
+    _qry = "SELECT field FROM tim_netobj_keys WHERE netobj = %s::TEXT;"
+    return _runQry(_qry, (netobj,))
+
+def _checkKeys(netobj, netobj_keys):
+    payload = _getNetObjKeys(netobj)
+    if len(payload) > 0:
+        if len(set(zip(*payload)[0]).difference(netobj_keys)) > 0:
+            return False
+        else:
+            return True
+    else:
+        return False
+
+# ---- #
 
 def _parseGETArray(prefix, GETParams):
     '''
@@ -106,17 +121,24 @@ def checkAttr(attr, GETParams):
     else:
         return False, None
 
+# ---- #
+
 def directory(request, resource, *args, **kwds):
     _start_time = time.time()
-    if resource in DIRECTORY:
-        if request.method == "GET":
-            return operator(resource, request.GET, _start_time)
-        elif request.method == "POST":
-            return operator(resource, request.POST, _start_time)
-        else:
-            return _deathRattle(ERR_INVALID_HTTP_METHOD)
-    return _deathRattle(ERR_INVALID_RESOURCE)
+    param = {}
+    if request.method == "GET":
+        param = request.GET
+    elif request.method == "POST":
+        param = request.POST
+    else:
+        return _deathRattle(ERR_INVALID_HTTP_METHOD)
 
+    if resource in PROCEDURES:
+        return PROCEDURES[resource](param, *args, **kwds)
+    elif resource in NETOBJS:
+        return operator(resource, param, _start_time)
+    else:
+        return _deathRattle(ERR_INVALID_RESOURCE)
 def operator(netobj, params, *args, **kwds):
     _start_time = args[0]
     return HttpResponse(json.dumps({
@@ -130,22 +152,13 @@ def operator(netobj, params, *args, **kwds):
         content_type = JSON_MIME_TYPE
     )
 
-def _checkKeys(netobj, netobj_keys):
-    _qry = "SELECT field FROM tim_netobj_keys WHERE netobj = %s::TEXT;"
-    payload = _runQry(_qry, (netobj,))
-    if len(payload) > 0:
-        if len(set(zip(*payload)[0]).difference(netobj_keys)) > 0:
-            return False
-        else:
-            return True
-    else:
-        return False
 
 
-DIRECTORY = set([
+PROCEDURES = {
+    "schema": schema,
+}
 
-    "schema",
-
+NETOBJS = set([
     "alias",
     "block",
     "blockitem",
@@ -258,5 +271,4 @@ DIRECTORY = set([
     "vehunittovehcomb",
     "zone",
     "zonecountfareitem",
-
 ])
