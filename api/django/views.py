@@ -2,6 +2,7 @@ from django.http import *
 from . import credentials
 import psycopg2 as psql
 import json
+import time
 
 JSON_MIME_TYPE = "application/json"
 
@@ -59,37 +60,43 @@ def _parseGETArray(prefix, GETParams):
     Parse encoded array in GET request
     Reads input like: attn=3&att0=0&att1=1&att2=2&att3=3
     Parses to [0,1,2]
-    Returns tuple of (Bounded::boolean, Value::list)
+    Returns tuple of (exists::boolean, values::list, unbounded::boolean)
     '''
     numElemsKey = "%sn" % prefix
     elems = []
-    parse = True
     exists, numElems = checkAttr(numElemsKey, GETParams)
+    if not exists or numElems is None:
+        return False, None, None
     try:
         numElems = int(numElems)
     except:
-        parse = False
-    else:
-        if numElems < 0:
-            parse = False
-    if exists and parse:
+        return False, None, None
+    if numElems > 0:
         for i in xrange(numElems):
             elemKey = "%s%d" % (prefix, i)
             if elemKey in GETParams:
                 elems.append(GETParams[elemKey])
-    return elems
+        return True, elems, False
+    else:
+        return True, None, True
+
 def checkArrayAttr(attr, GETParams):
     numElemsKey = "%sn" % attr
     if attr in GETParams:
-        return [GETParams[attr]]
+        return [GETParams[attr]], False
     elif numElemsKey in GETParams:
-        return _parseGETArray(attr, GETParams)
+        exists, vals, unbounded = _parseGETArray(attr, GETParams)
+        if exists:
+            return vals, unbounded
+        else:
+            return None, None
     else:
-        return []
+        return None, None
+
 def checkAttr(attr, GETParams):
     '''
     Check if param exists in GET request
-    Returns tuple of (Exists::boolean, Value::string)
+    Returns tuple of (exists::boolean, value::string)
     '''
     if attr in GETParams:
         if GETParams[attr] == "":
@@ -100,22 +107,25 @@ def checkAttr(attr, GETParams):
         return False, None
 
 def directory(request, resource, *args, **kwds):
+    _start_time = time.time()
     if resource in DIRECTORY:
         if request.method == "GET":
-            return operator(resource, request.GET)
+            return operator(resource, request.GET, _start_time)
         elif request.method == "POST":
-            return operator(resource, request.POST)
+            return operator(resource, request.POST, _start_time)
         else:
             return _deathRattle(ERR_INVALID_HTTP_METHOD)
     return _deathRattle(ERR_INVALID_RESOURCE)
 
 def operator(netobj, params, *args, **kwds):
-    
+    _start_time = args[0]
     return HttpResponse(json.dumps({
             "resource": netobj,
             "params": params,
             "tods": checkArrayAttr("tod", params),
-            "debugflag": checkAttr("debugflag", params)
+            "debugflag": checkAttr("debugflag", params),
+            # "_args": args,
+            "prctime": (time.time() - _start_time) * 1000
         }),
         content_type = JSON_MIME_TYPE
     )
