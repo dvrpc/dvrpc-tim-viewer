@@ -8,6 +8,7 @@ JSON_MIME_TYPE = "application/json"
 
 ERR_INVALID_HTTP_METHOD = "Unsupported HTTP Method"
 ERR_INVALID_RESOURCE = "Invalid resource"
+ERR_INCOMPLETE_PARAM = "Incomplete parameters"
 
 URLPARAM_KEY_DATATYPE = "t"
 URLPARAM_KEY_GEOMTYPE = "g"
@@ -84,33 +85,31 @@ def _parseGETArray(prefix, GETParams):
     elems = []
     exists, numElems = checkAttr(numElemsKey, GETParams)
     if not exists or numElems is None:
-        return False, None, None
+        return False, (None, None)
     try:
         numElems = int(numElems)
     except:
-        return False, None, None
+        return False, (None, None)
     if numElems > 0:
         for i in xrange(numElems):
             elemKey = "%s%d" % (prefix, i)
             if elemKey in GETParams:
                 elems.append(GETParams[elemKey])
-        return True, elems, False
+        return True, (elems, False)
     else:
-        return True, None, True
+        return True, (None, True)
 
 def checkArrayAttr(attr, GETParams):
+    '''
+    Returns tuple of (exists::boolean, values::list, unbounded::boolean)
+    '''
     numElemsKey = "%sn" % attr
     if attr in GETParams:
-        return [GETParams[attr]], False
+        return True, ([GETParams[attr]], False)
     elif numElemsKey in GETParams:
-        exists, vals, unbounded = _parseGETArray(attr, GETParams)
-        if exists:
-            return vals, unbounded
-        else:
-            return None, None
+        return _parseGETArray(attr, GETParams)
     else:
-        return None, None
-
+        return False, (None, None)
 def checkAttr(attr, GETParams):
     '''
     Check if param exists in GET request
@@ -123,13 +122,37 @@ def checkAttr(attr, GETParams):
             return True, GETParams[attr]
     else:
         return False, None
-
+def checkArrayAttrKwd(attr, params, kwd = None):
+    '''
+    Check if kwd is not None, if it is return else checkArrayAttr
+    '''
+    return (True, (kwd, False)) if kwd is not None else checkArrayAttr(attr, params)
+def checkAttrKwd(attr, params, kwd = None):
+    '''
+    Check if kwd is not None, if it is return else checkAttr
+    '''
+    return (True, kwd) if kwd is not None else checkAttr(attr, params)
+def checkParams(param_dir, params):
+    '''
+    param_dir = {
+        key: (checkFn, defval), ...
+    }
+    Returns tuple of (complete::boolean, { key: (exists::boolean, fn(key, params, *defval)), ... })
+    '''
+    complete = True
+    retval = {}
+    for k, (fn, args) in param_dir.iteritems():
+        exists, _retval = fn(k, params, *args)
+        if not exists:
+            complete = False
+        retval[k] = _retval
+    return complete, retval
 # ---- #
 
 def schema(request, *args, **kwds):
     qry = "SELECT tim_getschema();"
     return jsonQry(qry)
-def _desireLines(param, dlType = None, *args, **kwds):
+def _desireLines(params, dlType = None, *args, **kwds):
     '''
     type::text
     
@@ -140,17 +163,31 @@ def _desireLines(param, dlType = None, *args, **kwds):
     
     TODO: scen::TEXT
     '''
-    
+    req_param = {
+    #   param                   checkFn         defval
+        URLPARAM_KEY_DATATYPE: (checkAttrKwd,   (dlType,)),
+        URLPARAM_KEY_MATRIX:   (checkAttr,      ()),
+        URLPARAM_KEY_TOD:      (checkAttrKwd,   ()),
+        URLPARAM_KEY_OZONE:    (checkArrayAttr, ()),
+        URLPARAM_KEY_DZONE:    (checkArrayAttr, ()),
+    }
+
+    ok, parsed_param = checkParams(req_param, params)
+
+    if not ok:
+        return _deathRattle(ERR_INCOMPLETE_PARAM)
+
     return HttpResponse(json.dumps({
-        "param": param,
-        "required": {
-            URLPARAM_KEY_DATATYPE: dlType if dlType else checkAttr(URLPARAM_KEY_DATATYPE, param),
-            URLPARAM_KEY_MATRIX: checkAttr(URLPARAM_KEY_MATRIX, param),
-            URLPARAM_KEY_OZONE: checkArrayAttr(URLPARAM_KEY_OZONE, param),
-            URLPARAM_KEY_DZONE: checkArrayAttr(URLPARAM_KEY_DZONE, param),
-            URLPARAM_KEY_TOD: checkArrayAttr(URLPARAM_KEY_TOD, param),
-            URLPARAM_KEY_SCEN: checkAttr(URLPARAM_KEY_SCEN, param),
-        }
+        "params": params,
+        "required": parsed_param
+        # "required": {
+            # URLPARAM_KEY_DATATYPE: checkAttrKwd(URLPARAM_KEY_DATATYPE, params, dlType),
+            # URLPARAM_KEY_MATRIX: checkAttr(URLPARAM_KEY_MATRIX, params),
+            # URLPARAM_KEY_OZONE: checkArrayAttr(URLPARAM_KEY_OZONE, params),
+            # URLPARAM_KEY_DZONE: checkArrayAttr(URLPARAM_KEY_DZONE, params),
+            # URLPARAM_KEY_TOD: checkArrayAttrKwd(URLPARAM_KEY_TOD, params),
+            # URLPARAM_KEY_SCEN: checkAttr(URLPARAM_KEY_SCEN, params),
+        # }
     }), content_type = JSON_MIME_TYPE)
 def ddl(param, *args, **kwds):
     return _desireLines(param, "ddl", *args, **kwds)
@@ -186,8 +223,6 @@ def operator(netobj, params, *args, **kwds):
             "reqkeys": req_keys,
             "fields": checkArrayAttr(URLPARAM_KEY_ATTR, params),
             "foundkeys": _extractKeys(req_keys, params),
-            "debugflag": checkAttr("debugflag", params),
-            # "_args": args,
             "prctime": (time.time() - _start_time) * 1000
         }),
         content_type = JSON_MIME_TYPE
