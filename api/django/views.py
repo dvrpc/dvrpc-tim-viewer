@@ -98,11 +98,15 @@ def _parseGETArray(prefix, params, dtype):
     else:
         return True, (None, True)
 def _castableAttr(attr, dtype):
+    if dtype is str:
+        return True, attr
     try:
         return True, dtype(attr)
     except:
         return False, None
 def _castableArrayAttr(attr, dtype):
+    if dtype is str:
+        return True, (attr, False)
     try:
         return True, (map(dtype, attr), False)
     except:
@@ -232,19 +236,35 @@ def directory(request, resource, *args, **kwds):
 
 def operator(netobj, params, *args, **kwds):
     _start_time = args[0]
-    req_keys = _getNetObjKeys(netobj)
+    
+    # req_keys = _getNetObjKeys(netobj)
 
     return HttpResponse(json.dumps({
             "resource": netobj,
             "params": params,
-            "tods": checkArrayAttr("tod", params),
-            "reqkeys": req_keys,
-            "fields": checkArrayAttr(URLPARAM_KEY_ATTR, params),
-            "foundkeys": _extractKeys(req_keys, params),
-            "prctime": (time.time() - _start_time) * 1000
+            "tods": checkArrayAttr(URLPARAM_KEY_TOD, params, str),
+            # "reqkeys": req_keys,
+            "fields": checkArrayAttr(URLPARAM_KEY_ATTR, params, str),
+            # "foundkeys": _extractKeys(req_keys, params),
+            "prctime": (time.time() - _start_time) * 1000,
         }),
         content_type = JSON_MIME_TYPE
     )
+
+def getSingleRecord():
+    pass
+def getMultipleRecords():
+    pass
+def getFilteredRecords():
+    pass
+def getGeoJSON():
+    pass
+def getSingleTemporalRecord():
+    pass
+def getMultipleTemporalRecords():
+    pass
+def getFilteredTemporalRecords():
+    pass
 
 # ---- #
 
