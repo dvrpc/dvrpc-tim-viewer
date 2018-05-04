@@ -144,9 +144,9 @@ def checkAttrKwd(attr, params, dtype, kwd = None):
 def checkParams(param_dir, params):
     '''
     param_dir = {
-        key: (checkFn, defval), ...
+        key: (checkFn, castDtype, defval), ...
     }
-    Returns tuple of (complete::boolean, { key: (exists::boolean, fn(key, params, *defval)), ... })
+    Returns tuple of (complete::boolean, { key: (exists::boolean, fn(key, params, dtype, *defval)), ... })
     '''
     complete = True
     retval = {}
