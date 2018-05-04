@@ -12,6 +12,11 @@ ERR_INVALID_RESOURCE = "Invalid resource"
 URLPARAM_KEY_DATATYPE = "t"
 URLPARAM_KEY_GEOMTYPE = "g"
 URLPARAM_KEY_ATTR = "f"
+URLPARAM_KEY_MATRIX = "m"
+URLPARAM_KEY_OZONE = "oz"
+URLPARAM_KEY_DZONE = "dz"
+URLPARAM_KEY_TOD = "tod"
+URLPARAM_KEY_SCEN = "s"
 
 URLPARAM_VALUE_POINT = "p"
 URLPARAM_VALUE_LINE = "l"
@@ -54,9 +59,7 @@ def tableQry(qry_string, qry_params = None):
         content_type = JSON_MIME_TYPE
     )
 
-def schema(request, *args, **kwds):
-    qry = "SELECT tim_getschema();"
-    return jsonQry(qry)
+
 
 def _getNetObjKeys(netobj):
     _qry = "SELECT field FROM tim_netobj_keys WHERE netobj = %s::TEXT;"
@@ -123,6 +126,39 @@ def checkAttr(attr, GETParams):
 
 # ---- #
 
+def schema(request, *args, **kwds):
+    qry = "SELECT tim_getschema();"
+    return jsonQry(qry)
+def _desireLines(param, dlType = None, *args, **kwds):
+    '''
+    type::text
+    
+    matrixNo::INTEGER - 'm'
+    origzonenos::INTEGER[] - 'oz'
+    destzonenos::INTEGER[] - 'dz'
+    tods::TEXT[] - 'tod'
+    
+    TODO: scen::TEXT
+    '''
+    
+    return HttpResponse(json.dumps({
+        "param": param,
+        "required": {
+            URLPARAM_KEY_DATATYPE: dlType if dlType else checkAttr(URLPARAM_KEY_DATATYPE, param),
+            URLPARAM_KEY_MATRIX: checkAttr(URLPARAM_KEY_MATRIX, param),
+            URLPARAM_KEY_OZONE: checkArrayAttr(URLPARAM_KEY_OZONE, param),
+            URLPARAM_KEY_DZONE: checkArrayAttr(URLPARAM_KEY_DZONE, param),
+            URLPARAM_KEY_TOD: checkArrayAttr(URLPARAM_KEY_TOD, param),
+            URLPARAM_KEY_SCEN: checkAttr(URLPARAM_KEY_SCEN, param),
+        }
+    }), content_type = JSON_MIME_TYPE)
+def ddl(param, *args, **kwds):
+    return _desireLines(param, "ddl", *args, **kwds)
+def vddl(param, *args, **kwds):
+    return _desireLines(param, "vddl", *args, **kwds)
+
+# ---- #
+
 def directory(request, resource, *args, **kwds):
     _start_time = time.time()
     param = {}
@@ -142,7 +178,7 @@ def directory(request, resource, *args, **kwds):
 def operator(netobj, params, *args, **kwds):
     _start_time = args[0]
     req_keys = _getNetObjKeys(netobj)
-    
+
     return HttpResponse(json.dumps({
             "resource": netobj,
             "params": params,
@@ -161,6 +197,8 @@ def operator(netobj, params, *args, **kwds):
 
 PROCEDURES = {
     "schema": schema,
+    "vddl": vddl,
+    "ddl": ddl,
 }
 
 NETOBJS = set([
