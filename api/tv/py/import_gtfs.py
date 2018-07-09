@@ -1,15 +1,14 @@
 import csv
-import zipfile
-import os
 import hashlib
+import io
+import os
+import zipfile
 
 import psycopg2 as psql
 
-GTFS_ZIP = r"Z:\downloads\google_rail.zip"
-
 GTFS_SCHEMA = {
     "agency": [
-        ("agency_id",               "TEXT NOT NULL"),
+        ("agency_id",               "TEXT"), # Fuck you SEPTA. GTFS spec dictates NOT NULL
         ("agency_name",             "TEXT NOT NULL"),
         ("agency_url",              "TEXT NOT NULL"),
         ("agency_timezone",         "TEXT NOT NULL"),
@@ -97,53 +96,86 @@ GTFS_SCHEMA = {
 SQL_CREATE = "CREATE TABLE IF NOT EXISTS gtfs_%s (gtfs_id SMALLINT NOT NULL, %s)"
 SQL_INSERT = "INSERT INTO gtfs_%s (gtfs_id,%s) VALUES (%%s,%s)"
 
-GTFS_ID = None
-
 def filter_gtfs_table(header, data):
     return zip(*filter(lambda col:col[0].strip() in header, zip(*data)))
-def prepend_gtfs_id(data):
+
+def prepend_gtfs_id(gtfs_id, data):
     for row in data:
-        yield [GTFS_ID] + list(row)
+        yield [gtfs_id] + list(row)
 
-con = psql.connect(
-    host = "wol-vm-pubsql",
-    port = 5432,
-    database = "trainview",
-    user = "",
-    password = ""
-)
-cur = con.cursor()
-
-cur.execute("CREATE TABLE IF NOT EXISTS gtfs_meta (gtfs_id SMALLINT, hash TEXT)")
-
-hash = hashlib.md5()
-with open(GTFS_ZIP, "rb") as io:
-    hash.update(io.read())
-hash = hash.hexdigest()
-
-cur.execute("SELECT gtfs_id FROM gtfs_meta WHERE hash = %s", (hash,))
-if cur.fetchone() is None:
-    cur.execute("SELECT max(gtfs_id) FROM gtfs_meta")
-    (_max_gtfs_id,) = cur.fetchone()
-    GTFS_ID = _max_gtfs_id + 1
-    cur.execute("INSERT INTO gtfs_meta VALUES (%s, %s)", (GTFS_ID, hash))
+def _parseZip(path):
     gtfs_data = {}
-
-    with zipfile.ZipFile(GTFS_ZIP) as zf:
-        for f in zf.namelist():
-            gtfs_table, _ = os.path.splitext(f)
+    with zipfile.ZipFile(path) as zf:
+        for fn in zf.namelist():
+            gtfs_table, _ = os.path.splitext(fn)
             if gtfs_table in GTFS_SCHEMA:
-                with zf.open(f) as io:
-                    r = csv.reader(io)
+                with zf.open(fn) as f:
+                    r = csv.reader(f)
                     gtfs_data[gtfs_table] = filter_gtfs_table(zip(*GTFS_SCHEMA[gtfs_table])[0], [row for row in r])
+    return gtfs_data
 
+def parseZip(path):
+    hash = hashlib.md5()
+    with open(path, "rb") as f:
+        hash.update(f.read())
+    return hash.hexdigest(), _parseZip(path)
+
+def parseNestedZip(path):
+    with zipfile.ZipFile(path) as zf:
+        for subzip in zf.namelist():
+            print subzip,
+            szf = io.BytesIO(zf.read(subzip))
+            hash = hashlib.sha256()
+            hash.update(szf.read())
+            szf.seek(0)
+            gtfs_data = _parseZip(szf)
+            yield hash.hexdigest(), _parseZip(szf)
+
+def parseSEPTAZip(con, path):
+    for hash, gtfs_data in parseNestedZip(path):
+        gtfs_id = checkGTFSHash(con, hash)
+        if gtfs_id is None:
+            print "Exists"
+            continue
+        print gtfs_id
+        insertGTFS(con, gtfs_id, gtfs_data)
+
+def checkGTFSHash(con, hash):
+    cur = con.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS gtfs_meta (gtfs_id SMALLINT, hash TEXT)")
+    cur.execute("SELECT gtfs_id FROM gtfs_meta WHERE hash = %s", (hash,))
+    if cur.fetchone() is None:
+        cur.execute("SELECT max(gtfs_id) FROM gtfs_meta")
+        (max_gtfs_id,) = cur.fetchone()
+        if max_gtfs_id is None:
+            max_gtfs_id = 0
+        gtfs_id = max_gtfs_id + 1
+        cur.execute("INSERT INTO gtfs_meta VALUES (%s, %s);", (gtfs_id, hash))
+        con.commit()
+        return gtfs_id
+    else:
+        return None
+
+def insertGTFS(con, gtfs_id, gtfs_data):
+    cur = con.cursor()
     for gtfs_table, field_defs in GTFS_SCHEMA.iteritems():
         cur.execute(SQL_CREATE % (gtfs_table, ",".join("%s %s" % (f, d) for f, d in field_defs)))
     for gtfs_table, table in gtfs_data.iteritems():
-        print gtfs_table
         header = table[0]
-        cur.executemany(SQL_INSERT % (gtfs_table, ",".join(header), ",".join("%s" for _ in header)), prepend_gtfs_id(table[1:]))
+        cur.executemany(
+            SQL_INSERT % (gtfs_table, ",".join(header), ",".join("%s" for _ in header)),
+            prepend_gtfs_id(gtfs_id, table[1:])
+        )
     con.commit()
 
-else:
-    print "Already imported"
+if __name__ == "__main__":
+
+    con = psql.connect(
+        host = "localhost",
+        port = 5432,
+        database = "septatest",
+        user = "postgres",
+        password = "sergt"
+    )
+
+    parseSEPTAZip(con, r"C:\Users\wtsay\Downloads\gtfs_feeds\gtfs_public (3).zip")
