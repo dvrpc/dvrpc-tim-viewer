@@ -4,7 +4,7 @@
 --  function/trainview_gtfs_day_ids
 --  table/gtfs_shapes
 
-DROP FUNCTION trainview_link_match_shape(TEXT, INTEGER);
+DROP FUNCTION IF EXISTS trainview_link_match_shape(TEXT, INTEGER);
 CREATE OR REPLACE FUNCTION trainview_link_match_shape(isotime TEXT, dep_hour INTEGER)
 RETURNS TABLE (
     stdtime INTERVAL,

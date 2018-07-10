@@ -2,7 +2,7 @@
 --  function/trainview_gtfs_day_trips
 --  function/trainview_day_data
 
-DROP FUNCTION trainview_link_data(TEXT);
+DROP FUNCTION IF EXISTS trainview_link_data(TEXT);
 CREATE OR REPLACE FUNCTION trainview_link_data(isotime TEXT)
 RETURNS TABLE (
     tstz TIMESTAMPTZ,

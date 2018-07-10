@@ -1,6 +1,7 @@
 -- Dependencies:
 --  table/gtfs_calendar
 
+DROP FUNCTION IF EXISTS trainview_gtfs_day_ids(TEXT)
 CREATE OR REPLACE FUNCTION trainview_gtfs_day_ids (isodate TEXT)
 RETURNS TABLE (
     gtfs_id SMALLINT,

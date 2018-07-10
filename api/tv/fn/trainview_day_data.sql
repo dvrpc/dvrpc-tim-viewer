@@ -1,6 +1,7 @@
 -- Dependencies:
 --  view/trainview_joined
 
+DROP FUNCTION IF EXISTS trainview_day_data(TEXT);
 CREATE OR REPLACE FUNCTION trainview_day_data (isodate TEXT)
 RETURNS TABLE (
     tstz TIMESTAMPTZ,
