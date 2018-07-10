@@ -4,15 +4,14 @@
 --  function/trainview_gtfs_day_ids
 --  table/gtfs_shapes
 
+DROP FUNCTION trainview_link_match_shape(TEXT, INTEGER);
 CREATE OR REPLACE FUNCTION trainview_link_match_shape(isotime TEXT, dep_hour INTEGER)
 RETURNS TABLE (
-
     stdtime INTERVAL,
     trip_short_name TEXT,
     line TEXT,
-    late SMALLINT,
+    late INTEGER,
     geom GEOMETRY
-
 ) AS $$
 DECLARE
     all_hours BOOLEAN;
@@ -60,7 +59,7 @@ BEGIN
         GROUP BY shape_ids
     )
     SELECT
-        (timestmp - isotime::TIMESTAMP) stdtime,
+        (tstz - isotime::TIMESTAMP) stdtime,
         _ultra.trip_short_name,
         _ultra.line,
         _ultra.late,
@@ -69,10 +68,10 @@ BEGIN
     LEFT JOIN _full_lines
     ON _full_lines.shape_ids = _ultra.shape_ids
     WHERE
-        timestmp > (astart_time - '1 hour'::interval)
-    AND timestmp < (aend_time + '4 hours'::interval)
+        tstz > (astart_time - '1 hour'::interval)
+    AND tstz < (aend_time + '4 hours'::interval)
     AND (all_hours OR (EXTRACT(HOUR FROM astart_time) = dep_hour))
-    ORDER BY astart_time, timestmp;
+    ORDER BY astart_time, tstz;
 
 END;
 $$ LANGUAGE plpgsql;

@@ -2,21 +2,21 @@
 --  function/trainview_gtfs_day_trips
 --  function/trainview_day_data
 
-
+DROP FUNCTION trainview_link_data(TEXT);
 CREATE OR REPLACE FUNCTION trainview_link_data(isotime TEXT)
 RETURNS TABLE (
-    timestmp TIMESTAMP,
+    tstz TIMESTAMPTZ,
     line TEXT,
     service TEXT,
     trainno TEXT,
     consist TEXT[],
     -- consistlength SMALLINT,
-    origin TEXT,
-    destination TEXT,
+    origstop TEXT,
+    deststop TEXT,
     nextstop TEXT,
-    late SMALLINT,
-    lat REAL,
-    lon REAL
+    late INTEGER,
+    lat DOUBLE PRECISION,
+    lon DOUBLE PRECISION
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -33,26 +33,26 @@ BEGIN
         SELECT
             tvd.*,
             (isotime::timestamp + gtfst.start_time) astart_time,
-            (isotime::timestamp + gtfst.end_time) aend_time,
+            (isotime::timestamp + gtfst.end_time) aend_time
         FROM trainview_day_data(isotime) tvd
         INNER JOIN gtfst
         ON tvd.trainno = gtfst.trip_short_name
     )
     SELECT
-        _ultra.timestmp,
+        _ultra.tstz,
         _ultra.line,
         _ultra.service,
         _ultra.trainno,
         _ultra.consist,
         -- _ultra.consistlength,
-        _ultra.origin,
-        _ultra.destination,
+        _ultra.origstop,
+        _ultra.deststop,
         _ultra.nextstop,
         _ultra.late,
         _ultra.lat, _ultra.lon
     FROM _ultra
     WHERE
-        timestmp > (astart_time - '1 hour'::interval)
-    AND timestmp < (aend_time + '4 hours'::interval);
+        _ultra.tstz > (astart_time - '1 hour'::interval)
+    AND _ultra.tstz < (aend_time + '4 hours'::interval);
 END;
 $$ LANGUAGE plpgsql;
