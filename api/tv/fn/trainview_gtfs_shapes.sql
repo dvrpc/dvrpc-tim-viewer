@@ -2,6 +2,7 @@
 --  function/trainview_gtfs_day_ids
 --  table/gtfs_shapes
 
+DROP FUNCTION IF EXISTS trainview_gtfs_shapes(TEXT);
 CREATE OR REPLACE FUNCTION trainview_gtfs_shapes(isotime TEXT)
 RETURNS JSON AS $$
 DECLARE

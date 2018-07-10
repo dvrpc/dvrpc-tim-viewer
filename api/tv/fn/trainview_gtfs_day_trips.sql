@@ -3,6 +3,7 @@
 --  table/gtfs_trips
 --  table/gtfs_stop_times
 
+DROP FUNCTION IF EXISTS trainview_gtfs_day_trips(TEXT);
 CREATE OR REPLACE FUNCTION trainview_gtfs_day_trips(isotime TEXT)
 RETURNS TABLE (
     gtfs_id SMALLINT,
