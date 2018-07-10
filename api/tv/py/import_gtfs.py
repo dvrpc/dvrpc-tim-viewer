@@ -181,18 +181,22 @@ def _tryCasting(value, dtype, default = None):
 def _insertGTFSTable(con, gtfs_id, gtfs_table, table):
     cur = con.cursor()
     header = map(lambda s:s.lower().strip(), table.pop(0))
-    table = map(lambda row:map(lambda s:s.strip(), row), table)
-    field_names, python_types, postgres_types = zip(*GTFS_SCHEMA[gtfs_table])
-    casting_dict = dict(zip(field_names, python_types))
-    _table = zip(*table)
-    for i, field in enumerate(header):
-        _table[i] = map(lambda v:_tryCasting(v, casting_dict[field]), _table[i])
-    table = zip(*_table)
-    cur.executemany(
-        SQL_INSERT % (gtfs_table, ",".join(header), ",".join("%s" for _ in header)),
-        prepend_gtfs_id(gtfs_id, table)
-    )
-    con.commit()
+    # Empty table check after removing header
+    if len(table) > 0:
+        table = map(lambda row:map(lambda s:s.strip(), row), table)
+        field_names, python_types, postgres_types = zip(*GTFS_SCHEMA[gtfs_table])
+        casting_dict = dict(zip(field_names, python_types))
+        _table = zip(*table)
+        # _table = zip(*filter(lambda r:len(r) == len(header), table))
+        # print gtfs_table, len(table), len(_table), len(header)
+        for i, field in enumerate(header):
+            _table[i] = map(lambda v:_tryCasting(v, casting_dict[field]), _table[i])
+        table = zip(*_table)
+        cur.executemany(
+            SQL_INSERT % (gtfs_table, ",".join(header), ",".join("%s" for _ in header)),
+            prepend_gtfs_id(gtfs_id, table)
+        )
+        con.commit()
 
 if __name__ == "__main__":
 
@@ -205,6 +209,7 @@ if __name__ == "__main__":
     )
 
     root = r"C:\Users\wtsay\Downloads\gtfs_feeds"
+
     for septafeed in os.listdir(root):
         if septafeed.endswith('.zip'):
             print septafeed
