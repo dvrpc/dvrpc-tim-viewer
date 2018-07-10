@@ -1,5 +1,3 @@
--- Note: Is this still needed?
-
 -- Dependencies:
 --  view/trainview_joined
 

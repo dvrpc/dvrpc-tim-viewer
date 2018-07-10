@@ -1,3 +1,8 @@
+-- Dependencies:
+--  function/trainview_gtfs_day_trips
+--  function/trainview_day_data
+
+
 CREATE OR REPLACE FUNCTION trainview_link_data(isotime TEXT)
 RETURNS TABLE (
     timestmp TIMESTAMP,
@@ -5,7 +10,7 @@ RETURNS TABLE (
     service TEXT,
     trainno TEXT,
     consist TEXT[],
-    consistlength SMALLINT,
+    -- consistlength SMALLINT,
     origin TEXT,
     destination TEXT,
     nextstop TEXT,
@@ -39,7 +44,7 @@ BEGIN
         _ultra.service,
         _ultra.trainno,
         _ultra.consist,
-        _ultra.consistlength,
+        -- _ultra.consistlength,
         _ultra.origin,
         _ultra.destination,
         _ultra.nextstop,

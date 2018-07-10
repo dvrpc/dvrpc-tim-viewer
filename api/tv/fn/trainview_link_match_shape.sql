@@ -1,3 +1,9 @@
+-- Dependencies:
+--  function/trainview_gtfs_day_trips
+--  function/trainview_day_data
+--  function/trainview_gtfs_day_ids
+--  table/gtfs_shapes
+
 CREATE OR REPLACE FUNCTION trainview_link_match_shape(isotime TEXT, dep_hour INTEGER)
 RETURNS TABLE (
 

@@ -1,3 +1,7 @@
+-- Dependencies:
+--  function/trainview_gtfs_day_ids
+--  table/gtfs_shapes
+
 CREATE OR REPLACE FUNCTION trainview_gtfs_shapes(isotime TEXT)
 RETURNS JSON AS $$
 DECLARE
