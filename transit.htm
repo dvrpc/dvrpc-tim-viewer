@@ -264,5 +264,32 @@
     <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
   <script src='lib/config.js' type="text/javascript"></script>
   <script src='lib/transit.js' type="text/javascript"></script>
+  <!-- Start edited -->
+
+    <!-- vertex shader -->
+    <script id="vshader" type="x-shader/x-vertex">#version 300 es
+        uniform mat4    u_matrix;
+        in      vec4    a_vertex;
+        in      float   a_pointSize;
+        in      vec4    a_color;
+        out     vec4    v_color;
+        void main() {
+            gl_PointSize =  a_pointSize;
+            gl_Position = u_matrix * a_vertex;
+            v_color = a_color;
+        }
+    </script>
+    <!-- fragment shader -->
+    <script id="fshader" type="x-shader/x-fragment">#version 300 es
+        precision mediump float;
+        in  vec4 v_color;
+        out vec4 fragColor;
+        void main() {
+            fragColor = v_color;
+        }
+    </script>
+    <script src='lib/wobgl.js' type="text/javascript"></script>
+
+  <!-- End edited -->
 </body>
 </html>
