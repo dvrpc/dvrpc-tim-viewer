@@ -1,3 +1,6 @@
+-- Dependencies:
+--  table/gtfs_calendar
+
 CREATE OR REPLACE FUNCTION trainview_gtfs_day_ids (isodate TEXT)
 RETURNS TABLE (
     gtfs_id SMALLINT,

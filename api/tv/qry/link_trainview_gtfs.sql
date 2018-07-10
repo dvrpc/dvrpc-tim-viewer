@@ -71,7 +71,7 @@ _full_lines AS (
 )
 SELECT
     -- ARRAY[lat, lon]::REAL[]
-    timestmp,
+    _ultra.tstz,
     line,
     late,
     ST_ShortestLine(ST_SetSRID(ST_MakePoint(lon, lat), 4326), _full_lines.geom),
@@ -80,7 +80,7 @@ FROM _ultra
 LEFT JOIN _full_lines
 ON _full_lines.shape_ids = _ultra.shape_ids
 WHERE
-    timestmp > (astart_time - '1 hour'::interval)
-AND timestmp < (aend_time + '4 hours'::interval)
+    tstz > (astart_time - '1 hour'::interval)
+AND tstz < (aend_time + '4 hours'::interval)
 AND EXTRACT(HOUR FROM astart_time) = 20
-ORDER BY astart_time, timestmp
+ORDER BY astart_time, tstz

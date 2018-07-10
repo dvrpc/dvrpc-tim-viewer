@@ -1,3 +1,8 @@
+-- Dependencies:
+--  function/trainview_gtfs_day_ids
+--  table/gtfs_trips
+--  table/gtfs_stop_times
+
 CREATE OR REPLACE FUNCTION trainview_gtfs_day_trips(isotime TEXT)
 RETURNS TABLE (
     gtfs_id SMALLINT,
@@ -24,9 +29,14 @@ BEGIN
         AND _trips.service_id = _gtfs_service_id.service_id
     ),
     _stop_times AS (
-        SELECT _stop_times.gtfs_id, _stop_times.trip_id, min(arrival_time) start_time, max(departure_time) end_time 
+        SELECT
+            _stop_times.gtfs_id,
+            _stop_times.trip_id,
+            min(arrival_time) start_time,
+            max(departure_time) end_time 
         FROM _gtfs_service_id
-        LEFT JOIN gtfs_stop_times _stop_times ON _gtfs_service_id.gtfs_id = _stop_times.gtfs_id
+        LEFT JOIN gtfs_stop_times _stop_times
+        ON _gtfs_service_id.gtfs_id = _stop_times.gtfs_id
         GROUP BY _stop_times.gtfs_id, _stop_times.trip_id
     )
     SELECT
