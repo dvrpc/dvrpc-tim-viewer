@@ -203,7 +203,12 @@
           </li>
           <li class="navbar-nav active">
           		<a class="nav-link" href="zones.htm">Zones <span class="sr-only">(current)</span></a>
-          </li>
+					</li>
+					<li class="navbar-nav">
+							<button style="margin-left:20px" type="button" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#disclaimerModal">
+								Disclaimer
+							</button>
+						</li>
         </ul>
       </div>
     </nav>
@@ -332,6 +337,28 @@
 			<div style="clear:both"></div>
 		</div>
 	</div>
+<!-- DO NOT DO STUPID SHIT MODAL -->
+<div class="modal fade" id="disclaimerModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLabel">Disclaimer/Notice of Limitations</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p>This products is a proof-of-concept for a regional tool allowing for the visualization and exploration of the DVRPC TIM. The data in this application is for demonstration purposes only and not intended for use in any planning products.</p>
+					<p>The Delaware Valley Regional Commission (DVRPC) makes no warranty, representation, or guarantee as to the content, sequence, accuracy, timeliness, or completeness of any of the spatial data or database information provided herein. DVRPC and partner state, local, and other agencies shall assume no liability for errors, omissions, or inaccuracies in the information provided regardless of how caused; or any decision made or action taken or not taken by any person relying on any information or data furnished within.</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
 	<!-- <div style="position:absolute; right:20px; top:75px">
 	  <div id="style-selector" class="btn-group btn-group-vertical" data-toggle="buttons">
 	    <label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary active">
