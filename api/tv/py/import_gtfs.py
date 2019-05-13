@@ -106,6 +106,7 @@ def prepend_gtfs_id(gtfs_id, data):
     for row in data:
         yield [gtfs_id] + list(row)
 
+'''
 def _parseZip(path):
     gtfs_data = {}
     with zipfile.ZipFile(path) as zf:
@@ -117,6 +118,38 @@ def _parseZip(path):
                     r = csv.reader(f)
                     gtfs_data[gtfs_table] = filter_gtfs_table(zip(*GTFS_SCHEMA[gtfs_table])[0], [row for row in r])
     return gtfs_data
+'''
+
+def _parseZip(path):
+    with zipfile.ZipFile(path) as zf:
+        return _parser(
+            tblListFn = zf.namelist,
+            tblOpenFn = lambda f:zf.open(f)
+        )
+
+def _parseDir(path):
+    return _parser(
+        tblListFn = lambda:map(lambda f:os.path.join(path, f), os.listdir(path)),
+        tblOpenFn = lambda f:open(f, "rb")
+    )
+
+def _parser(tblListFn, tblOpenFn):
+    gtfs_data = {}
+    for fn in tblListFn():
+        _, filename = os.path.split(fn)
+        gtfs_table, _ = os.path.splitext(filename)
+        gtfs_table = gtfs_table.lower().strip()
+        if gtfs_table in GTFS_SCHEMA:
+            with tblOpenFn(fn) as f:
+                r = csv.reader(f)
+                gtfs_data[gtfs_table] = filter_gtfs_table(
+                    zip(*GTFS_SCHEMA[gtfs_table])[0],
+                    [row for row in r]
+                )
+    return gtfs_data
+
+def parseDir(path):
+    return None, _parseDir(path)
 
 def parseZip(path):
     hash = hashlib.md5()
@@ -135,7 +168,11 @@ def parseNestedZip(path):
             gtfs_data = _parseZip(szf)
             yield hash.hexdigest(), _parseZip(szf)
 
-def parseSEPTAZip(con, path):
+def processDir(con, path, gtfs_id = 0):
+    _, gtfs_data = parseDir(path)
+    insertGTFS(con, gtfs_id, gtfs_data)
+
+def processSEPTAZip(con, path):
     for hash, gtfs_data in parseNestedZip(path):
         gtfs_id = checkGTFSHash(con, hash)
         if gtfs_id is None:
@@ -188,7 +225,7 @@ def _insertGTFSTable(con, gtfs_id, gtfs_table, table):
         casting_dict = dict(zip(field_names, python_types))
         _table = zip(*table)
         # _table = zip(*filter(lambda r:len(r) == len(header), table))
-        # print gtfs_table, len(table), len(_table), len(header)
+        print gtfs_table, len(table), len(_table), len(header)
         for i, field in enumerate(header):
             _table[i] = map(lambda v:_tryCasting(v, casting_dict[field]), _table[i])
         table = zip(*_table)
@@ -201,16 +238,19 @@ def _insertGTFSTable(con, gtfs_id, gtfs_table, table):
 if __name__ == "__main__":
 
     con = psql.connect(
-        host = "localhost",
+        host = "wtsay",
         port = 5432,
-        database = "septatest",
+        database = "njtgtfs",
         user = "postgres",
         password = "sergt"
     )
 
-    root = r"C:\Users\wtsay\Downloads\gtfs_feeds"
+    root = r"C:\Users\wtsay\Downloads\NJT_190501_gtfs"
+    processDir(con, root)
 
+    '''
     for septafeed in os.listdir(root):
         if septafeed.endswith('.zip'):
             print septafeed
-            parseSEPTAZip(con, os.path.join(root, septafeed))
+            processSEPTAZip(con, os.path.join(root, septafeed))
+    '''
