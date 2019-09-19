@@ -1,6 +1,6 @@
 <?php
     include("_functions.php");
-    $netobj = "zone";
+    $netobj = "zones";
 
     header('Content-Type: application/json');
     header('Content-Encoding: x-gzip');

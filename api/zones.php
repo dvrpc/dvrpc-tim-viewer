@@ -3,7 +3,7 @@
     header('Content-Type: application/json');
     header('Content-Encoding: x-gzip');
     $response = Operator(
-        "zone",
+        "zones",
         $_SERVER['REQUEST_METHOD'],
         $_GET,
         trim(file_get_contents("php://input"))
