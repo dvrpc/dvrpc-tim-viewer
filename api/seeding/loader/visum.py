@@ -15,7 +15,41 @@ import time
 
 # TOD INDEPENDENT
 NETOBJ_ATTRIBUTES = {
-    "Links": [("V0PrT", "v0prt", "DOUBLE PRECISION")]
+    "Links": [
+        ("V0PrT",                                   "v0prt",                        "DOUBLE PRECISION"),
+        ("length",                                  "length",                       "DOUBLE PRECISION"),
+    ],
+    "Zones": [
+        ("name",                                    "name",                         "TEXT"),
+        ("population",                              "population",                   "DOUBLE PRECISION"),
+        ("total_employment",                        "total_employment",             "DOUBLE PRECISION"),
+        ("households",                              "households",                   "DOUBLE PRECISION"),
+        ("area_type",                               "area_type",                    "DOUBLE PRECISION"),
+        ("autos",                                   "autos",                        "DOUBLE PRECISION"),
+        ("ag_mining",                               "ag_mining",                    "DOUBLE PRECISION"),
+        ("arts/rec/food",                           "arts_rec_food",                "DOUBLE PRECISION"),
+        ("construction",                            "construction",                 "DOUBLE PRECISION"),
+        ("eds-meds",                                "eds_meds",                     "DOUBLE PRECISION"),
+        ("fire",                                    "fire",                         "DOUBLE PRECISION"),
+        ("information",                             "information",                  "DOUBLE PRECISION"),
+        ("manufacturing",                           "manufacturing",                "DOUBLE PRECISION"),
+        ("other_services",                          "other_services",               "DOUBLE PRECISION"),
+        ("prof_services",                           "prof_services",                "DOUBLE PRECISION"),
+        ("public_admin",                            "public_admin",                 "DOUBLE PRECISION"),
+        ("retail_trade",                            "retail_trade",                 "DOUBLE PRECISION"),
+        ("transport_wh_util",                       "transport_wh_util",            "DOUBLE PRECISION"),
+        ("wholesale_trade",                         "wholesale_trade",              "DOUBLE PRECISION"),
+        ("empres",                                  "empres",                       "DOUBLE PRECISION"),
+        ("k-12",                                    "k_12",                         "DOUBLE PRECISION"),
+        ("univ",                                    "univ",                         "DOUBLE PRECISION"),
+        ("stu_colleg",                              "stu_colleg",                   "DOUBLE PRECISION"),
+        ("stu_school",                              "stu_school",                   "DOUBLE PRECISION"),
+    ],
+    "Lines": [
+        ("tsyscode",                                "tsyscode",                     "TEXT"),
+        ("mainlinename",                            "mainlinename",                 "TEXT"),
+        ("shortname",                               "shortname",                    "TEXT"),
+    ]
 }
 
 # TOD DEPENDENT
@@ -292,14 +326,17 @@ class VisumDataMiner(threading.Thread):
         mtx = self.GetVisumMatrix(Visum, mtxno)
         if not mtx.shape in self._index_templates:
             n,n = mtx.shape
-            y = numpy.vstack((numpy.arange(n) for _ in xrange(n)))
-            x = y.T.flatten()
-            y = y.flatten()
-            self._index_templates[mtx.shape] = (x, y)
+            ind = numpy.vstack((numpy.arange(n) for _ in xrange(n)))
+            x = ind.T.flatten()
+            y = ind.flatten()
+            key = map(lambda v:int(v), self.GetVisumAttribute(Visum, "Zones", "No"))
+            nox = map(lambda i:key[i], x)
+            noy = map(lambda i:key[i], y)
+            self._index_templates[mtx.shape] = (nox, noy, x, y)
         else:
-            x, y = self._index_templates[mtx.shape]
+            nox, noy, x, y = self._index_templates[mtx.shape]
         z = mtx.flatten()
-        mtx_listing = numpy.array((x,y,z,), dtype = object).T
+        mtx_listing = numpy.array((nox, noy, x,y,z,), dtype = object).T
         return mtx_listing[numpy.where(mtx_listing[:,2] < MTX_UPPERLIMIT)]
     def GetGeometries(self, Visum):
         logger.info("VisumDataMiner-%s.GetGeometries(): Started", self.tod)

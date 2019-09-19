@@ -8,7 +8,7 @@ def main():
         password = "sergt",
         host = "localhost",
         port = 5432,
-        database = "postgres"
+        database = "dvrpc-tim-viewer"
     )
     cur = con.cursor()
     # FN FNS-9, little brother to the FN FNP-45, FNX-45

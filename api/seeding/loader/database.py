@@ -36,7 +36,7 @@ TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 # "ALTER TABLE {tblname} ADD COLUMN ({fname} {dtype})"
 # "INSERT INTO {tblname} VALUES ({nargs})"
 
-SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex smallint, scen text, tod text, val double precision);"
+SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (ozoneno int, dzoneno int, oindex smallint, dindex smallint, val double precision, scen text, tod text);"
 SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (oindex ASC NULLS LAST);"
 SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dindex ASC NULLS LAST);"
 SQL_CREATE_IDX_GEOM = "CREATE INDEX {tblname}_{field}_gidx ON {tblname} USING GIST ({field});"
@@ -90,7 +90,7 @@ class DatabaseManager(threading.Thread):
         self._con.commit()
 
 class Database(threading.Thread):
-    MTX_DEFAULT_COLUMNS = ["oindex", "dindex", "val"]
+    MTX_DEFAULT_COLUMNS = ["ozoneno", "dzoneno", "oindex", "dindex", "val"]
     def __init__(self, db_credentials, queue, max_queue_depth, overwrite_existing_tables):
         super(Database, self).__init__()
         self.db_credentials = db_credentials
@@ -134,14 +134,17 @@ class Database(threading.Thread):
         logger.debug("Database-%d.LoadAttributes(): Importing %s", self.ident, tblname)
         cur = self.con.cursor()
         atts = payload.atts + [[u"scen", u"TEXT"]]
+        logger.debug("Database-%d.LoadAttributes(): `%s`", self.ident, Utility.formatCreate(tblname, atts))
         try:
             cur.execute(Utility.formatCreate(tblname, atts))
         except:
             logger.debug("Database-%d.LoadAttributes(): Table already does exist %s", self.ident, tblname)
         else:
             self.con.commit()
+
         finally:
             cur = self.con.cursor()
+
         for data in self._iterPayload(payload.data):
             cur.execute(
                 Utility.formatMultiInsert(

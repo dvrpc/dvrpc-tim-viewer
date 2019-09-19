@@ -14,7 +14,7 @@ import loader.database
 import loader.visum
 from credentials import PSQL_CNX
 
-MODEL_PATH_TEMPLATE = r"C:\Users\model-ws\Desktop\TIM_23Full_run\TIM23_2015_Base_170612_FINAL_TMC_{tod}.ver"
+MODEL_PATH_TEMPLATE = r"D:\BikePedTransit\UrbanSim\TIM 2.3 2018 Conformity\2015\2015_Base_{tod}.ver"
 MODEL_SCEN = "2015"
 
 PSQL_SRID = 4326
@@ -22,7 +22,7 @@ PSQL_SRID = 4326
 MAX_QUEUE_DEPTH = 100
 
 SINGLE_LOAD_VISUM = True
-DB_THREADS = 8
+DB_THREADS = 12
 OVERWRITE_EXISTING_TABLES = False
 
 def main():
