@@ -16,7 +16,6 @@ This roadmap is organized by network system and feature priority.
 - [ ] Volume or V/C *simulated*  (__2__)
 
 ### Bike
-Who cares about bikes...dropped to lowest priority
 - [x] Facility type  (__1__)
 - [ ] Slope  (__1__)
 
