@@ -37,12 +37,15 @@ This roadmap is organized by network system and feature priority.
 - [x] Top travel destinations  (__1__)
 
 ## Front End
-*Dependencies*
+*Required dependencies*
+* [Mapbox-gl](https://github.com/mapbox/mapbox-gl-js) - map rendering and interactivity in browser
+* [D3.js](https://d3js.org/) - for charting
+
+## Vector layer hosting
 * [Tileserver-gl](https://github.com/maptiler/tileserver-gl) 
     * vector tile host, alternatives available
-* Mapbox-gl JS
 
-## Map layer preparation
+### Vector tile layer preparation
 * ogr2ogr 
     * for data preparation and spatial transformations
 * tippecanoe
