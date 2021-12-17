@@ -38,9 +38,11 @@ This roadmap is organized by network system and feature priority.
 
 ## Front End
 *Dependencies*
-* Tileserver-php 
+* [Tileserver-gl](https://github.com/maptiler/tileserver-gl) 
     * vector tile host, alternatives available
 * Mapbox-gl JS
+
+## Map layer preparation
 * ogr2ogr 
     * for data preparation and spatial transformations
 * tippecanoe
