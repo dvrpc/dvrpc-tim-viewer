@@ -222,20 +222,11 @@
 						<a class="nav-link active" data-toggle="tab" href="#zone-summary" role="tab">Summary Data</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" data-toggle="tab" href="#zone-popdensity" role="tab" >Population Density</a>
-					</li>
-                    <li class="nav-item">
-						<a class="nav-link" data-toggle="tab" href="#zone-transitaccess" role="tab" >Transit Accessibility</a>
-					</li>
-                    <li class="nav-item">
-						<a class="nav-link" data-toggle="tab" href="#zone-nearbyemp" role="tab" >Nearby Employment</a>
-					</li>
-					<li class="nav-item">
 						<a class="nav-link" data-toggle="tab" href="#zone-education" role="tab" >Education</a>
 					</li>
-					<li class="nav-item">
+					<!-- <li class="nav-item">
 						<a class="nav-link" data-toggle="tab" href="#zone-trip" role="tab" >Trip Data</a>
-					</li>
+					</li> -->
 				</ul>
 
 				<!-- Tab panes -->
@@ -343,18 +334,36 @@
 				</div>
 			</div>
 			<div id="map" class="col-sm-7 offset-sm-5 col-lg-8 offset-lg-4">
-                <div class="sk-cube-grid">
-				  <div class="sk-cube sk-cube1"></div>
-				  <div class="sk-cube sk-cube2"></div>
-				  <div class="sk-cube sk-cube3"></div>
-				  <div class="sk-cube sk-cube4"></div>
-				  <div class="sk-cube sk-cube5"></div>
-				  <div class="sk-cube sk-cube6"></div>
-				  <div class="sk-cube sk-cube7"></div>
-				  <div class="sk-cube sk-cube8"></div>
-				  <div class="sk-cube sk-cube9"></div>
+				<div style="position:absolute; right:20px; top:25px; max-width:350px; z-index:1">
+					<div style="max-width:200px; float:right">
+						<div id="style-selector" class="btn-group btn-group-vertical map-btn-group" data-toggle="buttons">
+								<label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary active">
+									<input type="radio" name="zone-render-state" value="zone-no-style"> No Style
+								</label>
+								<label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary">
+									<input type="radio" name="zone-render-state" value="zone-population-style"> Population Density
+								</label>
+								<label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary">
+									<input type="radio" name="zone-render-state" value="zone-transit-style"> Transit Accessibility
+								</label>
+								<label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary">
+									<input type="radio" name="zone-render-state" value="zone-employment-style"> Nearby Employment
+								</label>
+						</div>
+					</div>
 				</div>
-			</div>
+					<div class="sk-cube-grid">
+						<div class="sk-cube sk-cube1"></div>
+						<div class="sk-cube sk-cube2"></div>
+						<div class="sk-cube sk-cube3"></div>
+						<div class="sk-cube sk-cube4"></div>
+						<div class="sk-cube sk-cube5"></div>
+						<div class="sk-cube sk-cube6"></div>
+						<div class="sk-cube sk-cube7"></div>
+						<div class="sk-cube sk-cube8"></div>
+						<div class="sk-cube sk-cube9"></div>
+					</div>
+				</div>
 			<div style="clear:both"></div>
 		</div>
 	</div>
@@ -380,13 +389,6 @@
 	</div>
 
 
-	<!-- <div style="position:absolute; right:20px; top:75px">
-	  <div id="style-selector" class="btn-group btn-group-vertical" data-toggle="buttons">
-	    <label style="margin-bottom: .2rem;" class="btn btn-md btn-block well btn-primary active">
-	      <input type="radio" name="hwy-render-state" value="hwy-no-style"> No Style
-	    </label>
-	  </div>
-	</div> -->
 	<div id="legend"></div>
 	<div id="layerList"></div>
     <pre id="propertyList"></pre>
