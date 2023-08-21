@@ -281,7 +281,10 @@ class Utility:
             else:
                 yield (values, None)
     @classmethod
-    def _formatInsert(self, con, tblname, records, geom_records = None, field_dtypes = None, postgisfn = None):
+    def __formatInsert(self, con, tblname, records, geom_records = None, field_dtypes = None, postgisfn = None):
+        """
+            Deprecated
+        """
         # cur.mogrify requires a valid psycopg2.extensions.connection
         # (it does stuff like read the encoding from the connection)
         cur = con.cursor()
@@ -296,6 +299,25 @@ class Utility:
             "fdefs": self._strFields(field_dtypes),
             "values": values
         })
+    @classmethod
+    def _formatInsert(self, con, tblname, records, geom_records = None, field_dtypes = None, postgisfn = None):
+        # cur.mogrify now returns a binary string
+        cur = con.cursor()
+        values = []
+        for r, g in self._iterRecordGeoms(records, geom_records):
+            record = list(r)
+            if g:
+                for geo in g:
+                    record.append(postgisfn % geo)
+            values.append(tuple(record))
+        qry = "INSERT INTO {tname} {fdefs} VALUES {values}".format(**{
+            "tname": tblname,
+            "fdefs": self._strFields(field_dtypes),
+            "values": ",".join("%s" for _ in values)
+        })
+        retval = cur.mogrify(qry, values)
+        logger.debug("Database.Utility._formatInsert(): Values preview: %s", str(retval)[:64])
+        return retval
     @classmethod
     def formatInsert(self, con, tblname, values, field_dtypes = None):
         return self._formatInsert(con, tblname, (values,), field_dtypes = field_dtypes)

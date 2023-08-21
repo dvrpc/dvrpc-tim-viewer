@@ -252,8 +252,9 @@ class VisumDataMiner(threading.Thread):
                 logger.info("VisumDataMiner-%s.GetNetObjects(): Additional attributes found for Netobj %s", self.tod, netobj)
             data = self._getAttributes(Visum, netobj, list(map(lambda retval:(retval[0],retval[2]), ids)))
             if len(data) > 0:
+                logger.info("VisumDataMiner-%s.GetNetObjects(): %s preview: %s", self.tod, netobj, str(data[0]))
                 self.queue.put(Sponge(**{
-                    "type": database.TBL_NETOBJ,
+                    "type": loader.database.TBL_NETOBJ,
                     "scen": self.scen,
                     "netobj": netobj,
                     "atts": list(map(lambda retval:(retval[1],retval[2]), ids)),
@@ -359,7 +360,9 @@ class VisumDataMiner(threading.Thread):
         return list(gdtype)[0]
     @staticmethod
     def GetVisumAttribute(Visum, netobj, att):
-        return list(map(lambda retval:retval[1], getattr(Visum.Net, netobj).GetMultiAttValues(att, False)))
+        logger.info("VisumDataMiner.GetVisumAttribute(): Exporting %s from NetObj %s", att, netobj)
+        retval = list(map(lambda retval:retval[1], getattr(Visum.Net, netobj).GetMultiAttValues(att, False)))
+        return retval
     @staticmethod
     def GetVisumMatrix(Visum, mtxno):
         return numpy.array(Visum.Net.Matrices.ItemByKey(mtxno).GetValues())
