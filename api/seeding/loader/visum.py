@@ -8,8 +8,8 @@ import win32com.client
 
 import numpy
 
-import database
-from common import *
+import loader.database
+from loader.common import *
 
 import time
 
@@ -164,15 +164,16 @@ NETOBJ_IDs = {
 # I knew I wanted a thread manager
 class VisumManager(threading.Thread):
     TODs = ["AM","MD","PM","NT"]
-    def __init__(self, path_template, scen, vernum, queue, (srid, prjwkt), max_queue_depth, single_load_visum):
+    def __init__(self, path_template, scen, vernum, queue, srid_prj, max_queue_depth, single_load_visum):
         super(VisumManager, self).__init__()
         self.path_template = path_template
         self.scen = scen
         self.vernum = vernum
         self.queue = queue
         self._threads = []
-        self.srid = srid
-        self.prjwkt = prjwkt
+        # self.srid = srid
+        # self.prjwkt = prjwkt
+        self.srid, self.prjwkt = srid_prj
         self.max_queue_depth = max_queue_depth
         self.single_load_visum = single_load_visum
         logger.debug("VisumManager.__init__(): Done")
@@ -199,7 +200,7 @@ class VisumManager(threading.Thread):
             t.join()
 
 class VisumDataMiner(threading.Thread):
-    def __init__(self, path, scen, vernum, getnetobj, queue, (srid, prjwkt), semaphore):
+    def __init__(self, path, scen, vernum, getnetobj, queue, srid_prj, semaphore):
         super(VisumDataMiner, self).__init__()
         self.path = path
         self.scen = scen
@@ -208,8 +209,7 @@ class VisumDataMiner(threading.Thread):
         self.queue = queue
         self._index_templates = {}
         self.tod = None
-        self.srid = srid
-        self.prjwkt = prjwkt
+        self.srid, self.prjwkt = srid_prj
         self.semaphore = semaphore
         logger.debug("VisumDataMiner.__init__(): Done")
 
@@ -240,22 +240,23 @@ class VisumDataMiner(threading.Thread):
         return v
 
     def _getAttributes(self, Visum, netobj, ids):
-        return zip(*map(lambda (_id, dtype):self.GetVisumAttribute(Visum, netobj, _id), ids))
+        # retval = (_id, dtype)
+        return zip(*map(lambda retval:self.GetVisumAttribute(Visum, netobj, retval[0]), ids))
 
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
             logger.info("VisumDataMiner-%s.GetNetObjects(): Exporting NetObj %s", self.tod, netobj)
-            ids = map(lambda (f,d):(f,f.lower(),d), ids)
+            ids = map(lambda retval:(retval[0],retval[0].lower(),retval[1]), ids)
             if netobj in NETOBJ_ATTRIBUTES:
                 ids += NETOBJ_ATTRIBUTES[netobj]
                 logger.info("VisumDataMiner-%s.GetNetObjects(): Additional attributes found for Netobj %s", self.tod, netobj)
-            data = self._getAttributes(Visum, netobj, map(lambda (v,p,d):(v,d), ids))
+            data = self._getAttributes(Visum, netobj, map(lambda retval:(retval[0],retval[2]), ids))
             if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
                     "scen": self.scen,
                     "netobj": netobj,
-                    "atts": map(lambda (v,p,d):(p,d), ids),
+                    "atts": map(lambda retval:(retval[1],retval[2]), ids),
                     "data": data
                 }))
 
@@ -265,15 +266,15 @@ class VisumDataMiner(threading.Thread):
             if not netobj in NETOBJ_IDs:
                 logger.error("VisumDataMiner-%s.GetAttributes(): Error, {0} not included in NETOBJ_IDs".format(netobj), self.tod)
                 continue
-            ids = map(lambda (f,d):(f,f.lower(),d), NETOBJ_IDs[netobj]) + ids
-            data = self._getAttributes(Visum, netobj, map(lambda (v,p,d):(v,d), ids))
+            ids = map(lambda retval:(retval[0],retval[0].lower(),retval[1]), NETOBJ_IDs[netobj]) + ids
+            data = self._getAttributes(Visum, netobj, map(lambda retval:(retval[0],retval[2]), ids))
             if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_DATA,
                     "scen": self.scen,
                     "tod": self.tod,
                     "netobj": netobj,
-                    "atts": map(lambda (v,p,d):(p,d), ids),
+                    "atts": map(lambda retval:(retval[1],retval[2]), ids),
                     "data": data
                 }))
 
@@ -292,7 +293,7 @@ class VisumDataMiner(threading.Thread):
         mtx = self.GetVisumMatrix(Visum, mtxno)
         if not mtx.shape in self._index_templates:
             n,n = mtx.shape
-            y = numpy.vstack((numpy.arange(n) for _ in xrange(n)))
+            y = numpy.vstack((numpy.arange(n) for _ in range(n)))
             x = y.T.flatten()
             y = y.flatten()
             self._index_templates[mtx.shape] = (x, y)
@@ -358,7 +359,7 @@ class VisumDataMiner(threading.Thread):
         return list(gdtype)[0]
     @staticmethod
     def GetVisumAttribute(Visum, netobj, att):
-        return map(lambda (i,v):v, getattr(Visum.Net, netobj).GetMultiAttValues(att, False))
+        return map(lambda retval:retval[1], getattr(Visum.Net, netobj).GetMultiAttValues(att, False))
     @staticmethod
     def GetVisumMatrix(Visum, mtxno):
         return numpy.array(Visum.Net.Matrices.ItemByKey(mtxno).GetValues())
@@ -409,7 +410,7 @@ class Utility:
     @staticmethod
     def enumerateCOM(object, bruteForceN = 1000):
         methods, attributes = [], []
-        for i in xrange(bruteForceN):
+        for i in range(bruteForceN):
             try:
                 sig = object._lazydata_[0].GetNames(i)
             except:
@@ -595,7 +596,7 @@ class Access:
         cur = self.con_sqlite.cursor()
         cur.execute(self.SQL_SELECT_TBL_FIELDS_COLUMNSxTABLENAMES, (tblname, notNullable))
         payload = cur.fetchall()
-        for row in (payload if leadTableName else map(lambda t,c,d:(c,d), payload)):
+        for row in (payload if leadTableName else map(lambda retval:(retval[1], retval[2]), payload)):
             yield row
     def iterAllTableFields(self, notNullable = -1):
         for tblname in self.iterTables():
