@@ -241,22 +241,22 @@ class VisumDataMiner(threading.Thread):
 
     def _getAttributes(self, Visum, netobj, ids):
         # retval = (_id, dtype)
-        return zip(*map(lambda retval:self.GetVisumAttribute(Visum, netobj, retval[0]), ids))
+        return list(zip(*map(lambda retval:self.GetVisumAttribute(Visum, netobj, retval[0]), ids)))
 
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
             logger.info("VisumDataMiner-%s.GetNetObjects(): Exporting NetObj %s", self.tod, netobj)
-            ids = map(lambda retval:(retval[0],retval[0].lower(),retval[1]), ids)
+            ids = list(map(lambda retval:(retval[0],retval[0].lower(),retval[1]), ids))
             if netobj in NETOBJ_ATTRIBUTES:
                 ids += NETOBJ_ATTRIBUTES[netobj]
                 logger.info("VisumDataMiner-%s.GetNetObjects(): Additional attributes found for Netobj %s", self.tod, netobj)
-            data = self._getAttributes(Visum, netobj, map(lambda retval:(retval[0],retval[2]), ids))
+            data = self._getAttributes(Visum, netobj, list(map(lambda retval:(retval[0],retval[2]), ids)))
             if len(data) > 0:
                 self.queue.put(Sponge(**{
                     "type": database.TBL_NETOBJ,
                     "scen": self.scen,
                     "netobj": netobj,
-                    "atts": map(lambda retval:(retval[1],retval[2]), ids),
+                    "atts": list(map(lambda retval:(retval[1],retval[2]), ids)),
                     "data": data
                 }))
 
@@ -266,15 +266,15 @@ class VisumDataMiner(threading.Thread):
             if not netobj in NETOBJ_IDs:
                 logger.error("VisumDataMiner-%s.GetAttributes(): Error, {0} not included in NETOBJ_IDs".format(netobj), self.tod)
                 continue
-            ids = map(lambda retval:(retval[0],retval[0].lower(),retval[1]), NETOBJ_IDs[netobj]) + ids
-            data = self._getAttributes(Visum, netobj, map(lambda retval:(retval[0],retval[2]), ids))
+            ids = list(map(lambda retval:(retval[0],retval[0].lower(),retval[1]), NETOBJ_IDs[netobj])) + ids
+            data = self._getAttributes(Visum, netobj, list(map(lambda retval:(retval[0],retval[2]), ids)))
             if len(data) > 0:
                 self.queue.put(Sponge(**{
-                    "type": database.TBL_DATA,
+                    "type": loader.database.TBL_DATA,
                     "scen": self.scen,
                     "tod": self.tod,
                     "netobj": netobj,
-                    "atts": map(lambda retval:(retval[1],retval[2]), ids),
+                    "atts": list(map(lambda retval:(retval[1],retval[2]), ids)),
                     "data": data
                 }))
 
@@ -283,7 +283,7 @@ class VisumDataMiner(threading.Thread):
             logger.info("VisumDataMiner-%s.GetMatrices(): Exporting Matrix %s", self.tod, mtxno)
             mtx_listing = self._getMatrix(Visum, mtxno)
             self.queue.put(Sponge(**{
-                "type": database.TBL_MATRIX,
+                "type": loader.database.TBL_MATRIX,
                 "scen": self.scen,
                 "tod": self.tod,
                 "mtxno": mtxno,
@@ -331,7 +331,7 @@ class VisumDataMiner(threading.Thread):
                     _data
                 ))
             self.queue.put(Sponge(**{
-                "type": database.TBL_GEOMETRY,
+                "type": loader.database.TBL_GEOMETRY,
                 "scen": self.scen,
                 "netobj": netobj,
                 "atts": ids,
@@ -339,7 +339,7 @@ class VisumDataMiner(threading.Thread):
                 "gatts": gatts,
                 # Internal debate about this, it'll get 'appended' to data which involves zip(*args) both
                 # For now, transpose for consistency sake
-                "gdata": zip(*gdata),
+                "gdata": list(zip(*gdata)),
                 "srid": self.srid
             }))
     def _getGeometryFields(self, Visum):
@@ -347,30 +347,30 @@ class VisumDataMiner(threading.Thread):
         attributes = Utility.GetCOMAttributes(Visum)
         wkt_fields = filter(lambda row:"wkt" in row[1].lower(), attributes)
         logger.info("VisumDataMiner-%s._getGeometryFields(): Found %s geometry fields", self.tod, len(wkt_fields))
-        for netobj in set(zip(*wkt_fields)[0]):
-            netobj_geometry[netobj] = zip(*filter(lambda row:row[0] == netobj, wkt_fields))[1]
+        for netobj in set(list(zip(*wkt_fields))[0]):
+            netobj_geometry[netobj] = list(zip(*filter(lambda row:row[0] == netobj, wkt_fields)))[1]
         return netobj_geometry
 
     @staticmethod
     def _extractFeatureType(features):
         # gdtype = set(zip(*map(lambda v:v.split("(",1), features))[0])
-        gdtype = set(zip(*map(lambda v:re.split(" |\(", v, 1), features))[0])
+        gdtype = set(list(zip(*map(lambda v:re.split(" |\(", v, 1), features))[0]))
         assert len(gdtype) == 1, "Too many feature types (%s)" % str(gdtype)
         return list(gdtype)[0]
     @staticmethod
     def GetVisumAttribute(Visum, netobj, att):
-        return map(lambda retval:retval[1], getattr(Visum.Net, netobj).GetMultiAttValues(att, False))
+        return list(map(lambda retval:retval[1], getattr(Visum.Net, netobj).GetMultiAttValues(att, False)))
     @staticmethod
     def GetVisumMatrix(Visum, mtxno):
         return numpy.array(Visum.Net.Matrices.ItemByKey(mtxno).GetValues())
     @staticmethod
     def iterNetObjIDs():
-        for netobj, ids in NETOBJ_IDs.iteritems():
+        for netobj, ids in NETOBJ_IDs.items():
             for _id, dtype in ids:
                 yield netobj, _id
     @staticmethod
     def iterNetObjectGroup(dictionary):
-        for netobj, ids in dictionary.iteritems():
+        for netobj, ids in dictionary.items():
             yield netobj, ids
     @classmethod
     def iterNetObjGroupIDs(self):
@@ -456,7 +456,7 @@ class Utility:
         self.GetFullAccessDB(Visum, path_temp)
         accdb = Access(path_temp)
         COM_atts = self.GetCOMAttributes(Visum)
-        COM_netobj = dict((netobj.lower(), netobj) for netobj in set(zip(*COM_atts)[0]))
+        COM_netobj = dict((netobj.lower(), netobj) for netobj in set(list(zip(*COM_atts)[0])))
 
         netobj_ids = {}
         for netobj, field, dtype in accdb.iterAllTableFields(notNullable = 1):
@@ -576,7 +576,7 @@ class Access:
         cur.execute(self.SQL_CREATE_TBL_FIELDS)
         cur.executemany(self.SQL_INSERT_TBL_FIELDS, list(self.con_accdb.cursor().columns()))
         cur.execute(self.SQL_CREATE_TBL_BLACKLIST)
-        cur.executemany(self.SQL_INSERT_TBL_BLACKLIST, map(lambda v:(v,), self.ACCESS_SYS_TABLES))
+        cur.executemany(self.SQL_INSERT_TBL_BLACKLIST, list(map(lambda v:(v,), self.ACCESS_SYS_TABLES)))
         self.con_sqlite.commit()
     def close(self):
         self.con_accdb.close()
@@ -596,7 +596,7 @@ class Access:
         cur = self.con_sqlite.cursor()
         cur.execute(self.SQL_SELECT_TBL_FIELDS_COLUMNSxTABLENAMES, (tblname, notNullable))
         payload = cur.fetchall()
-        for row in (payload if leadTableName else map(lambda retval:(retval[1], retval[2]), payload)):
+        for row in (payload if leadTableName else list(map(lambda retval:(retval[1], retval[2]), payload))):
             yield row
     def iterAllTableFields(self, notNullable = -1):
         for tblname in self.iterTables():

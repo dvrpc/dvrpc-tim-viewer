@@ -147,7 +147,7 @@ class Database(threading.Thread):
                 Utility.formatMultiInsert(
                     self.con,
                     tblname,
-                    map(lambda a:a + (payload.scen,), data),
+                    list(map(lambda a:a + (payload.scen,), data)),
                     atts
                 )
             )
@@ -175,7 +175,7 @@ class Database(threading.Thread):
                 Utility.formatMultiInsert(
                     self.con,
                     tblname,
-                    map(lambda a:a + (payload.scen, payload.tod,), data),
+                    list(map(lambda a:a + (payload.scen, payload.tod,), data)),
                     atts
                 )
             )
@@ -213,7 +213,7 @@ class Database(threading.Thread):
             logger.debug("Database-%d.LoadGeometries(): Exists, skipped %s", self.ident, tblname)
             return
         logger.debug("Database-%d.LoadGeometries(): Importing %s", self.ident, tblname)
-        atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
+        atts = payload.atts + list(map(lambda r:(lambda retval:(retval[0],"geometry({0},{1})".format(retval[1],payload.srid)) + retval[2:])(*r), payload.gatts))
         cur = self.con.cursor()
         try:
             cur.execute(Utility.formatCreate(tblname, atts))
@@ -223,8 +223,8 @@ class Database(threading.Thread):
             self.con.commit()
         finally:
             cur = self.con.cursor()
-        for _data in self._iterPayload(zip(payload.data, payload.gdata)):
-            data, gdata = zip(*_data)
+        for _data in self._iterPayload(list(zip(payload.data, payload.gdata))):
+            data, gdata = list(zip(*_data))
             cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, data, gdata, atts))
         for field, dtype in payload.gatts:
             cur.execute(SQL_CREATE_IDX_GEOM.format(**{"tblname": tblname, "field": field}))
@@ -252,13 +252,15 @@ class Utility:
         pass
     @staticmethod
     def _strFieldDtypes(field_dtypes):
-        return ", ".join(map(
+        return ", ".join(list(map(
             lambda fd:" ".join(["{{{0}}}".format(i) for i in range(len(fd))]).format(*fd),
             field_dtypes
-        ))
+        )))
     @classmethod
     def _strFields(self, field_dtypes):
-        return "({0})".format(self._strFieldDtypes(map(lambda v:(v,), zip(*field_dtypes)[0]))) if field_dtypes is not None else ""
+        return "({0})".format(self._strFieldDtypes(
+            list(map(lambda v:(v,), list(zip(*field_dtypes))[0]))
+        )) if field_dtypes is not None else ""
     @classmethod
     def _strGeos(self, cur, values, postgisfn):
         return "," + cur.mogrify(",".join(postgisfn for _ in values), values) if values else ""
