@@ -1,5 +1,5 @@
 from django.http import *
-from . import credentials
+from phltripgen import credentials
 import psycopg2 as psql
 import json
 import time
@@ -90,7 +90,7 @@ def _parseGETArray(prefix, params, dtype):
     except:
         return False, (None, None)
     if numElems > 0:
-        for i in xrange(numElems):
+        for i in range(numElems):
             elemKey = "%s%d" % (prefix, i)
             if elemKey in params:
                 elems.append(params[elemKey])
@@ -154,7 +154,7 @@ def checkParams(param_dir, params):
     '''
     complete = True
     retval = {}
-    for k, (fn, dtype, args) in param_dir.iteritems():
+    for k, (fn, dtype, args) in param_dir.items():
         exists, _retval = fn(k, params, dtype, *args)
         if not exists:
             complete = False
@@ -192,7 +192,7 @@ def _desireLines(params, dlType = None, *args, **kwds):
         return _deathRattle(ERR_INCOMPLETE_PARAM)
 
     _dlType = parsed_param[URLPARAM_KEY_DATATYPE]
-    if _dlType <> "ddl" and _dlType <> "vddl":
+    if _dlType != "ddl" and _dlType != "vddl":
         return _deathRattle(ERR_INVALID_PARAM)
 
     qry = "SELECT tim_gfx_%s(%%s, %%s, %%s, %%s)" % _dlType
