@@ -355,7 +355,7 @@ class VisumDataMiner(threading.Thread):
     @staticmethod
     def _extractFeatureType(features):
         # gdtype = set(zip(*map(lambda v:v.split("(",1), features))[0])
-        gdtype = set(list(zip(*map(lambda v:re.split(" |\(", v, 1), features))[0]))
+        gdtype = set(list(zip(*map(lambda v:re.split(" |\(", v, 1), features)))[0])
         assert len(gdtype) == 1, "Too many feature types (%s)" % str(gdtype)
         return list(gdtype)[0]
     @staticmethod
@@ -403,6 +403,12 @@ class Utility:
         u"vehjourneyitem": u"VehicleJourneyItems",
         u"vehunit": u"VehicleUnits",
     }
+    # For some reason, Visum.Net.[NetObj].Attributes.GetAll will report back non-existent fields
+    # 
+    ATTRIBUTE_BLACKLIST = {
+        u"connectors": ["wktpolywgs84",],
+        u"countlocations": ["wktlocwgs84",],
+    }
     def __init__(self):
         pass
     # Note:
@@ -437,8 +443,13 @@ class Utility:
     @staticmethod
     def FindWKT(Visum, netobj):
         for att in getattr(Visum.Net, netobj).Attributes.GetAll:
-            if "wkt" in att.Code.lower():
-                yield att.Code.lower()
+            att_code = att.Code.lower()
+            if ("wkt" in att_code):
+                # if (netobj.lower() in Utility.ATTRIBUTE_BLACKLIST):
+                    # if (att_code not in Utility.ATTRIBUTE_BLACKLIST[netobj.lower()]):
+                        # yield att_code
+                if ("wgs84" not in att_code):
+                    yield att_code
     @classmethod
     def GetCOMAttributes(self, Visum):
         master_attributes = []

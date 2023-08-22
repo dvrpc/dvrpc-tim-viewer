@@ -213,7 +213,7 @@ class Database(threading.Thread):
             logger.debug("Database-%d.LoadGeometries(): Exists, skipped %s", self.ident, tblname)
             return
         logger.debug("Database-%d.LoadGeometries(): Importing %s", self.ident, tblname)
-        atts = payload.atts + list(map(lambda r:(lambda retval:(retval[0],"geometry({0},{1})".format(retval[1],payload.srid)) + retval[2:])(*r), payload.gatts))
+        atts = payload.atts + list(map(lambda retval:(retval[0],"geometry({0},{1})".format(retval[1],payload.srid)) + retval[2:], payload.gatts))
         cur = self.con.cursor()
         try:
             cur.execute(Utility.formatCreate(tblname, atts))
@@ -304,19 +304,29 @@ class Utility:
         # cur.mogrify now returns a binary string
         cur = con.cursor()
         values = []
+        record_cnt = 0
+        record_placeholder_populated = False
+        record_placeholders = []
         for r, g in self._iterRecordGeoms(records, geom_records):
             record = list(r)
+            if not record_placeholder_populated:
+                record_placeholders = ["%s" for _ in range(len(record))]
             if g:
-                for geo in g:
-                    record.append(postgisfn % geo)
-            values.append(tuple(record))
+                record.extend([geo for geo in g])
+                if not record_placeholder_populated:
+                    record_placeholders.extend([postgisfn for geo in g])
+            values.extend(record)
+            record_cnt += 1
+            record_placeholder_populated = True
+        value_placeholder = "({0})".format(",".join(record_placeholders))
         qry = "INSERT INTO {tname} {fdefs} VALUES {values}".format(**{
             "tname": tblname,
             "fdefs": self._strFields(field_dtypes),
-            "values": ",".join("%s" for _ in values)
+            "values": ",".join(value_placeholder for _ in range(record_cnt))
         })
+        logger.debug("Database.Utility._formatInsert(): Query preview: %s", str(qry)[:128])
         retval = cur.mogrify(qry, values)
-        logger.debug("Database.Utility._formatInsert(): Values preview: %s", str(retval)[:64])
+        logger.debug("Database.Utility._formatInsert(): Values preview: %s", str(retval)[14:128 + 14])
         return retval
     @classmethod
     def formatInsert(self, con, tblname, values, field_dtypes = None):
