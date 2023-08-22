@@ -7,35 +7,35 @@ logger = logging.getLogger()
 logger.addHandler(fileHandler)
 logger.setLevel(logging.DEBUG)
 
-import Queue
+import queue
 import time
 
 import loader.database
 import loader.visum
 from credentials import PSQL_CNX
 
-MODEL_PATH_TEMPLATE = r"C:\Users\model-ws\Desktop\TIM_23Full_run\TIM23_2015_Base_170612_FINAL_TMC_{tod}.ver"
-MODEL_SCEN = "2015"
+MODEL_PATH_TEMPLATE = r"C:\Users\wtsay\Desktop\TIM_2.5_Conf_2023\2023_{tod}.ver"
+MODEL_SCEN = "2023"
 
 PSQL_SRID = 4326
 
 MAX_QUEUE_DEPTH = 100
 
 SINGLE_LOAD_VISUM = True
-DB_THREADS = 8
+DB_THREADS = 4
 OVERWRITE_EXISTING_TABLES = False
 
 def main():
     # Initialisation
     logger.debug("Hi")
-    Q = Queue.Queue()
+    Q = queue.Queue()
     DM = loader.database.DatabaseManager(PSQL_CNX, Q, MAX_QUEUE_DEPTH, DB_THREADS, OVERWRITE_EXISTING_TABLES)
 
     # WARNING
     DM.nukeDatabase()
 
     spatial_ref = (PSQL_SRID, DM.getProjectionWKT(PSQL_SRID))
-    VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, MODEL_SCEN, 15, Q, spatial_ref, MAX_QUEUE_DEPTH, SINGLE_LOAD_VISUM)
+    VM = loader.visum.VisumManager(MODEL_PATH_TEMPLATE, MODEL_SCEN, 23, Q, spatial_ref, MAX_QUEUE_DEPTH, SINGLE_LOAD_VISUM)
 
     # Start Database IO Agent Manager
     DM.start()

@@ -6,13 +6,13 @@
 import csv
 import logging
 logger = logging.getLogger(__name__)
-import Queue
-import StringIO
+import queue
+import io
 import threading
 
 import psycopg2 as psql
 
-from common import *
+from loader.common import *
 
 import time
 
@@ -42,21 +42,21 @@ SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dind
 SQL_CREATE_IDX_GEOM = "CREATE INDEX {tblname}_{field}_gidx ON {tblname} USING GIST ({field});"
 
 class DatabaseManager(threading.Thread):
-    def __init__(self, db_credentials, queue, max_queue_depth, num_threads, overwrite_existing_tables):
+    def __init__(self, db_credentials, dataqueue, max_queue_depth, num_threads, overwrite_existing_tables):
         super(DatabaseManager, self).__init__()
         self.db_credentials = db_credentials
-        self.queue = queue
+        self.dataqueue = dataqueue
         self.max_queue_depth = max_queue_depth
         self.num_threads = num_threads
         self.overwrite_existing_tables = overwrite_existing_tables
-        self._queue = Queue.Queue()
+        self._queue = queue.Queue()
         self._threads = []
         self._initialiseWorkers()
         self._con = psql.connect(**db_credentials)
         logger.debug("DatabaseManager.__init__(): Done")
     def run(self):
         while True:
-            payload = self.queue.get()
+            payload = self.dataqueue.get()
             if payload is None:
                 for _ in self._threads:
                     self._queue.put(None)
@@ -67,7 +67,7 @@ class DatabaseManager(threading.Thread):
             t.join()
         logger.debug("DatabaseManager.run(): Done")
     def _initialiseWorkers(self):
-        for i in xrange(self.num_threads):
+        for i in range(self.num_threads):
             self._threads.append(Database(
                 self.db_credentials,
                 self._queue,
@@ -91,10 +91,10 @@ class DatabaseManager(threading.Thread):
 
 class Database(threading.Thread):
     MTX_DEFAULT_COLUMNS = ["oindex", "dindex", "val"]
-    def __init__(self, db_credentials, queue, max_queue_depth, overwrite_existing_tables):
+    def __init__(self, db_credentials, dataqueue, max_queue_depth, overwrite_existing_tables):
         super(Database, self).__init__()
         self.db_credentials = db_credentials
-        self.queue = queue
+        self.dataqueue = dataqueue
         self.con = psql.connect(**self.db_credentials)
         self.max_queue_depth = max_queue_depth
         self.overwrite_existing_tables = overwrite_existing_tables
@@ -103,7 +103,7 @@ class Database(threading.Thread):
     def run(self):
         while True:
             logger.debug("Database-%d.run(): Waiting...", self.ident)
-            payload = self.queue.get()
+            payload = self.dataqueue.get()
             if payload is None:
                 self.con.commit()
                 self.con.close()
@@ -147,7 +147,7 @@ class Database(threading.Thread):
                 Utility.formatMultiInsert(
                     self.con,
                     tblname,
-                    map(lambda a:a + (payload.scen,), data),
+                    list(map(lambda a:a + (payload.scen,), data)),
                     atts
                 )
             )
@@ -175,7 +175,7 @@ class Database(threading.Thread):
                 Utility.formatMultiInsert(
                     self.con,
                     tblname,
-                    map(lambda a:a + (payload.scen, payload.tod,), data),
+                    list(map(lambda a:a + (payload.scen, payload.tod,), data)),
                     atts
                 )
             )
@@ -213,7 +213,7 @@ class Database(threading.Thread):
             logger.debug("Database-%d.LoadGeometries(): Exists, skipped %s", self.ident, tblname)
             return
         logger.debug("Database-%d.LoadGeometries(): Importing %s", self.ident, tblname)
-        atts = payload.atts + map(lambda r:(lambda f,d,*a:(f,"geometry({0},{1})".format(d,payload.srid)) + a)(*r), payload.gatts)
+        atts = payload.atts + list(map(lambda retval:(retval[0],"geometry({0},{1})".format(retval[1],payload.srid)) + retval[2:], payload.gatts))
         cur = self.con.cursor()
         try:
             cur.execute(Utility.formatCreate(tblname, atts))
@@ -223,14 +223,14 @@ class Database(threading.Thread):
             self.con.commit()
         finally:
             cur = self.con.cursor()
-        for _data in self._iterPayload(zip(payload.data, payload.gdata)):
-            data, gdata = zip(*_data)
+        for _data in self._iterPayload(list(zip(payload.data, payload.gdata))):
+            data, gdata = list(zip(*_data))
             cur.execute(Utility.formatMultiGeometryInsert(self.con, tblname, data, gdata, atts))
         for field, dtype in payload.gatts:
             cur.execute(SQL_CREATE_IDX_GEOM.format(**{"tblname": tblname, "field": field}))
         self.con.commit()
     def _bufferMatrix(self, mtx_listing, addtl_fields = []):
-        f = StringIO.StringIO()
+        f = io.StringIO()
         w = csv.writer(f)
         for row in mtx_listing:
             w.writerow(row.tolist() + addtl_fields)
@@ -238,7 +238,7 @@ class Database(threading.Thread):
         f.seek(0)
         return f
     def _iterPayload(self, data):
-        for i in xrange(0, len(data), INSERT_BATCH_SIZE):
+        for i in range(0, len(data), INSERT_BATCH_SIZE):
             yield data[i:i+INSERT_BATCH_SIZE]
     def skipTable(self, tblname):
         return self.overwrite_existing_tables if Utility.doesTableExist(self.con, tblname) else False
@@ -252,13 +252,15 @@ class Utility:
         pass
     @staticmethod
     def _strFieldDtypes(field_dtypes):
-        return ", ".join(map(
-            lambda fd:" ".join(["{{{0}}}".format(i) for i in xrange(len(fd))]).format(*fd),
+        return ", ".join(list(map(
+            lambda fd:" ".join(["{{{0}}}".format(i) for i in range(len(fd))]).format(*fd),
             field_dtypes
-        ))
+        )))
     @classmethod
     def _strFields(self, field_dtypes):
-        return "({0})".format(self._strFieldDtypes(map(lambda v:(v,), zip(*field_dtypes)[0]))) if field_dtypes is not None else ""
+        return "({0})".format(self._strFieldDtypes(
+            list(map(lambda v:(v,), list(zip(*field_dtypes))[0]))
+        )) if field_dtypes is not None else ""
     @classmethod
     def _strGeos(self, cur, values, postgisfn):
         return "," + cur.mogrify(",".join(postgisfn for _ in values), values) if values else ""
@@ -279,7 +281,10 @@ class Utility:
             else:
                 yield (values, None)
     @classmethod
-    def _formatInsert(self, con, tblname, records, geom_records = None, field_dtypes = None, postgisfn = None):
+    def __formatInsert(self, con, tblname, records, geom_records = None, field_dtypes = None, postgisfn = None):
+        """
+            Deprecated
+        """
         # cur.mogrify requires a valid psycopg2.extensions.connection
         # (it does stuff like read the encoding from the connection)
         cur = con.cursor()
@@ -294,6 +299,35 @@ class Utility:
             "fdefs": self._strFields(field_dtypes),
             "values": values
         })
+    @classmethod
+    def _formatInsert(self, con, tblname, records, geom_records = None, field_dtypes = None, postgisfn = None):
+        # cur.mogrify now returns a binary string
+        cur = con.cursor()
+        values = []
+        record_cnt = 0
+        record_placeholder_populated = False
+        record_placeholders = []
+        for r, g in self._iterRecordGeoms(records, geom_records):
+            record = list(r)
+            if not record_placeholder_populated:
+                record_placeholders = ["%s" for _ in range(len(record))]
+            if g:
+                record.extend([geo for geo in g])
+                if not record_placeholder_populated:
+                    record_placeholders.extend([postgisfn for geo in g])
+            values.extend(record)
+            record_cnt += 1
+            record_placeholder_populated = True
+        value_placeholder = "({0})".format(",".join(record_placeholders))
+        qry = "INSERT INTO {tname} {fdefs} VALUES {values}".format(**{
+            "tname": tblname,
+            "fdefs": self._strFields(field_dtypes),
+            "values": ",".join(value_placeholder for _ in range(record_cnt))
+        })
+        logger.debug("Database.Utility._formatInsert(): Query preview: %s", str(qry)[:128])
+        retval = cur.mogrify(qry, values)
+        logger.debug("Database.Utility._formatInsert(): Values preview: %s", str(retval)[14:128 + 14])
+        return retval
     @classmethod
     def formatInsert(self, con, tblname, values, field_dtypes = None):
         return self._formatInsert(con, tblname, (values,), field_dtypes = field_dtypes)

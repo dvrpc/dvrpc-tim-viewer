@@ -57,15 +57,15 @@ This roadmap is organized by network system and feature priority.
 ## Back End
 [API documentation](/api/README.md)
 *Dependencies - Core*
-* Python 2.7
+* Python 3.9
     * psycopg2
     * numpy
-* PostgreSQL 9.5
-    * PostGIS 2.3+ (3rd party)
+* PostgreSQL 14.9
+    * PostGIS 3.4 (with pgRouting)
     * tablefunc (extension needs to be enabled)
 
 *Dependencies - Utilities*
-* Python 2.7
+* Python 3.9
     * MS Access ODBC
         * pypyodbc [PyPi](https://pypi.python.org/pypi/pypyodbc) [Github](https://github.com/jiangwen365/pypyodbc)
         * Microsoft Access Database Engine (for your flavour of Microsoft Office)

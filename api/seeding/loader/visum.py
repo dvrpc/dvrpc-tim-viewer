@@ -8,14 +8,146 @@ import win32com.client
 
 import numpy
 
-import database
-from common import *
+import loader.database
+from loader.common import *
 
 import time
 
 # TOD INDEPENDENT
+__visum_value_types = {
+    1: "INTEGER",
+    2: "DOUBLE PRECISION",
+    5: "TEXT",
+    9: "BOOLEAN",
+    62: "TEXT"
+}
+__char_replace = {
+    '-': '_',
+    '/': '_',
+    '+': 'p',
+}
+def __sanitize_names(fn):
+    for x, y in __char_replace.items():
+        fn = fn.replace(x,y)
+    return fn
+"""
+pprint(list(map(
+    lambda z:(
+        z.ID,
+        __sanitize_names(z.Code).lower(),
+        __visum_value_types[z.ValueType]
+    ),
+    filter(
+        lambda z:z.IsUserDefined,
+        Visum.Net.Zones.Attributes.GetAll
+    )
+)))
+"""
+
 NETOBJ_ATTRIBUTES = {
-    "Links": [("V0PrT", "v0prt", "DOUBLE PRECISION")]
+    "Links": [("V0PrT", "v0prt", "DOUBLE PRECISION")],
+    "Zones": [
+        ('AG_MINING', 'ag_mining', 'DOUBLE PRECISION'),
+        ('AREA_LAND', 'area_land', 'DOUBLE PRECISION'),
+        ('AREA_TYPE', 'area_type', 'INTEGER'),
+        ('AREA_TYPE_MAX', 'area_type_max', 'INTEGER'),
+        ('ARMED_FORCES', 'armed_forces', 'DOUBLE PRECISION'),
+        ('ARTS/REC/FOOD', 'arts_rec_food', 'DOUBLE PRECISION'),
+        ('ATTRACT', 'attract', 'DOUBLE PRECISION'),
+        ('AUTOS', 'autos', 'DOUBLE PRECISION'),
+        ('BIKE', 'bike', 'DOUBLE PRECISION'),
+        ('BUSSTOP', 'busstop', 'DOUBLE PRECISION'),
+        ('COMMUTE_IX', 'commute_ix', 'DOUBLE PRECISION'),
+        ('COMMUTE_XI', 'commute_xi', 'DOUBLE PRECISION'),
+        ('CONNECT', 'connect', 'DOUBLE PRECISION'),
+        ('CONSTRUCTION', 'construction', 'DOUBLE PRECISION'),
+        ('DEN12', 'den12', 'DOUBLE PRECISION'),
+        ('DEN3', 'den3', 'DOUBLE PRECISION'),
+        ('DEN4', 'den4', 'DOUBLE PRECISION'),
+        ('DEN56', 'den56', 'DOUBLE PRECISION'),
+        ('EDS-MEDS', 'eds_meds', 'DOUBLE PRECISION'),
+        ('EMPRES', 'empres', 'DOUBLE PRECISION'),
+        ('EMP_DENS', 'emp_dens', 'DOUBLE PRECISION'),
+        ('EXT_AM', 'ext_am', 'DOUBLE PRECISION'),
+        ('EXT_EV', 'ext_ev', 'DOUBLE PRECISION'),
+        ('EXT_HTRK_SHARE', 'ext_htrk_share', 'DOUBLE PRECISION'),
+        ('EXT_LTRK_SHARE', 'ext_ltrk_share', 'DOUBLE PRECISION'),
+        ('EXT_MD', 'ext_md', 'DOUBLE PRECISION'),
+        ('EXT_NT', 'ext_nt', 'DOUBLE PRECISION'),
+        ('EXT_PM', 'ext_pm', 'DOUBLE PRECISION'),
+        ('FAF_HTRK', 'faf_htrk', 'DOUBLE PRECISION'),
+        ('FAF_MTRK', 'faf_mtrk', 'DOUBLE PRECISION'),
+        ('FIRE', 'fire', 'DOUBLE PRECISION'),
+        ('GRPQRTS', 'grpqrts', 'DOUBLE PRECISION'),
+        ('GRPQ_DENS', 'grpq_dens', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC', 'hhs_hi_inc', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_0WORKERS', 'hhs_hi_inc_0workers', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_1PERSON', 'hhs_hi_inc_1person', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_1WORKER', 'hhs_hi_inc_1worker', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_2PERSON', 'hhs_hi_inc_2person', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_2WORKERS', 'hhs_hi_inc_2workers', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_3PERSON', 'hhs_hi_inc_3person', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_3_PLUS_WORKERS', 'hhs_hi_inc_3p_workers', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_4_PLUS_PERSON', 'hhs_hi_inc_4p_person', 'DOUBLE PRECISION'),
+        ('HHS_LO_INC', 'hhs_lo_inc', 'DOUBLE PRECISION'),
+        ('HH_0VEH', 'hh_0veh', 'DOUBLE PRECISION'),
+        ('HH_0WORKER', 'hh_0worker', 'DOUBLE PRECISION'),
+        ('HH_1VEH', 'hh_1veh', 'DOUBLE PRECISION'),
+        ('HH_1WORKER', 'hh_1worker', 'DOUBLE PRECISION'),
+        ('HH_2VEH', 'hh_2veh', 'DOUBLE PRECISION'),
+        ('HH_2WORKER', 'hh_2worker', 'DOUBLE PRECISION'),
+        ('HH_3_PLUS_VEH', 'hh_3p_veh', 'DOUBLE PRECISION'),
+        ('HH_3_PLUS_WORKER', 'hh_3p_worker', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_0WORKERS', 'hh_lo_inc_0workers', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_1PERSON', 'hh_lo_inc_1person', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_1WORKER', 'hh_lo_inc_1worker', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_2PERSON', 'hh_lo_inc_2person', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_2WORKERS', 'hh_lo_inc_2workers', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_3PERSON', 'hh_lo_inc_3person', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_3_PLUS_WORKERS', 'hh_lo_inc_3p_workers', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_4_PLUS_PERSON', 'hh_lo_inc_4p_person', 'DOUBLE PRECISION'),
+        ('HOUSEHOLDS', 'households', 'DOUBLE PRECISION'),
+        ('INFORMATION', 'information', 'DOUBLE PRECISION'),
+        ('K-12', 'k_12', 'DOUBLE PRECISION'),
+        ('LOINC', 'loinc', 'INTEGER'),
+        ('LU_MIX2_1', 'lu_mix2_1', 'DOUBLE PRECISION'),
+        ('MANUFACTURING', 'manufacturing', 'DOUBLE PRECISION'),
+        ('MCD_FIPS', 'mcd_fips', 'TEXT'),
+        ('MCD_NAME', 'mcd_name', 'TEXT'),
+        ('MC_TRA', 'mc_tra', 'DOUBLE PRECISION'),
+        ('MC_TRW', 'mc_trw', 'DOUBLE PRECISION'),
+        ('MC_TRW_FROM', 'mc_trw_from', 'DOUBLE PRECISION'),
+        ('NUM_COLLEG', 'num_colleg', 'INTEGER'),
+        ('NUM_SCHOOL', 'num_school', 'INTEGER'),
+        ('OTHER_EMPLOYMENT', 'other_employment', 'DOUBLE PRECISION'),
+        ('OTHER_SERVICES', 'other_services', 'DOUBLE PRECISION'),
+        ('PARKCAP_TRANSIT', 'parkcap_transit', 'INTEGER'),
+        ('PARKCOST_1H', 'parkcost_1h', 'DOUBLE PRECISION'),
+        ('PARKCOST_DAILY', 'parkcost_daily', 'DOUBLE PRECISION'),
+        ('PARKRIDE_COUNT', 'parkride_count', 'INTEGER'),
+        ('PARK_REC', 'park_rec', 'DOUBLE PRECISION'),
+        ('POPULATION', 'population', 'DOUBLE PRECISION'),
+        ('POP_DENS', 'pop_dens', 'DOUBLE PRECISION'),
+        ('PROF_SERVICES', 'prof_services', 'DOUBLE PRECISION'),
+        ('PSEUDORADIUS', 'pseudoradius', 'DOUBLE PRECISION'),
+        ('PUBLIC_ADMIN', 'public_admin', 'DOUBLE PRECISION'),
+        ('PUMA', 'puma', 'INTEGER'),
+        ('RAIL', 'rail', 'DOUBLE PRECISION'),
+        ('RETAIL_TRADE', 'retail_trade', 'DOUBLE PRECISION'),
+        ('RTL_DENS', 'rtl_dens', 'DOUBLE PRECISION'),
+        ('STATEFP00', 'statefp00', 'INTEGER'),
+        ('STATE_COUNTY_ID', 'state_county_id', 'INTEGER'),
+        ('STATION_TYPE', 'station_type', 'TEXT'),
+        ('STU_COLLEG', 'stu_colleg', 'DOUBLE PRECISION'),
+        ('STU_SCHOOL', 'stu_school', 'DOUBLE PRECISION'),
+        ('T0CAR', 't0car', 'DOUBLE PRECISION'),
+        ('TOTAL_EMPLOYMENT', 'total_employment', 'DOUBLE PRECISION'),
+        ('TRANSPORT_WH_UTIL', 'transport_wh_util', 'DOUBLE PRECISION'),
+        ('UNIV', 'univ', 'DOUBLE PRECISION'),
+        ('VEHPP', 'vehpp', 'DOUBLE PRECISION'),
+        ('VOL2', 'ei_vol', 'INTEGER'),
+        ('WHOLESALE_TRADE', 'wholesale_trade', 'DOUBLE PRECISION')
+    ],
 }
 
 # TOD DEPENDENT
@@ -158,21 +290,22 @@ NETOBJ_IDs = {
     u'VehicleJourneyItems': [(u'VEHJOURNEYNO', 'INTEGER'), (u'INDEX', 'INTEGER')],
     u'VehicleJourneys': [(u'NO', 'INTEGER')],
     # u'VehicleUnits': [(u'NO', 'INTEGER')],
-    u'Zones': [(u'NO', 'INTEGER')]
+    u'Zones': [(u'NO', 'INTEGER')],
 }
 
 # I knew I wanted a thread manager
 class VisumManager(threading.Thread):
     TODs = ["AM","MD","PM","NT"]
-    def __init__(self, path_template, scen, vernum, queue, (srid, prjwkt), max_queue_depth, single_load_visum):
+    def __init__(self, path_template, scen, vernum, queue, srid_prj, max_queue_depth, single_load_visum):
         super(VisumManager, self).__init__()
         self.path_template = path_template
         self.scen = scen
         self.vernum = vernum
         self.queue = queue
         self._threads = []
-        self.srid = srid
-        self.prjwkt = prjwkt
+        # self.srid = srid
+        # self.prjwkt = prjwkt
+        self.srid, self.prjwkt = srid_prj
         self.max_queue_depth = max_queue_depth
         self.single_load_visum = single_load_visum
         logger.debug("VisumManager.__init__(): Done")
@@ -199,7 +332,7 @@ class VisumManager(threading.Thread):
             t.join()
 
 class VisumDataMiner(threading.Thread):
-    def __init__(self, path, scen, vernum, getnetobj, queue, (srid, prjwkt), semaphore):
+    def __init__(self, path, scen, vernum, getnetobj, queue, srid_prj, semaphore):
         super(VisumDataMiner, self).__init__()
         self.path = path
         self.scen = scen
@@ -208,8 +341,7 @@ class VisumDataMiner(threading.Thread):
         self.queue = queue
         self._index_templates = {}
         self.tod = None
-        self.srid = srid
-        self.prjwkt = prjwkt
+        self.srid, self.prjwkt = srid_prj
         self.semaphore = semaphore
         logger.debug("VisumDataMiner.__init__(): Done")
 
@@ -240,22 +372,24 @@ class VisumDataMiner(threading.Thread):
         return v
 
     def _getAttributes(self, Visum, netobj, ids):
-        return zip(*map(lambda (_id, dtype):self.GetVisumAttribute(Visum, netobj, _id), ids))
+        # retval = (_id, dtype)
+        return list(zip(*map(lambda retval:self.GetVisumAttribute(Visum, netobj, retval[0]), ids)))
 
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
             logger.info("VisumDataMiner-%s.GetNetObjects(): Exporting NetObj %s", self.tod, netobj)
-            ids = map(lambda (f,d):(f,f.lower(),d), ids)
+            ids = list(map(lambda retval:(retval[0],retval[0].lower(),retval[1]), ids))
             if netobj in NETOBJ_ATTRIBUTES:
                 ids += NETOBJ_ATTRIBUTES[netobj]
                 logger.info("VisumDataMiner-%s.GetNetObjects(): Additional attributes found for Netobj %s", self.tod, netobj)
-            data = self._getAttributes(Visum, netobj, map(lambda (v,p,d):(v,d), ids))
+            data = self._getAttributes(Visum, netobj, list(map(lambda retval:(retval[0],retval[2]), ids)))
             if len(data) > 0:
+                logger.info("VisumDataMiner-%s.GetNetObjects(): %s preview: %s", self.tod, netobj, str(data[0]))
                 self.queue.put(Sponge(**{
-                    "type": database.TBL_NETOBJ,
+                    "type": loader.database.TBL_NETOBJ,
                     "scen": self.scen,
                     "netobj": netobj,
-                    "atts": map(lambda (v,p,d):(p,d), ids),
+                    "atts": list(map(lambda retval:(retval[1],retval[2]), ids)),
                     "data": data
                 }))
 
@@ -265,15 +399,15 @@ class VisumDataMiner(threading.Thread):
             if not netobj in NETOBJ_IDs:
                 logger.error("VisumDataMiner-%s.GetAttributes(): Error, {0} not included in NETOBJ_IDs".format(netobj), self.tod)
                 continue
-            ids = map(lambda (f,d):(f,f.lower(),d), NETOBJ_IDs[netobj]) + ids
-            data = self._getAttributes(Visum, netobj, map(lambda (v,p,d):(v,d), ids))
+            ids = list(map(lambda retval:(retval[0],retval[0].lower(),retval[1]), NETOBJ_IDs[netobj])) + ids
+            data = self._getAttributes(Visum, netobj, list(map(lambda retval:(retval[0],retval[2]), ids)))
             if len(data) > 0:
                 self.queue.put(Sponge(**{
-                    "type": database.TBL_DATA,
+                    "type": loader.database.TBL_DATA,
                     "scen": self.scen,
                     "tod": self.tod,
                     "netobj": netobj,
-                    "atts": map(lambda (v,p,d):(p,d), ids),
+                    "atts": list(map(lambda retval:(retval[1],retval[2]), ids)),
                     "data": data
                 }))
 
@@ -282,7 +416,7 @@ class VisumDataMiner(threading.Thread):
             logger.info("VisumDataMiner-%s.GetMatrices(): Exporting Matrix %s", self.tod, mtxno)
             mtx_listing = self._getMatrix(Visum, mtxno)
             self.queue.put(Sponge(**{
-                "type": database.TBL_MATRIX,
+                "type": loader.database.TBL_MATRIX,
                 "scen": self.scen,
                 "tod": self.tod,
                 "mtxno": mtxno,
@@ -292,7 +426,7 @@ class VisumDataMiner(threading.Thread):
         mtx = self.GetVisumMatrix(Visum, mtxno)
         if not mtx.shape in self._index_templates:
             n,n = mtx.shape
-            y = numpy.vstack((numpy.arange(n) for _ in xrange(n)))
+            y = numpy.vstack((numpy.arange(n) for _ in range(n)))
             x = y.T.flatten()
             y = y.flatten()
             self._index_templates[mtx.shape] = (x, y)
@@ -330,7 +464,7 @@ class VisumDataMiner(threading.Thread):
                     _data
                 ))
             self.queue.put(Sponge(**{
-                "type": database.TBL_GEOMETRY,
+                "type": loader.database.TBL_GEOMETRY,
                 "scen": self.scen,
                 "netobj": netobj,
                 "atts": ids,
@@ -338,7 +472,7 @@ class VisumDataMiner(threading.Thread):
                 "gatts": gatts,
                 # Internal debate about this, it'll get 'appended' to data which involves zip(*args) both
                 # For now, transpose for consistency sake
-                "gdata": zip(*gdata),
+                "gdata": list(zip(*gdata)),
                 "srid": self.srid
             }))
     def _getGeometryFields(self, Visum):
@@ -346,30 +480,32 @@ class VisumDataMiner(threading.Thread):
         attributes = Utility.GetCOMAttributes(Visum)
         wkt_fields = filter(lambda row:"wkt" in row[1].lower(), attributes)
         logger.info("VisumDataMiner-%s._getGeometryFields(): Found %s geometry fields", self.tod, len(wkt_fields))
-        for netobj in set(zip(*wkt_fields)[0]):
-            netobj_geometry[netobj] = zip(*filter(lambda row:row[0] == netobj, wkt_fields))[1]
+        for netobj in set(list(zip(*wkt_fields))[0]):
+            netobj_geometry[netobj] = list(zip(*filter(lambda row:row[0] == netobj, wkt_fields)))[1]
         return netobj_geometry
 
     @staticmethod
     def _extractFeatureType(features):
         # gdtype = set(zip(*map(lambda v:v.split("(",1), features))[0])
-        gdtype = set(zip(*map(lambda v:re.split(" |\(", v, 1), features))[0])
+        gdtype = set(list(zip(*map(lambda v:re.split(" |\(", v, 1), features)))[0])
         assert len(gdtype) == 1, "Too many feature types (%s)" % str(gdtype)
         return list(gdtype)[0]
     @staticmethod
     def GetVisumAttribute(Visum, netobj, att):
-        return map(lambda (i,v):v, getattr(Visum.Net, netobj).GetMultiAttValues(att, False))
+        logger.info("VisumDataMiner.GetVisumAttribute(): Exporting %s from NetObj %s", att, netobj)
+        retval = list(map(lambda retval:retval[1], getattr(Visum.Net, netobj).GetMultiAttValues(att, False)))
+        return retval
     @staticmethod
     def GetVisumMatrix(Visum, mtxno):
         return numpy.array(Visum.Net.Matrices.ItemByKey(mtxno).GetValues())
     @staticmethod
     def iterNetObjIDs():
-        for netobj, ids in NETOBJ_IDs.iteritems():
+        for netobj, ids in NETOBJ_IDs.items():
             for _id, dtype in ids:
                 yield netobj, _id
     @staticmethod
     def iterNetObjectGroup(dictionary):
-        for netobj, ids in dictionary.iteritems():
+        for netobj, ids in dictionary.items():
             yield netobj, ids
     @classmethod
     def iterNetObjGroupIDs(self):
@@ -399,6 +535,12 @@ class Utility:
         u"vehjourneyitem": u"VehicleJourneyItems",
         u"vehunit": u"VehicleUnits",
     }
+    # For some reason, Visum.Net.[NetObj].Attributes.GetAll will report back non-existent fields
+    # 
+    ATTRIBUTE_BLACKLIST = {
+        u"connectors": ["wktpolywgs84",],
+        u"countlocations": ["wktlocwgs84",],
+    }
     def __init__(self):
         pass
     # Note:
@@ -409,7 +551,7 @@ class Utility:
     @staticmethod
     def enumerateCOM(object, bruteForceN = 1000):
         methods, attributes = [], []
-        for i in xrange(bruteForceN):
+        for i in range(bruteForceN):
             try:
                 sig = object._lazydata_[0].GetNames(i)
             except:
@@ -433,8 +575,13 @@ class Utility:
     @staticmethod
     def FindWKT(Visum, netobj):
         for att in getattr(Visum.Net, netobj).Attributes.GetAll:
-            if "wkt" in att.Code.lower():
-                yield att.Code.lower()
+            att_code = att.Code.lower()
+            if ("wkt" in att_code):
+                # if (netobj.lower() in Utility.ATTRIBUTE_BLACKLIST):
+                    # if (att_code not in Utility.ATTRIBUTE_BLACKLIST[netobj.lower()]):
+                        # yield att_code
+                if ("wgs84" not in att_code):
+                    yield att_code
     @classmethod
     def GetCOMAttributes(self, Visum):
         master_attributes = []
@@ -455,7 +602,7 @@ class Utility:
         self.GetFullAccessDB(Visum, path_temp)
         accdb = Access(path_temp)
         COM_atts = self.GetCOMAttributes(Visum)
-        COM_netobj = dict((netobj.lower(), netobj) for netobj in set(zip(*COM_atts)[0]))
+        COM_netobj = dict((netobj.lower(), netobj) for netobj in set(list(zip(*COM_atts)[0])))
 
         netobj_ids = {}
         for netobj, field, dtype in accdb.iterAllTableFields(notNullable = 1):
@@ -575,7 +722,7 @@ class Access:
         cur.execute(self.SQL_CREATE_TBL_FIELDS)
         cur.executemany(self.SQL_INSERT_TBL_FIELDS, list(self.con_accdb.cursor().columns()))
         cur.execute(self.SQL_CREATE_TBL_BLACKLIST)
-        cur.executemany(self.SQL_INSERT_TBL_BLACKLIST, map(lambda v:(v,), self.ACCESS_SYS_TABLES))
+        cur.executemany(self.SQL_INSERT_TBL_BLACKLIST, list(map(lambda v:(v,), self.ACCESS_SYS_TABLES)))
         self.con_sqlite.commit()
     def close(self):
         self.con_accdb.close()
@@ -595,7 +742,7 @@ class Access:
         cur = self.con_sqlite.cursor()
         cur.execute(self.SQL_SELECT_TBL_FIELDS_COLUMNSxTABLENAMES, (tblname, notNullable))
         payload = cur.fetchall()
-        for row in (payload if leadTableName else map(lambda t,c,d:(c,d), payload)):
+        for row in (payload if leadTableName else list(map(lambda retval:(retval[1], retval[2]), payload))):
             yield row
     def iterAllTableFields(self, notNullable = -1):
         for tblname in self.iterTables():
