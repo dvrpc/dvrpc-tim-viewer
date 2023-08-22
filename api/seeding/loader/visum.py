@@ -14,8 +14,140 @@ from loader.common import *
 import time
 
 # TOD INDEPENDENT
+__visum_value_types = {
+    1: "INTEGER",
+    2: "DOUBLE PRECISION",
+    5: "TEXT",
+    9: "BOOLEAN",
+    62: "TEXT"
+}
+__char_replace = {
+    '-': '_',
+    '/': '_',
+    '+': 'p',
+}
+def __sanitize_names(fn):
+    for x, y in __char_replace.items():
+        fn = fn.replace(x,y)
+    return fn
+"""
+pprint(list(map(
+    lambda z:(
+        z.ID,
+        __sanitize_names(z.Code).lower(),
+        __visum_value_types[z.ValueType]
+    ),
+    filter(
+        lambda z:z.IsUserDefined,
+        Visum.Net.Zones.Attributes.GetAll
+    )
+)))
+"""
+
 NETOBJ_ATTRIBUTES = {
-    "Links": [("V0PrT", "v0prt", "DOUBLE PRECISION")]
+    "Links": [("V0PrT", "v0prt", "DOUBLE PRECISION")],
+    "Zones": [
+        ('AG_MINING', 'ag_mining', 'DOUBLE PRECISION'),
+        ('AREA_LAND', 'area_land', 'DOUBLE PRECISION'),
+        ('AREA_TYPE', 'area_type', 'INTEGER'),
+        ('AREA_TYPE_MAX', 'area_type_max', 'INTEGER'),
+        ('ARMED_FORCES', 'armed_forces', 'DOUBLE PRECISION'),
+        ('ARTS/REC/FOOD', 'arts_rec_food', 'DOUBLE PRECISION'),
+        ('ATTRACT', 'attract', 'DOUBLE PRECISION'),
+        ('AUTOS', 'autos', 'DOUBLE PRECISION'),
+        ('BIKE', 'bike', 'DOUBLE PRECISION'),
+        ('BUSSTOP', 'busstop', 'DOUBLE PRECISION'),
+        ('COMMUTE_IX', 'commute_ix', 'DOUBLE PRECISION'),
+        ('COMMUTE_XI', 'commute_xi', 'DOUBLE PRECISION'),
+        ('CONNECT', 'connect', 'DOUBLE PRECISION'),
+        ('CONSTRUCTION', 'construction', 'DOUBLE PRECISION'),
+        ('DEN12', 'den12', 'DOUBLE PRECISION'),
+        ('DEN3', 'den3', 'DOUBLE PRECISION'),
+        ('DEN4', 'den4', 'DOUBLE PRECISION'),
+        ('DEN56', 'den56', 'DOUBLE PRECISION'),
+        ('EDS-MEDS', 'eds_meds', 'DOUBLE PRECISION'),
+        ('EMPRES', 'empres', 'DOUBLE PRECISION'),
+        ('EMP_DENS', 'emp_dens', 'DOUBLE PRECISION'),
+        ('EXT_AM', 'ext_am', 'DOUBLE PRECISION'),
+        ('EXT_EV', 'ext_ev', 'DOUBLE PRECISION'),
+        ('EXT_HTRK_SHARE', 'ext_htrk_share', 'DOUBLE PRECISION'),
+        ('EXT_LTRK_SHARE', 'ext_ltrk_share', 'DOUBLE PRECISION'),
+        ('EXT_MD', 'ext_md', 'DOUBLE PRECISION'),
+        ('EXT_NT', 'ext_nt', 'DOUBLE PRECISION'),
+        ('EXT_PM', 'ext_pm', 'DOUBLE PRECISION'),
+        ('FAF_HTRK', 'faf_htrk', 'DOUBLE PRECISION'),
+        ('FAF_MTRK', 'faf_mtrk', 'DOUBLE PRECISION'),
+        ('FIRE', 'fire', 'DOUBLE PRECISION'),
+        ('GRPQRTS', 'grpqrts', 'DOUBLE PRECISION'),
+        ('GRPQ_DENS', 'grpq_dens', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC', 'hhs_hi_inc', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_0WORKERS', 'hhs_hi_inc_0workers', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_1PERSON', 'hhs_hi_inc_1person', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_1WORKER', 'hhs_hi_inc_1worker', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_2PERSON', 'hhs_hi_inc_2person', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_2WORKERS', 'hhs_hi_inc_2workers', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_3PERSON', 'hhs_hi_inc_3person', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_3_PLUS_WORKERS', 'hhs_hi_inc_3p_workers', 'DOUBLE PRECISION'),
+        ('HHS_HI_INC_4_PLUS_PERSON', 'hhs_hi_inc_4p_person', 'DOUBLE PRECISION'),
+        ('HHS_LO_INC', 'hhs_lo_inc', 'DOUBLE PRECISION'),
+        ('HH_0VEH', 'hh_0veh', 'DOUBLE PRECISION'),
+        ('HH_0WORKER', 'hh_0worker', 'DOUBLE PRECISION'),
+        ('HH_1VEH', 'hh_1veh', 'DOUBLE PRECISION'),
+        ('HH_1WORKER', 'hh_1worker', 'DOUBLE PRECISION'),
+        ('HH_2VEH', 'hh_2veh', 'DOUBLE PRECISION'),
+        ('HH_2WORKER', 'hh_2worker', 'DOUBLE PRECISION'),
+        ('HH_3_PLUS_VEH', 'hh_3p_veh', 'DOUBLE PRECISION'),
+        ('HH_3_PLUS_WORKER', 'hh_3p_worker', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_0WORKERS', 'hh_lo_inc_0workers', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_1PERSON', 'hh_lo_inc_1person', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_1WORKER', 'hh_lo_inc_1worker', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_2PERSON', 'hh_lo_inc_2person', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_2WORKERS', 'hh_lo_inc_2workers', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_3PERSON', 'hh_lo_inc_3person', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_3_PLUS_WORKERS', 'hh_lo_inc_3p_workers', 'DOUBLE PRECISION'),
+        ('HH_LO_INC_4_PLUS_PERSON', 'hh_lo_inc_4p_person', 'DOUBLE PRECISION'),
+        ('HOUSEHOLDS', 'households', 'DOUBLE PRECISION'),
+        ('INFORMATION', 'information', 'DOUBLE PRECISION'),
+        ('K-12', 'k_12', 'DOUBLE PRECISION'),
+        ('LOINC', 'loinc', 'INTEGER'),
+        ('LU_MIX2_1', 'lu_mix2_1', 'DOUBLE PRECISION'),
+        ('MANUFACTURING', 'manufacturing', 'DOUBLE PRECISION'),
+        ('MCD_FIPS', 'mcd_fips', 'TEXT'),
+        ('MCD_NAME', 'mcd_name', 'TEXT'),
+        ('MC_TRA', 'mc_tra', 'DOUBLE PRECISION'),
+        ('MC_TRW', 'mc_trw', 'DOUBLE PRECISION'),
+        ('MC_TRW_FROM', 'mc_trw_from', 'DOUBLE PRECISION'),
+        ('NUM_COLLEG', 'num_colleg', 'INTEGER'),
+        ('NUM_SCHOOL', 'num_school', 'INTEGER'),
+        ('OTHER_EMPLOYMENT', 'other_employment', 'DOUBLE PRECISION'),
+        ('OTHER_SERVICES', 'other_services', 'DOUBLE PRECISION'),
+        ('PARKCAP_TRANSIT', 'parkcap_transit', 'INTEGER'),
+        ('PARKCOST_1H', 'parkcost_1h', 'DOUBLE PRECISION'),
+        ('PARKCOST_DAILY', 'parkcost_daily', 'DOUBLE PRECISION'),
+        ('PARKRIDE_COUNT', 'parkride_count', 'INTEGER'),
+        ('PARK_REC', 'park_rec', 'DOUBLE PRECISION'),
+        ('POPULATION', 'population', 'DOUBLE PRECISION'),
+        ('POP_DENS', 'pop_dens', 'DOUBLE PRECISION'),
+        ('PROF_SERVICES', 'prof_services', 'DOUBLE PRECISION'),
+        ('PSEUDORADIUS', 'pseudoradius', 'DOUBLE PRECISION'),
+        ('PUBLIC_ADMIN', 'public_admin', 'DOUBLE PRECISION'),
+        ('PUMA', 'puma', 'INTEGER'),
+        ('RAIL', 'rail', 'DOUBLE PRECISION'),
+        ('RETAIL_TRADE', 'retail_trade', 'DOUBLE PRECISION'),
+        ('RTL_DENS', 'rtl_dens', 'DOUBLE PRECISION'),
+        ('STATEFP00', 'statefp00', 'INTEGER'),
+        ('STATE_COUNTY_ID', 'state_county_id', 'INTEGER'),
+        ('STATION_TYPE', 'station_type', 'TEXT'),
+        ('STU_COLLEG', 'stu_colleg', 'DOUBLE PRECISION'),
+        ('STU_SCHOOL', 'stu_school', 'DOUBLE PRECISION'),
+        ('T0CAR', 't0car', 'DOUBLE PRECISION'),
+        ('TOTAL_EMPLOYMENT', 'total_employment', 'DOUBLE PRECISION'),
+        ('TRANSPORT_WH_UTIL', 'transport_wh_util', 'DOUBLE PRECISION'),
+        ('UNIV', 'univ', 'DOUBLE PRECISION'),
+        ('VEHPP', 'vehpp', 'DOUBLE PRECISION'),
+        ('VOL2', 'ei_vol', 'INTEGER'),
+        ('WHOLESALE_TRADE', 'wholesale_trade', 'DOUBLE PRECISION')
+    ],
 }
 
 # TOD DEPENDENT
@@ -158,7 +290,7 @@ NETOBJ_IDs = {
     u'VehicleJourneyItems': [(u'VEHJOURNEYNO', 'INTEGER'), (u'INDEX', 'INTEGER')],
     u'VehicleJourneys': [(u'NO', 'INTEGER')],
     # u'VehicleUnits': [(u'NO', 'INTEGER')],
-    u'Zones': [(u'NO', 'INTEGER')]
+    u'Zones': [(u'NO', 'INTEGER')],
 }
 
 # I knew I wanted a thread manager
