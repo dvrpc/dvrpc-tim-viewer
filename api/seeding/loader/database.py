@@ -19,6 +19,7 @@ import time
 INSERT_BATCH_SIZE = 10000
 
 # TOD agnostic
+TBL_METADATA = "tim"
 TBL_NETOBJ = "net"
 # TOD dependent
 TBL_DATA = "dat"
@@ -27,6 +28,7 @@ TBL_MATRIX = "mtx"
 # TOD agnostic(?)
 TBL_GEOMETRY = "geom"
 
+TBL_NAMETMPLT_METADATA = "tim_{metaobj}"
 TBL_NAMETMPLT_NETOBJ = "net_{netobj}"
 TBL_NAMETMPLT_MTX = "mtx_{mtxno}"
 TBL_NAMETMPLT_DATA = "dat_{netobj}"
@@ -124,8 +126,35 @@ class Database(threading.Thread):
             self.LoadMatrix(payload)
         elif payload.type == TBL_GEOMETRY:
             self.LoadGeometries(payload)
+        elif payload.type == TBL_METADATA:
+            self.LoadMetadata(payload)
         else:
             logger.error("Database.process(): Invalid table type (%s)", payload.type)
+    def LoadMetadata(self, payload):
+        tblname = TBL_NAMETMPLT_METADATA.format(**{'metaobj': payload.metaobj})
+        if self.skipTable(tblname):
+            logger.debug("Database-%d.LoadAttributes(): Exists, skipped %s", self.ident, tblname)
+            return
+        logger.debug("Database-%d.LoadAttributes(): Importing %s", self.ident, tblname)
+        cur = self.con.cursor()
+        try:
+            cur.execute(Utility.formatCreate(tblname, payload.atts))
+        except:
+            logger.debug("Database-%d.LoadAttributes(): Table already does exist %s", self.ident, tblname)
+        else:
+            self.con.commit()
+        finally:
+            cur = self.con.cursor()
+        for data in self._iterPayload(payload.data):
+            cur.execute(
+                Utility.formatMultiInsert(
+                    self.con,
+                    tblname,
+                    data,
+                    payload.atts
+                )
+            )
+        self.con.commit()
     def LoadAttributes(self, payload):
         tblname = TBL_NAMETMPLT_NETOBJ.format(**{'netobj':payload.netobj})
         if self.skipTable(tblname):

@@ -357,6 +357,7 @@ class VisumDataMiner(threading.Thread):
         v.Net.SetAttValue("CoordDecPlaces", COORD_DEC_PRECISION)
 
         if self.getnetobj:
+            self.ExportNetObjKeys()
             self.GetNetObjects(v)
         self.GetAttributes(v)
         self.GetMatrices(v)
@@ -374,6 +375,14 @@ class VisumDataMiner(threading.Thread):
     def _getAttributes(self, Visum, netobj, ids):
         # retval = (_id, dtype)
         return list(zip(*map(lambda retval:self.GetVisumAttribute(Visum, netobj, retval[0]), ids)))
+
+    def ExportNetObjKeys(self):
+        self.queue.put(Sponge(**{
+            "type": loader.database.TBL_METADATA,
+            "metaobj": "netobj_keys",
+            "atts": [("netobj", "TEXT"), ("field", "TEXT"), ("dtype", "TEXT")],
+            "data": [list(map(lambda s:s.lower(), [k,]+list(r))) for k,v in NETOBJ_IDs.items() for r in v]
+        }))
 
     def GetNetObjects(self, Visum):
         for netobj, ids in self.iterNetObjGroupIDs():
@@ -498,11 +507,6 @@ class VisumDataMiner(threading.Thread):
     @staticmethod
     def GetVisumMatrix(Visum, mtxno):
         return numpy.array(Visum.Net.Matrices.ItemByKey(mtxno).GetValues())
-    @staticmethod
-    def iterNetObjIDs():
-        for netobj, ids in NETOBJ_IDs.items():
-            for _id, dtype in ids:
-                yield netobj, _id
     @staticmethod
     def iterNetObjectGroup(dictionary):
         for netobj, ids in dictionary.items():
