@@ -244,9 +244,9 @@ def operator(netobj, params, *args, **kwds):
     elif params['t'] == 'g':
         return getGeoJSON(netobj, params)
     elif params['t'] == 'a':
-        getRecords(netobj, params)
+        return getRecords(netobj, params)
     elif params['t'] == 't':
-        getTemporalRecords(netobj, params)
+        return getTemporalRecords(netobj, params)
     else:
         return _deathRattle(ERR_INCOMPLETE_PARAM)
 
@@ -263,7 +263,11 @@ def operator(netobj, params, *args, **kwds):
     )
 
 def getRecords(netobj, params):
-    pass
+    exists, (fields, unbounded) = checkArrayAttr(URLPARAM_KEY_ATTR, params, str)
+    try:
+        return jsonQry("SELECT tim_dat_attributes(%s::TEXT, %s::TEXT[]);", [netobj, fields])
+    except:
+        return _deathRattle(ERR_INVALID_PARAM)
 def getSingleRecord():
     pass
 def getMultipleRecords():
@@ -291,7 +295,11 @@ def getGeoJSON(netobj, params):
 
 
 def getTemporalRecords(netobj, params):
-    pass
+    exists, (fields, unbounded) = checkArrayAttr(URLPARAM_KEY_ATTR, params, str)
+    try:
+        return jsonQry("SELECT tim_dat_temporalattributes(%s::TEXT, %s::TEXT[]);", [netobj, fields])
+    except:
+        return _deathRattle(ERR_INVALID_PARAM)
 def getSingleTemporalRecord():
     pass
 def getMultipleTemporalRecords():
