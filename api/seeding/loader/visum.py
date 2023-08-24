@@ -435,7 +435,9 @@ class VisumDataMiner(threading.Thread):
         mtx = self.GetVisumMatrix(Visum, mtxno)
         if not mtx.shape in self._index_templates:
             n,n = mtx.shape
-            y = numpy.vstack((numpy.arange(n) for _ in range(n)))
+            # y = numpy.vstack((numpy.arange(n) for _ in range(n)))
+            zone_nos = numpy.array(self.GetVisumAttribute(Visum, "Zones", "No"), dtype = int)
+            y = numpy.vstack([zone_nos for _ in range(n)])
             x = y.T.flatten()
             y = y.flatten()
             self._index_templates[mtx.shape] = (x, y)

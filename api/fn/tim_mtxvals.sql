@@ -5,7 +5,7 @@ RETURNS TABLE (
     ozoneno INTEGER,
     dzoneno INTEGER,
     tod TEXT,
-    val REAL
+    val DOUBLE PRECISION
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -18,7 +18,7 @@ RETURNS TABLE (
     ozoneno INTEGER,
     dzoneno INTEGER,
     tod TEXT,
-    val REAL
+    val DOUBLE PRECISION
 ) AS $$
 DECLARE
     _mtx_tbl TEXT;
@@ -38,10 +38,10 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION tim_mtxvals_ct(mtxno INTEGER, zonenos INTEGER[])
 RETURNS TABLE(
     odpair INTEGER[],
-    AM REAL,
-    MD REAL,
-    PM REAL,
-    NT REAL
+    AM DOUBLE PRECISION,
+    MD DOUBLE PRECISION,
+    PM DOUBLE PRECISION,
+    NT DOUBLE PRECISION
 ) AS $$
 DECLARE
     _mtx_tbl TEXT;
@@ -60,8 +60,8 @@ BEGIN
         ORDER BY 1,2
     ', _mtx_tbl, zonenos, zonenos)) AS ct(
         odpair INTEGER[],
-        AM REAL, MD REAL,
-        PM REAL, NT REAL
+        AM DOUBLE PRECISION, MD DOUBLE PRECISION,
+        PM DOUBLE PRECISION, NT DOUBLE PRECISION
     );
 END;
 $$ LANGUAGE plpgsql;

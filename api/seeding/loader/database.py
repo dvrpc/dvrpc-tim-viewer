@@ -38,9 +38,9 @@ TBL_NAMETMPLT_GEOMETRY = "geom_{netobj}"
 # "ALTER TABLE {tblname} ADD COLUMN ({fname} {dtype})"
 # "INSERT INTO {tblname} VALUES ({nargs})"
 
-SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (oindex smallint, dindex smallint, scen text, tod text, val double precision);"
-SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (oindex ASC NULLS LAST);"
-SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dindex ASC NULLS LAST);"
+SQL_CREATE_TBL_MTX = "CREATE TABLE IF NOT EXISTS {0} (ozoneno integer, dzoneno integer, scen text, tod text, val double precision);"
+SQL_CREATE_IDX_MTX_O = "CREATE INDEX IF NOT EXISTS {0}_o_idx ON public.{0} (ozoneno ASC NULLS LAST);"
+SQL_CREATE_IDX_MTX_D = "CREATE INDEX IF NOT EXISTS {0}_d_idx ON public.{0} (dzoneno ASC NULLS LAST);"
 SQL_CREATE_IDX_GEOM = "CREATE INDEX {tblname}_{field}_gidx ON {tblname} USING GIST ({field});"
 
 class DatabaseManager(threading.Thread):
@@ -92,7 +92,7 @@ class DatabaseManager(threading.Thread):
         self._con.commit()
 
 class Database(threading.Thread):
-    MTX_DEFAULT_COLUMNS = ["oindex", "dindex", "val"]
+    MTX_DEFAULT_COLUMNS = ["ozoneno", "dzoneno", "val"]
     def __init__(self, db_credentials, dataqueue, max_queue_depth, overwrite_existing_tables):
         super(Database, self).__init__()
         self.db_credentials = db_credentials
