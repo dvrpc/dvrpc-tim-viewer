@@ -282,9 +282,12 @@ def getGeoJSON(netobj, params):
         geomtype = "wktsurface"
     else:
         return _deathRattle(ERR_INCOMPLETE_PARAM)
-    return jsonQry("SELECT tim_gfx_netobj(%s,%s)", [
-        netobj, geomtype
-    ])
+    try:
+        return jsonQry("SELECT tim_gfx_netobj(%s,%s)", [
+            netobj, geomtype
+        ])
+    except psql.errors.UndefinedColumn:
+        return _deathRattle(ERR_INVALID_PARAM)
 
 
 def getTemporalRecords(netobj, params):
