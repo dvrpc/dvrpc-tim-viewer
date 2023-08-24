@@ -2,16 +2,11 @@ import os
 
 import psycopg2 as psql
 
+from credentials import *
+
 def main():
-    con = psql.connect(
-        user = "postgres",
-        password = "sergt",
-        host = "localhost",
-        port = 5432,
-        database = "postgres"
-    )
+    con = psql.connect(**PSQL_CNX)
     cur = con.cursor()
-    # FN FNS-9, little brother to the FN FNP-45, FNX-45
     fns = filter(lambda f:f.lower().endswith("sql"), os.listdir(os.curdir))
     for f in fns:
         with open(f, "rb") as io:

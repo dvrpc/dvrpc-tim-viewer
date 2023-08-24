@@ -63,7 +63,7 @@ def tableQry(qry_string, qry_params = None):
 
 def _getNetObjKeys(netobj):
     _qry = "SELECT field FROM tim_netobj_keys WHERE netobj = %s::TEXT;"
-    return zip(*_runQry(_qry, (netobj,)))[0]
+    return list(zip(*_runQry(_qry, (netobj,))))[0]
 
 def _extractKeys(keys, assarr):
     xkvp = map(lambda k:(k, assarr[k]) if k in assarr else (None, None), keys)
@@ -237,27 +237,57 @@ def directory(request, resource, *args, **kwds):
 def operator(netobj, params, *args, **kwds):
     _start_time = args[0]
     
-    # req_keys = _getNetObjKeys(netobj)
+    req_keys = _getNetObjKeys(netobj)
+
+    if   't' not in params:
+        return _deathRattle(ERR_INCOMPLETE_PARAM)
+    elif params['t'] == 'g':
+        return getGeoJSON(netobj, params)
+    elif params['t'] == 'a':
+        getRecords(netobj, params)
+    elif params['t'] == 't':
+        getTemporalRecords(netobj, params)
+    else:
+        return _deathRattle(ERR_INCOMPLETE_PARAM)
 
     return HttpResponse(json.dumps({
             "resource": netobj,
             "params": params,
             "tods": checkArrayAttr(URLPARAM_KEY_TOD, params, str),
-            # "reqkeys": req_keys,
+            "reqkeys": req_keys,
             "fields": checkArrayAttr(URLPARAM_KEY_ATTR, params, str),
-            # "foundkeys": _extractKeys(req_keys, params),
+            "foundkeys": _extractKeys(req_keys, params),
             "prctime": (time.time() - _start_time) * 1000,
         }),
         content_type = JSON_MIME_TYPE
     )
 
+def getRecords(netobj, params):
+    pass
 def getSingleRecord():
     pass
 def getMultipleRecords():
     pass
 def getFilteredRecords():
     pass
-def getGeoJSON():
+
+def getGeoJSON(netobj, params):
+    if   'g' not in params:
+        return _deathRattle(ERR_INCOMPLETE_PARAM)
+    elif params['g'] == 'p':
+        geomtype = "wktloc"
+    elif params['g'] == 'l':
+        geomtype = "wktpoly"
+    elif params['g'] == 'g':
+        geomtype = "wktsurface"
+    else:
+        return _deathRattle(ERR_INCOMPLETE_PARAM)
+    return jsonQry("SELECT tim_gfx_netobj(%s,%s)", [
+        netobj, geomtype
+    ])
+
+
+def getTemporalRecords(netobj, params):
     pass
 def getSingleTemporalRecord():
     pass
@@ -276,116 +306,23 @@ PROCEDURES = {
 }
 
 NETOBJS = set([
-    "alias",
-    "block",
-    "blockitem",
-    "blockitemtype",
-    "blockversion",
-    "calendarperiod",
-    "chainedupvehjourneysection",
-    "connector",
-    "coordgrp",
-    "coordgrpitem",
-    "countlocation",
-    "crosswalktemplate",
-    "demandsegment",
-    "demandsegtimevaryingatt",
-    "detector",
-    "direction",
-    "edge",
-    "edgeitem",
-    "faceitem",
-    "faresupplementitem",
-    "faresystem",
-    "farezone",
-    "fleetcomposition",
-    "fleetcompositiontovehiclestratum",
-    "fromtozonefareitem",
-    "geometrytemplateitem",
-    "holidays",
-    "info",
-    "intergreen",
-    "lane",
-    "laneturn",
-    "leg",
-    "legtemplateitem",
-    "line",
-    "lineroute",
-    "linerouteitem",
-    "link",
-    "linkpoly",
-    "linktimevaryingatt",
-    "linktype",
-    "mainnode",
-    "mainnodetimevaryingatt",
-    "mainturn",
-    "mainturntimevaryingatt",
-    "mainzone",
-    "mode",
-    "node",
-    "nodetimevaryingatt",
-    "operator",
-    "path",
-    "pathitem",
-    "point",
-    "poiofcat_1",
-    "poiofcat_10",
-    "poiofcat_11",
-    "poiofcat_12",
-    "poiofcat_13",
-    "poiofcat_14",
-    "poiofcat_15",
-    "poiofcat_18",
-    "poiofcat_3",
-    "poiofcat_4",
-    "poiofcat_5",
-    "poiofcat_8",
-    "poiofcat_9",
-    "poitolink",
-    "poitonode",
-    "screenline",
-    "screenlinepoly",
-    "signalcontrol",
-    "signalcoordgroup",
-    "signalgroup",
-    "signalgrouptemplate",
-    "signalgrouptemplateitem",
-    "stage",
-    "stagetemplate",
-    "stagetemplateitem",
-    "stagetemplateset",
-    "stagetemplatesetitem",
-    "stop",
-    "stoparea",
-    "stoppoint",
-    "surfaceitem",
-    "sysroute",
-    "sysrouteitem",
-    "sysroutevehtime",
-    "territory",
-    "tickettype",
-    "timeprofile",
-    "timeprofileitem",
-    "tollsystem",
-    "transferfare",
-    "transferwaittimetp",
-    "transferwaittimetsys",
-    "transferwalktimedirline",
-    "transferwalktimestoparea",
-    "transferwalktimetp",
-    "transferwalktimetsys",
-    "tsys",
-    "turn",
-    "turnstandard",
-    "turntimevaryingatt",
-    "userattdef",
-    "validdays",
-    "vehcomb",
-    "vehjourney",
-    "vehjourneycouplesectionitem",
-    "vehjourneysection",
-    "vehunit",
-    "vehunittovehcomb",
-    "zone",
-    "zonecountfareitem",
+    "connectors",
+    "countlocations",
+    "linerouteitems",
+    "lineroutes",
+    "lines",
+    "links",
+    "linktypes",
+    "nodes",
+    "screenlines",
+    "stopareas",
+    "stoppoints",
+    "stops",
+    "territories",
+    "timeprofileitems",
+    "timeprofiles",
+    "vehiclecombinations",
+    "vehiclejourneyitems",
+    "vehiclejourneys",
+    "zones",
 ])
