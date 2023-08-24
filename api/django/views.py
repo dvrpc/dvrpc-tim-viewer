@@ -279,13 +279,15 @@ def get_operator(netobj, params, _exec_start_time, *args, **kwds):
 def post_operator(netobj, params, _exec_start_time, *args, **kwds):
     req_keys = _getNetObjKeys(netobj)
     checkNetObj(netobj)
+    net_qry = "SELECT tim_dat_attributes(%s::TEXT, %s::TEXT[]);"
+    dat_qry = "SELECT tim_dat_temporalattributes(%s::TEXT, %s::TEXT[]);"
     return HttpResponse(json.dumps({
             "netobj": netobj,
             "keys": req_keys,
             "netfields": params["netfields"] if "netfields" in params else None,
             "datfields": params["datfields"] if "datfields" in params else None,
-            "netpayload": None,
-            "datpayload": None,
+            "netpayload": _runQry(net_qry, [netobj, params["netfields"]]) if "netfields" in params else None,
+            "datpayload": _runQry(dat_qry, [netobj, params["datfields"]]) if "datfields" in params else None,
             "prctime": (time.time() - _exec_start_time) * 1000,
         }),
         content_type = JSON_MIME_TYPE
