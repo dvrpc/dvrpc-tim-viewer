@@ -1,4 +1,5 @@
 from django.http import *
+from django.views.decorators.csrf import csrf_exempt
 from phltripgen import credentials
 import psycopg2 as psql
 import json
@@ -46,7 +47,9 @@ def _runQry(qry_string, qry_params = None):
     con = _getPSQLCon()
     cur = con.cursor()
     cur.execute(qry_string, qry_params)
-    return cur.fetchall()
+    data = cur.fetchall()
+    con.close()
+    return data
 
 def jsonQry(qry_string, qry_params = None):
     response, = _runQry(qry_string, qry_params)[0]
@@ -111,6 +114,11 @@ def _castableArrayAttr(attr, dtype):
         return True, (map(dtype, attr), False)
     except:
         return False, (None, None)
+
+def checkNetObj(netobj):
+    qry = "SELECT CASE WHEN %s::TEXT IN (SELECT DISTINCT(netobj) FROM tim_netobj_keys) THEN TRUE ELSE FALSE END netobjfound";
+    retval = _runQry(qry, (netobj,))
+    return True if len(retval) > 0 and retval[0][0] else False
 
 def checkArrayAttr(attr, params, dtype):
     '''
@@ -217,26 +225,31 @@ def vddl(param, *args, **kwds):
     return _desireLines(param, "vddl", *args, **kwds)
 
 # ---- #
-
+@csrf_exempt
 def directory(request, resource, *args, **kwds):
     _start_time = time.time()
+
     param = {}
     if request.method == "GET":
         param = request.GET
     elif request.method == "POST":
-        param = request.POST
+        # param = request.POST
+        param = json.loads((request.body).decode('utf-8'))
     else:
         return _deathRattle(ERR_INVALID_HTTP_METHOD)
+    param["HTTPMethod"] = request.method
+
     if resource in PROCEDURES:
         return PROCEDURES[resource](param, *args, **kwds)
     elif resource in NETOBJS:
-        return operator(resource, param, _start_time)
+        if param["HTTPMethod"] == "GET":
+            return get_operator(resource, param, _start_time, *args, **kwds)
+        else:
+            return post_operator(resource, param, _start_time, *args, **kwds)
     else:
         return _deathRattle(ERR_INVALID_RESOURCE)
 
-def operator(netobj, params, *args, **kwds):
-    _start_time = args[0]
-    
+def get_operator(netobj, params, _exec_start_time, *args, **kwds):
     req_keys = _getNetObjKeys(netobj)
 
     if   't' not in params:
@@ -253,11 +266,27 @@ def operator(netobj, params, *args, **kwds):
     return HttpResponse(json.dumps({
             "resource": netobj,
             "params": params,
+            
             "tods": checkArrayAttr(URLPARAM_KEY_TOD, params, str),
             "reqkeys": req_keys,
             "fields": checkArrayAttr(URLPARAM_KEY_ATTR, params, str),
             "foundkeys": _extractKeys(req_keys, params),
-            "prctime": (time.time() - _start_time) * 1000,
+            "prctime": (time.time() - _exec_start_time) * 1000,
+        }),
+        content_type = JSON_MIME_TYPE
+    )
+
+def post_operator(netobj, params, _exec_start_time, *args, **kwds):
+    req_keys = _getNetObjKeys(netobj)
+    checkNetObj(netobj)
+    return HttpResponse(json.dumps({
+            "netobj": netobj,
+            "keys": req_keys,
+            "netfields": params["netfields"] if "netfields" in params else None,
+            "datfields": params["datfields"] if "datfields" in params else None,
+            "netpayload": None,
+            "datpayload": None,
+            "prctime": (time.time() - _exec_start_time) * 1000,
         }),
         content_type = JSON_MIME_TYPE
     )
