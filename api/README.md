@@ -2,7 +2,7 @@
 
 ## Available Data/(partial) Database Schema
 
-**/api/schema.php**
+**/api/schema/**
 
 HTTP Method: `GET`
 
@@ -23,47 +23,24 @@ Return value:
 
 **/api/***|
 ----------|
-connectors.php
-countlocations.php
-crosswalks.php
-demandsegments.php
-detectors.php
-directions.php
-linerouteitems.php
-lineroutes.php
-lines.php
-links.php
-linktypes.php
-mainlines.php
-mainnodes.php
-mainturns.php
-mainzones.php
-modes.php
-nodes.php
-operators.php
-paths.php
-pathsets.php
-screenlines.php
-signalcontrols.php
-signalgroups.php
-stages.php
-stopareas.php
-stoppoints.php
-stops.php
-territories.php
-tickettypes.php
-timeprofileitems.php
-timeprofiles.php
-tollsystems.php
-tsystems.php
-turns.php
-validdayscont.php
-vehiclecombinations.php
-vehiclejourneyitems.php
-vehiclejourneys.php
-vehicleunits.php
-vehijouneysections.php
-zones.php
+connectors/
+countlocations/
+linerouteitems/
+lineroutes/
+lines/
+links/
+linktypes/
+nodes/
+screenlines/
+stopareas/
+stoppoints/
+stops/
+territories/
+timeprofileitems/
+timeprofiles/
+vehiclejourneyitems/
+vehiclejourneys/
+zones/
 
 HTTP Method: `GET`
 

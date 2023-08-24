@@ -111,7 +111,7 @@ def _castableArrayAttr(attr, dtype):
     if dtype is str:
         return True, (attr, False)
     try:
-        return True, (map(dtype, attr), False)
+        return True, (list(map(dtype, attr)), False)
     except:
         return False, (None, None)
 
@@ -223,6 +223,31 @@ def ddl(param, *args, **kwds):
     return _desireLines(param, "ddl", *args, **kwds)
 def vddl(param, *args, **kwds):
     return _desireLines(param, "vddl", *args, **kwds)
+
+def matrix(param, *args, **kwds):
+    """
+    include("_functions.php");
+    error_reporting(0);
+    $matrixno = (int) _parseAttribute("m", $_GET);
+    $zones = pg_toIntArray(_parseAttributes("z", $_GET));
+    $con = ConnectToDB();
+    $req = pg_query_params("SELECT tim_mtxvals_json($1," . $zones . ")", array($matrixno)) or
+        die('[]');
+    header('Content-Encoding: x-gzip');
+    $payload = pg_fetch_row($req);
+    header('Content-Length: ' . strlen($payload[0]));
+    echo gzencode($payload[0]);
+    """
+    mtx_exists, mtx_no = checkAttr('m', param, int)
+    zones_exists, (zone_nos, zone_unbounded) = checkArrayAttr('z', param, int)
+    # return HttpResponse(json.dumps({
+            # "params": param,
+            # 'm': checkAttr('m', param, int),
+            # 'z': checkArrayAttr('z', param, int),
+        # }),
+        # content_type = JSON_MIME_TYPE
+    # )
+    return jsonQry("SELECT tim_mtxvals_json(%s, %s::INTEGER[])", (mtx_no, zone_nos))
 
 # ---- #
 @csrf_exempt
@@ -345,6 +370,7 @@ PROCEDURES = {
     "desireline": desireline,
     "vddl": vddl,
     "ddl": ddl,
+    "matrices": matrix,
 }
 
 NETOBJS = set([
