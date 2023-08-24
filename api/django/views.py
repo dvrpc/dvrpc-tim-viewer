@@ -230,19 +230,18 @@ def directory(request, resource, *args, **kwds):
     _start_time = time.time()
 
     param = {}
-    if request.method == "GET":
+    HTTPMethod = request.method
+    if HTTPMethod == "GET":
         param = request.GET
-    elif request.method == "POST":
-        # param = request.POST
+    elif HTTPMethod == "POST":
         param = json.loads((request.body).decode('utf-8'))
     else:
         return _deathRattle(ERR_INVALID_HTTP_METHOD)
-    param["HTTPMethod"] = request.method
 
     if resource in PROCEDURES:
         return PROCEDURES[resource](param, *args, **kwds)
     elif resource in NETOBJS:
-        if param["HTTPMethod"] == "GET":
+        if HTTPMethod == "GET":
             return get_operator(resource, param, _start_time, *args, **kwds)
         else:
             return post_operator(resource, param, _start_time, *args, **kwds)
@@ -252,8 +251,9 @@ def directory(request, resource, *args, **kwds):
 def get_operator(netobj, params, _exec_start_time, *args, **kwds):
     req_keys = _getNetObjKeys(netobj)
 
+    print(params)
     if   't' not in params:
-        return _deathRattle(ERR_INCOMPLETE_PARAM)
+        return _deathRattle(ERR_INCOMPLETE_PARAM+":0")
     elif params['t'] == 'g':
         return getGeoJSON(netobj, params)
     elif params['t'] == 'a':
@@ -261,7 +261,7 @@ def get_operator(netobj, params, _exec_start_time, *args, **kwds):
     elif params['t'] == 't':
         return getTemporalRecords(netobj, params)
     else:
-        return _deathRattle(ERR_INCOMPLETE_PARAM)
+        return _deathRattle(ERR_INCOMPLETE_PARAM+":1")
 
     return HttpResponse(json.dumps({
             "resource": netobj,
@@ -298,7 +298,7 @@ def getRecords(netobj, params):
     try:
         return jsonQry("SELECT tim_dat_attributes(%s::TEXT, %s::TEXT[]);", [netobj, fields])
     except:
-        return _deathRattle(ERR_INVALID_PARAM)
+        return _deathRattle(ERR_INVALID_PARAM+":2")
 def getSingleRecord():
     pass
 def getMultipleRecords():
