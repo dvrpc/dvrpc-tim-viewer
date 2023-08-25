@@ -47,6 +47,7 @@ pprint(list(map(
 NETOBJ_ATTRIBUTES = {
     "Links": [("V0PrT", "v0prt", "DOUBLE PRECISION")],
     "Zones": [
+        ('NAME', 'name', 'TEXT'),
         ('AG_MINING', 'ag_mining', 'DOUBLE PRECISION'),
         ('AREA_LAND', 'area_land', 'DOUBLE PRECISION'),
         ('AREA_TYPE', 'area_type', 'INTEGER'),

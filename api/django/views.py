@@ -115,7 +115,9 @@ def _castableArrayAttr(attr, dtype):
     except:
         return False, (None, None)
 
-def checkNetObj(netobj):
+def verifyKeys(params, keys):
+    pass
+def verifyNetObj(netobj):
     qry = "SELECT CASE WHEN %s::TEXT IN (SELECT DISTINCT(netobj) FROM tim_netobj_keys) THEN TRUE ELSE FALSE END netobjfound";
     retval = _runQry(qry, (netobj,))
     return True if len(retval) > 0 and retval[0][0] else False
@@ -301,18 +303,46 @@ def get_operator(netobj, params, _exec_start_time, *args, **kwds):
         content_type = JSON_MIME_TYPE
     )
 
+def _filter_net_payload(payload, params):
+    # Ok, so the deal is that the base PL/PGSQL function uses `array_to_json`
+    # which will aggregate rows into a single record JSON like `[{data},{data},]
+    # Then when retrieved by psycopg2, it is further encapsulated [[record]]
+    if not (len(payload) > 0):
+        return []
+    [[records]] = payload
+    record = list(filter(lambda r:r['key'] == params['keys'], records))
+    # Should change this to a keyed record
+    if len(record) > 0:
+        return record[0]['data'][0]
+    else:
+        return {}
+def _filter_dat_payload(payload, params):
+    if not (len(payload) > 0):
+        return []
+    [[records]] = payload
+    record = list(filter(lambda r:r['key'] == params['keys'], records))
+    params['datfields']['tod']
+    return record
+
 def post_operator(netobj, params, _exec_start_time, *args, **kwds):
+    verifyNetObj(netobj)
     req_keys = _getNetObjKeys(netobj)
-    checkNetObj(netobj)
+    verifyKeys(params, req_keys)
+    print(params)
+
+    # Intrinsically 1 row returns because of PL/PGSQL `array_to_json(...)`
     net_qry = "SELECT tim_dat_attributes(%s::TEXT, %s::TEXT[]);"
     dat_qry = "SELECT tim_dat_temporalattributes(%s::TEXT, %s::TEXT[]);"
+    net_payload = _runQry(net_qry, [netobj, params["netfields"]]) if "netfields" in params else []
+    dat_payload = _runQry(dat_qry, [netobj, params["datfields"]["fields"]]) if "datfields" in params and "fields" in params["datfields"] else []
+
     return HttpResponse(json.dumps({
             "netobj": netobj,
             "keys": req_keys,
             "netfields": params["netfields"] if "netfields" in params else None,
             "datfields": params["datfields"] if "datfields" in params else None,
-            "netpayload": _runQry(net_qry, [netobj, params["netfields"]]) if "netfields" in params else None,
-            "datpayload": _runQry(dat_qry, [netobj, params["datfields"]]) if "datfields" in params else None,
+            "netpayload": _filter_net_payload(net_payload, params),
+            "datpayload": _filter_dat_payload(dat_payload, params),
             "prctime": (time.time() - _exec_start_time) * 1000,
         }),
         content_type = JSON_MIME_TYPE

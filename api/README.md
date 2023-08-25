@@ -55,16 +55,12 @@ Return Value:
 
 **/api/*** |
 -----------|
-connectors.php
-countlocations.php
-mainzones.php
-nodes.php
-screenlines.php
-stopareas.php
-stoppoints.php
-stops.php
-territories.php
-zones.php
+connectors/
+lines/
+links/
+stopareas/
+stoppoints/
+zones/
 
 HTTP Method: `GET`
 
@@ -86,7 +82,7 @@ Return value:
 
 ## Matrices
 
-**/api/matrices.php**
+**/api/matrices/**
 
 HTTP Method: `GET`/`POST`
 
