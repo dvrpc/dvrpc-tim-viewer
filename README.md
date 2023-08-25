@@ -63,6 +63,8 @@ This roadmap is organized by network system and feature priority.
 * PostgreSQL 14.9
     * PostGIS 3.4 (with pgRouting)
     * tablefunc (extension needs to be enabled)
+* Django 4.2
+    * CORS middleware [PyPi](https://pypi.org/project/django-cors-headers/) [Github](https://github.com/adamchainz/django-cors-headers)
 
 *Dependencies - Utilities*
 * Python 3.9
